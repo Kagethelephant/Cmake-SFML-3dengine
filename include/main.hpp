@@ -1,19 +1,16 @@
 #pragma once
 
-//SFML
-#include "SFML/System.hpp"
-#include "SFML/Graphics.hpp"
-#include "SFML/Window.hpp"
-#include "SFML/Audio.hpp"
+// SFML
+#include <SFML/Graphics.hpp>
 
-//General
+// General
 #include <string>
 #include <iostream>
 
-//Game libraries
+// Local
 #include "display.hpp"
 #include "math.hpp"
-#include "constants.hpp"
+#include "data.hpp"
 
 
 

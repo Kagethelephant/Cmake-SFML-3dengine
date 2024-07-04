@@ -10,7 +10,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(SOURCE_FILES
     src/main.cpp
     src/display.cpp
-    src/math.cpp)
+    src/math.cpp
+    src/data.cpp)
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 

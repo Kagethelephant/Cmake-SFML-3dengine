@@ -1,52 +1,53 @@
 #pragma once
 
-//SFML
-#include "SFML/System.hpp"
-#include "SFML/Graphics.hpp"
-#include "SFML/Window.hpp"
-#include "SFML/Audio.hpp"
+// SFML
+#include <SFML/Graphics.hpp>
 
+// Local
+#include "data.hpp"
 
-//game header files
-#include "constants.hpp"
 
 
 class Canvas
 {
-
 public:
 
 	Canvas(int _w,int _h);
-
 	~Canvas();
 
 
+
+	// Size of the screen or canvas that is being used
 	sf::Vector2i m_canvasSize;
 
-	//main render texture
+	// This is the place holder texture to transfer content to layer textures
 	sf::RenderTexture m_renderer;
+
+	// Sprite to be drawn
+	sf::Sprite m_sprite;
 	
-	//layers or textures to be used to draw (10 max)
+	// Layers/textures to be used to draw (10 max)
 	int const m_n = 10;
-	sf::Texture* m_layers = new sf::Texture [m_n];
 	bool* m_reset = new bool[m_n];
-
-	sf::Texture layer;
-
-
-	void draw(sf::Drawable& _sprite, int _layer, bool _reset = true);
+	sf::Texture* m_layers = new sf::Texture [m_n];
+	
 
 
-	void clearLayer(int _layer, sf::Color _clear = sf::Color::Transparent);
 
+	// Draw an sf::drawable to one of the layer textures
+	void draw(int _layer, sf::Drawable& _sprite);
 
-	void display(sf::RenderWindow& _window);
+	// Clear one of the layers (layers are automatically cleared every frame)
+	void clear(int _layer, sf::Color _clear = sf::Color::Transparent);
 
+	// Set a layer to to clear every frame (true) or stay static (false)
+	void reset(int _layer, bool reset);
 
-	void dig(sf::RenderWindow& _window, sf::RenderTexture& _ren, sf::Texture& _text);
+	// Draw all of the layers to a given window
+	void display(sf::RenderWindow& _window, int _x = 0, int _y = 0);
 };
 
 //sets up window with a pixel scale and returns the dimmensions of the window
 //in a 2 dimmensional vector
-sf::Vector2i windowSetup(sf::RenderWindow&, int, bool, int);
+sf::Vector2i windowSetup(sf::RenderWindow&, int, bool, sf::String, int);
 
