@@ -19,20 +19,12 @@ public:
 
     object3d();
 
-    struct vertex
-    {
-        float x,y,z;
-    };
+    struct point{float x,y,z;};
 
-    struct triangle
-    {
-        vertex v[3];
-    };
+    struct triangle{point v[3];};
 
-    struct mat4x4 
-    {
-        float m[4][4] = {0};
-    };
+    struct mat4x4 {float m[4][4] = {0};};
+
 
     std::vector<triangle> mesh;
 
@@ -42,14 +34,14 @@ public:
     mat4x4 rotW;
 
 
-    void drawSelf(sf:: RenderWindow& window, float u = 0, float v = 0, float w = 0, float scale = 1);
+    void drawSelf(sf:: RenderTexture& texture, float u = 0, float v = 0, float w = 0);
 
 
 
 private:
 
-    object3d::vertex projectVertex(vertex &vin, mat4x4 mat);
+    point matMultiply(point &pin, mat4x4 mat);
 
-    void drawTriangle(sf::RenderWindow& window, int x1, int y1, int x2, int y2, int x3, int y3, sf::Color col = c_color(White));
+    void drawTriangle(sf::RenderTexture& texture, triangle tri, sf::Color col = c_color(White));
 
 };

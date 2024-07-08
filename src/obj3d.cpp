@@ -21,7 +21,7 @@ object3d::object3d()
 
 
 
-void object3d::drawSelf(sf::RenderWindow& window, float u, float v, float w, float scale)
+void object3d::drawSelf(sf::RenderTexture& texture, float u, float v, float w)
 {
     float AspectRatio = ((float)sf::VideoMode::getDesktopMode().width) / ((float)sf::VideoMode::getDesktopMode().height);
 
@@ -52,17 +52,17 @@ void object3d::drawSelf(sf::RenderWindow& window, float u, float v, float w, flo
     {
         triangle triTrans, triProj, triRotU, triRotV, triRotW;
 
-        triRotU.v[0] = projectVertex(i.v[0], rotU);
-        triRotU.v[1] = projectVertex(i.v[1], rotU);
-        triRotU.v[2] = projectVertex(i.v[2], rotU);
+        triRotU.v[0] = matMultiply(i.v[0], rotU);
+        triRotU.v[1] = matMultiply(i.v[1], rotU);
+        triRotU.v[2] = matMultiply(i.v[2], rotU);
 
-        triRotV.v[0] = projectVertex(triRotU.v[0], rotV);
-        triRotV.v[1] = projectVertex(triRotU.v[1], rotV);
-        triRotV.v[2] = projectVertex(triRotU.v[2], rotV);
+        triRotV.v[0] = matMultiply(triRotU.v[0], rotV);
+        triRotV.v[1] = matMultiply(triRotU.v[1], rotV);
+        triRotV.v[2] = matMultiply(triRotU.v[2], rotV);
 
-        triRotW.v[0] = projectVertex(triRotV.v[0], rotW);
-        triRotW.v[1] = projectVertex(triRotV.v[1], rotW);
-        triRotW.v[2] = projectVertex(triRotV.v[2], rotW);
+        triRotW.v[0] = matMultiply(triRotV.v[0], rotW);
+        triRotW.v[1] = matMultiply(triRotV.v[1], rotW);
+        triRotW.v[2] = matMultiply(triRotV.v[2], rotW);
 
 
 
@@ -75,9 +75,9 @@ void object3d::drawSelf(sf::RenderWindow& window, float u, float v, float w, flo
         
 
         // Project
-        triProj.v[0] = projectVertex(triTrans.v[0], matProj);
-        triProj.v[1] = projectVertex(triTrans.v[1], matProj);
-        triProj.v[2] = projectVertex(triTrans.v[2], matProj);
+        triProj.v[0] = matMultiply(triTrans.v[0], matProj);
+        triProj.v[1] = matMultiply(triTrans.v[1], matProj);
+        triProj.v[2] = matMultiply(triTrans.v[2], matProj);
 
         // Scale
         triProj.v[0].x += 1; triProj.v[0].y += 1; 
@@ -92,45 +92,44 @@ void object3d::drawSelf(sf::RenderWindow& window, float u, float v, float w, flo
         triProj.v[2].y *= 0.5f * 500;
 
 
-        drawTriangle(window, triProj.v[0].x,triProj.v[0].y, triProj.v[1].x,triProj.v[1].y, triProj.v[2].x,triProj.v[2].y );
+        drawTriangle(texture, triProj);
 
     }
 }
 
 
-object3d::vertex object3d::projectVertex(vertex &vin, mat4x4 mat)
+object3d::point object3d::matMultiply(point &pin, mat4x4 mat)
 {
-    vertex vout;
+    point pout;
 
-    vout.x = vin.x * mat.m[0][0] + vin.y * mat.m[1][0] + vin.z * mat.m[2][0] + mat.m[3][0];
-    vout.y = vin.x * mat.m[0][1] + vin.y * mat.m[1][1] + vin.z * mat.m[2][1] + mat.m[3][1];
-    vout.z = vin.x * mat.m[0][2] + vin.y * mat.m[1][2] + vin.z * mat.m[2][2] + mat.m[3][2];
-    float w = vin.x * mat.m[0][3] + vin.y * mat.m[1][3] + vin.z * mat.m[2][3] + mat.m[3][3];
+    pout.x = pin.x * mat.m[0][0] + pin.y * mat.m[1][0] + pin.z * mat.m[2][0] + mat.m[3][0];
+    pout.y = pin.x * mat.m[0][1] + pin.y * mat.m[1][1] + pin.z * mat.m[2][1] + mat.m[3][1];
+    pout.z = pin.x * mat.m[0][2] + pin.y * mat.m[1][2] + pin.z * mat.m[2][2] + mat.m[3][2];
+    float w = pin.x * mat.m[0][3] + pin.y * mat.m[1][3] + pin.z * mat.m[2][3] + mat.m[3][3];
 
     if ( w != 0.0f)
     {
-        vout.x /= w;
-        vout.y /= w;
-        vout.z /= w;
+        pout.x /= w;
+        pout.y /= w;
+        pout.z /= w;
     }
-
-    return vout;
+    return pout;
 }
 
 
-void object3d::drawTriangle(sf::RenderWindow& window, int x1, int y1, int x2, int y2, int x3, int y3, sf::Color col) 
+void object3d::drawTriangle(sf::RenderTexture& texture, triangle tri, sf::Color col) 
 {
     sf::Vertex line1[2], line2[2], line3[2];
     line1[0].color = col; line1[1].color = col;
     line2[0].color = col; line2[1].color = col;
     line3[0].color = col; line3[1].color = col;
 
-    line1[0].position = sf::Vector2f(x1, y1); line1[1].position = sf::Vector2f(x2,y2);
-    line2[0].position = sf::Vector2f(x2, y2); line2[1].position = sf::Vector2f(x3,y3);
-    line3[0].position = sf::Vector2f(x3, y3); line3[1].position = sf::Vector2f(x2,y2);
+    line1[0].position = sf::Vector2f(tri.v[0].x, tri.v[0].y); line1[1].position = sf::Vector2f(tri.v[1].x, tri.v[1].y);
+    line2[0].position = sf::Vector2f(tri.v[1].x, tri.v[1].y); line2[1].position = sf::Vector2f(tri.v[2].x, tri.v[2].y);
+    line3[0].position = sf::Vector2f(tri.v[2].x, tri.v[2].y); line3[1].position = sf::Vector2f(tri.v[0].x, tri.v[0].y);
 
-    window.draw(line1,2,sf::Lines);
-    window.draw(line2,2,sf::Lines);
-    window.draw(line3,2,sf::Lines);
+    texture.draw(line1,2,sf::Lines);
+    texture.draw(line2,2,sf::Lines);
+    texture.draw(line3,2,sf::Lines);
 
 }

@@ -4,22 +4,18 @@
 
 int main() {
 
-    std::cout << "\n" << "\n" << "*****START*****" << std::endl;
-
     //////////////////////////////////////////////////////////////////
     // Setup for SFML window and resolution
     //////////////////////////////////////////////////////////////////
 
-    // Only window view for the game
-    sf::RenderWindow window; 
-
     sf::Vector2f mousePos;
-    sf::Vector2i resPixels;
-    resPixels = windowSetup(window, 500, true, "CORONA",60);
+    sf::Vector2i resWindow;
+    
+    sf::RenderWindow window;
+    resWindow = windowSetup(window, 500, true, "CORONA",60);
 
-    Canvas canvas(resPixels, 3);
-
-
+    sf::RenderTexture rendWindow;
+    rendWindow.create(resWindow.x,resWindow.y);
 
 
     object3d cube;
@@ -28,28 +24,28 @@ int main() {
     cube.mesh = {
 
         // Front
-        {n,n,n,   w,n,n,   w,w,n}, 
-        {n,n,n,   w,w,n,   n,w,n},
-
-        // Left
-        {n,w,n,   n,n,n,   n,n,w}, 
-        {n,w,n,   n,n,w,   n,w,w},
+        {w,w,n,   n,w,n,   w,n,n}, 
+        {n,n,n,   w,n,n,   n,w,n},
 
         // Back
-        {n,n,w,   w,w,w,   n,w,w}, 
-        {n,n,w,   n,w,w,   w,n,w},
+        {n,w,w,   w,w,w,   n,n,w}, 
+        {w,n,w,   n,n,w,   w,w,w},
 
-        // Right
-        {w,n,n,   w,w,n,   w,w,w}, 
-        {w,n,n,   w,w,w,   w,n,w},
+        // Righ
+        {w,w,w,   w,w,n,   w,n,w}, 
+        {w,n,n,   w,n,w,   w,w,n},
+
+        // Left
+        {n,w,n,   n,w,w,   n,n,n}, 
+        {n,n,w,   n,n,n,   n,w,w},
 
         // Top
-        {n,w,n,   n,w,w,   w,w,w}, 
-        {n,w,n,   w,w,w,   w,w,n},
+        {n,n,n,   n,n,w,   w,n,n}, 
+        {w,n,w,   w,n,n,   n,n,w},
 
         // Bottom
-        {n,n,n,   n,n,w,   w,n,w}, 
-        {n,n,n,   w,n,w,   w,n,n},
+        {w,w,n,   w,w,w,   n,w,n}, 
+        {n,w,w,   n,w,n,   w,w,w},
 
     };
 
@@ -88,9 +84,6 @@ int main() {
     //////////////////////////////////////////////////////////////////
     // DRAW STATIC
     //////////////////////////////////////////////////////////////////
-    canvas.reset(0,false);
-    canvas.clear(0, c_color(Black));
-
 
 
 
@@ -165,22 +158,10 @@ int main() {
         ////////////////////////////////////////////////////////////////// 
 
         // Move the rectangle to the correct position before drawing
-        rect.setPosition(0, 0);
-        canvas.draw(1, rect);
-
-        rect.setPosition(0, resPixels.y-1);
-        canvas.draw(1, rect);
-
-        rect.setPosition(resPixels.x-1, resPixels.y-1);
-        canvas.draw(1, rect);
-
-        rect.setPosition(resPixels.x-1, 0);
-        canvas.draw(1, rect);
-
-
+        rendWindow.clear(c_color(Black));
         rect.setPosition(mousePos.x, mousePos.y);
-        canvas.draw(2, rect);
-
+        rendWindow.draw(rect);
+        cube.drawSelf(rendWindow,U,V,W);
 
 
         
@@ -191,8 +172,8 @@ int main() {
 
         // Display canvas layers to screen
         //canvas.display(window);
-        window.clear(c_color(Black));
-        cube.drawSelf(window,U,V,W);
+        rendWindow.display();
+        window.draw(sf::Sprite(rendWindow.getTexture()));
         window.display();
     }
 
