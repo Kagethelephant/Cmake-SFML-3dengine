@@ -3,14 +3,21 @@
 
 
 
-//-------CONSTRUCTOR AND DESTRUCTOR--------
 
-// Object constructor
-Canvas::Canvas(int _w, int _h)
+//////////////////////////////////////////////////////////////////
+/// Canvas Functions
+//////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////
+/// Constructor
+//////////////////////////////////////////////////////////////////
+Canvas::Canvas(sf::Vector2i canvasSize, int layers)
 {
-	m_renderer.create(_w, _h);
+	m_renderer.create(canvasSize.x,canvasSize.y);
 
-	for (int i = 0; i < m_n; i++)
+	// Create all of the layers (max is initialization size m_n)
+	if (layers > m_n) layers = m_n;
+	for (int i = 0; i < layers; i++)
 	{
 		m_renderer.clear(sf::Color::Transparent);
 		m_renderer.display();
@@ -19,47 +26,47 @@ Canvas::Canvas(int _w, int _h)
 	}
 }
 
-// Object destructor
+//////////////////////////////////////////////////////////////////
+/// Destructor
+//////////////////////////////////////////////////////////////////
 Canvas::~Canvas()
 {
 	delete[] m_layers;
 }
 
-	
 
-	
 
-//------CANVAS FUNCTIONS-------
 
-// Draw an sf::drawable to one of the layer textures
-void Canvas::draw(int _layer, sf::Drawable& _sprite)
+
+//////////////////////////////////////////////////////////////////
+void Canvas::draw(int layer, sf::Drawable& sprite)
 {
 	m_renderer.clear(sf::Color::Transparent);
-	m_renderer.draw(sf::Sprite(m_layers[_layer]));
-	m_renderer.draw(_sprite);
+	m_renderer.draw(sf::Sprite(m_layers[layer]));
+	m_renderer.draw(sprite);
 	m_renderer.display();
-	m_layers[_layer] = m_renderer.getTexture();
+	m_layers[layer] = m_renderer.getTexture();
 }
 
 
-// Clear one of the layers (layers are automatically cleared every frame)                                                                       
-void Canvas::clear(int _layer, sf::Color _clear)
+//////////////////////////////////////////////////////////////////                                                                 
+void Canvas::clear(int layer, sf::Color clear)
 {
-	m_renderer.clear(_clear);
+	m_renderer.clear(clear);
 	m_renderer.display();
-	m_layers[_layer] = m_renderer.getTexture();
+	m_layers[layer] = m_renderer.getTexture();
 }
 
 
-// Set a layer to to clear every frame (true) or stay static (false)
-void Canvas::reset(int _layer, bool reset)
+//////////////////////////////////////////////////////////////////
+void Canvas::reset(int layer, bool reset)
 {
-	m_reset[_layer] = reset;
+	m_reset[layer] = reset;
 }
 
 
-// Draw all of the layers to a given window
-void Canvas::display(sf::RenderWindow& _window, int _x, int _y)
+//////////////////////////////////////////////////////////////////
+void Canvas::display(sf::RenderWindow& window, int x, int y)
 {
 	// Draw all of the layers to the render texture
 	m_renderer.clear(sf::Color::Transparent);
@@ -71,10 +78,10 @@ void Canvas::display(sf::RenderWindow& _window, int _x, int _y)
 	// Make the texture into a sprite
 	m_sprite.setTexture(m_renderer.getTexture());
 	m_sprite.setOrigin(0,0);
-	m_sprite.setPosition(_x,_y);
+	m_sprite.setPosition(x,y);
 	
 	// Draw the sprite to the display
-	_window.draw(m_sprite);
+	window.draw(m_sprite);
 
 
 	// Clear the layers that need to be cleared
@@ -89,41 +96,36 @@ void Canvas::display(sf::RenderWindow& _window, int _x, int _y)
 
 
 
-//-----INITIALIZE VIEW------
-
-sf::Vector2i windowSetup(sf::RenderWindow& _window, int _height, bool _fullscreen = true, sf::String _title = "Window", int _fps = 60)
+//////////////////////////////////////////////////////////////////
+// Setup the window initially
+//////////////////////////////////////////////////////////////////
+sf::Vector2i windowSetup(sf::RenderWindow& window, int height, bool fullscreen = true, sf::String title = "Window", int fps = 60)
 {
 	
-	//get the display dimmensions and calculate the aspect ratio
-	float displayWidth = sf::VideoMode::getDesktopMode().width;
-	float DisplayHeight = sf::VideoMode::getDesktopMode().height;
-	float aspectRatio = displayWidth / DisplayHeight;
+	// Get the display dimmensions and calculate the aspect ratio
+	float aspectRatio = ((float)sf::VideoMode::getDesktopMode().width) / ((float)sf::VideoMode::getDesktopMode().height);
 
-	//create a static window width in pixels and calculate the width based on the aspect ratio
-	int bufferH = _height;
+	// Create a static window width in pixels and calculate the width based on the aspect ratio
+	int bufferH = height;
 	int bufferW = abs(bufferH * aspectRatio);
 
-	//center position of the window (needed for view setup)
-	int bufferX = bufferW / 2;
-	int bufferY = bufferH / 2;
+	// Initialize the view with the calculated resolution 
+	if (fullscreen) window.create(sf::VideoMode(bufferW, bufferH), title, sf::Style::Fullscreen);
+	else window.create(sf::VideoMode(bufferW, bufferH), title, sf::Style::Default);
 
-	//initialize the view with the calculated resolution 
-	if (_fullscreen) _window.create(sf::VideoMode(bufferW, bufferH), _title, sf::Style::Fullscreen);
-	else _window.create(sf::VideoMode(bufferW, bufferH), _title, sf::Style::Default);
+	// Set the frame rate and hide the cursor so we can draw our own
+	window.setFramerateLimit(fps);
+	window.setMouseCursorVisible(false);
 
-	//set the frame rate and hide the cursor so we can draw our own
-	_window.setFramerateLimit(60);
-	_window.setMouseCursorVisible(false);
-
-	//set the size and position of the view
+	// Set the size and position of the view
 	sf::View view;
-	view.setCenter(sf::Vector2f(bufferX, bufferY));
+	view.setCenter(sf::Vector2f(bufferW / 2, bufferH / 2));
 	view.setSize(sf::Vector2f(bufferW, bufferH));
 
-	//asign the view to the window
-	_window.setView(view);
+	// Asign the view to the window
+	window.setView(view);
 
-	//return the calculated width and height of the window in pixels
+	// Return the calculated width and height of the window in pixels
 	return sf::Vector2i(bufferW, bufferH);
 }
 
