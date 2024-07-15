@@ -33,8 +33,8 @@ int main() {
 
         float theta = phi * i;
 
-        x = std::cosf(theta) * rad;
-        z = std::sinf(theta) * rad;
+        x = mat_cos(theta) * rad;
+        z = mat_sin(theta) * rad;
 
         object3d::point pnew;
         pnew.x = x; pnew.y = y; pnew.z = z;

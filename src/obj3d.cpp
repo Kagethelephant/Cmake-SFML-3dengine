@@ -10,7 +10,7 @@ object3d::object3d()
     float fNear = 0.1f;
     float fFar = 1000.0f;
     float fFov = 90.0f;
-    float fFovRad = 1.0f / std::tanf(fFov * 0.5f/ 180.0f * 3.14159f);
+    float fFovRad = 1.0f / mat_tan(fFov * 0.5f/ 180.0f * 3.14159f);
 
     m_matProj.m[0][0] = m_aspectRatio * fFovRad;
     m_matProj.m[1][1] = fFovRad;
@@ -28,23 +28,23 @@ object3d::object3d()
 void object3d::rotate(float u, float v, float w)
 {
     m_matRotU.m[0][0] = 1;               //    1    0    0    0
-    m_matRotU.m[1][1] = std::cosf(u);    //    0   cos -sin   0
-    m_matRotU.m[1][2] = std::sinf(u);    //    0   sin  cos   0     for dividing by z when
-    m_matRotU.m[2][1] = -std::sinf(u);   //    0    0    0    1 <<  scaling distant objects
-    m_matRotU.m[2][2] = std::cosf(u);
+    m_matRotU.m[1][1] = mat_cos(u);    //    0   cos -sin   0
+    m_matRotU.m[1][2] = mat_sin(u);    //    0   sin  cos   0     for dividing by z when
+    m_matRotU.m[2][1] = -mat_sin(u);   //    0    0    0    1 <<  scaling distant objects
+    m_matRotU.m[2][2] = mat_cos(u);
     m_matRotU.m[3][3] = 1;
 
-    m_matRotV.m[0][0] = std::cosf(v);    //   cos   0   sin   0
+    m_matRotV.m[0][0] = mat_cos(v);    //   cos   0   sin   0
     m_matRotV.m[1][1] = 1;               //    0    1    0    0
-    m_matRotV.m[2][0] = std::sinf(v);    //  -sin   0   cos   0
-    m_matRotV.m[0][2] = -std::sinf(v);   //    0    0    0    1
-    m_matRotV.m[2][2] = std::cosf(v);
+    m_matRotV.m[2][0] = mat_sin(v);    //  -sin   0   cos   0
+    m_matRotV.m[0][2] = -mat_sin(v);   //    0    0    0    1
+    m_matRotV.m[2][2] = mat_cos(v);
     m_matRotV.m[3][3] = 1;
 
-    m_matRotW.m[0][0] = std::cosf(w);    //   cos -sin   0    0
-    m_matRotW.m[0][1] = std::sinf(w);    //   sin  cos   0    0
-    m_matRotW.m[1][0] = -std::sinf(w);   //    0    0    0    0
-    m_matRotW.m[1][1] = std::cosf(w);    //    0    0    0    1
+    m_matRotW.m[0][0] = mat_cos(w);    //   cos -sin   0    0
+    m_matRotW.m[0][1] = mat_sin(w);    //   sin  cos   0    0
+    m_matRotW.m[1][0] = -mat_sin(w);   //    0    0    0    0
+    m_matRotW.m[1][1] = mat_cos(w);    //    0    0    0    1
     m_matRotW.m[2][2] = 1;
     m_matRotW.m[3][3] = 1;
 }
@@ -124,7 +124,7 @@ void object3d::drawPointCloud(sf::RenderTexture& texture, float u, float v, floa
 
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////
-object3d::point object3d::matMultiply(point &pin, mat4x4 mat)
+object3d::point object3d::matMultiply(point pin, mat4x4 mat)
 {
     point pout;
 

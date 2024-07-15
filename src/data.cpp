@@ -19,3 +19,5 @@ sf::Color c_color(COLOR color, int alpha)
 
 	else {return sf::Color(255,255,255,alpha);}
 }
+
+
