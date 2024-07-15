@@ -18,36 +18,61 @@ int main() {
     rendWindow.create(resWindow.x,resWindow.y);
 
 
+
+
     object3d cube;
-    float n = -1.0f;
-    float w = 1.0f;
+
+    float phi = 3.14159 * std::sqrt(5)-1;
+    int n = 400;
+
+    for(int i=0; i<n; i++)
+    {
+        float x, y, z;
+        y = 1 - (i / float(n - 1)) * 2;
+        float rad = std::sqrt(1 - y * y);
+
+        float theta = phi * i;
+
+        x = std::cosf(theta) * rad;
+        z = std::sinf(theta) * rad;
+
+        object3d::point pnew;
+        pnew.x = x; pnew.y = y; pnew.z = z;
+
+        cube.pointCloud.push_back(pnew);
+    }
+
+
+    float lo = -1.0f;
+    float hi = 1.0f;
     cube.mesh = {
 
         // Front
-        {w,w,n,   n,w,n,   w,n,n}, 
-        {n,n,n,   w,n,n,   n,w,n},
+        {hi,hi,lo,   lo,hi,lo,   hi,lo,lo}, 
+        {lo,lo,lo,   hi,lo,lo,   lo,hi,lo},
 
         // Back
-        {n,w,w,   w,w,w,   n,n,w}, 
-        {w,n,w,   n,n,w,   w,w,w},
+        {lo,hi,hi,   hi,hi,hi,   lo,lo,hi}, 
+        {hi,lo,hi,   lo,lo,hi,   hi,hi,hi},
 
         // Righ
-        {w,w,w,   w,w,n,   w,n,w}, 
-        {w,n,n,   w,n,w,   w,w,n},
+        {hi,hi,hi,   hi,hi,lo,   hi,lo,hi}, 
+        {hi,lo,lo,   hi,lo,hi,   hi,hi,lo},
 
         // Left
-        {n,w,n,   n,w,w,   n,n,n}, 
-        {n,n,w,   n,n,n,   n,w,w},
+        {lo,hi,lo,   lo,hi,hi,   lo,lo,lo}, 
+        {lo,lo,hi,   lo,lo,lo,   lo,hi,hi},
 
         // Top
-        {n,n,n,   n,n,w,   w,n,n}, 
-        {w,n,w,   w,n,n,   n,n,w},
+        {lo,lo,lo,   lo,lo,hi,   hi,lo,lo}, 
+        {hi,lo,hi,   hi,lo,lo,   lo,lo,hi},
 
         // Bottom
-        {w,w,n,   w,w,w,   n,w,n}, 
-        {n,w,w,   n,w,n,   w,w,w},
-
+        {hi,hi,lo,   hi,hi,hi,   lo,hi,lo}, 
+        {lo,hi,hi,   lo,hi,lo,   hi,hi,hi},
     };
+
+    
 
 
 
@@ -79,6 +104,7 @@ int main() {
     float U = 0;
     float V = 0;
     float W = 0;
+    float Z = 3;
 
 
     //////////////////////////////////////////////////////////////////
@@ -97,6 +123,7 @@ int main() {
     while (window.isOpen()) 
     {
         bool up = 0, down = 0, right = 0, left = 0, space = 0, keyA = 0, keyD = 0;
+        
         // Event handler
         sf::Event event; 
         while (window.pollEvent(event)) 
@@ -108,7 +135,7 @@ int main() {
                     window.close();
                     break;
 
-                // If the escape key is pressed exit
+                // Keyboard input
                 case sf::Event::KeyPressed:
                     if (event.key.code == sf::Keyboard::Escape) { window.close(); }
                     else if (event.key.code == sf::Keyboard::Up) { up = 1; }
@@ -119,9 +146,6 @@ int main() {
                     else if (event.key.code == sf::Keyboard::A) { keyA = 1; }
                     else if (event.key.code == sf::Keyboard::D) { keyD = 1; }
                     break;
-
-
-
             }
         }
 
@@ -142,13 +166,13 @@ int main() {
         
         U += (down - up)*.1;
         V += (left - right)*.1;
-        W += (keyD - keyA)*.1;
+        Z += (keyD - keyA)*.1;
 
         if(space)
         {
             U = 0;
             V = 0;
-            W = 0;
+            Z = 0;
         }
 
         
@@ -161,7 +185,7 @@ int main() {
         rendWindow.clear(c_color(Black));
         rect.setPosition(mousePos.x, mousePos.y);
         rendWindow.draw(rect);
-        cube.drawSelf(rendWindow,U,V,W);
+        cube.drawPointCloud(rendWindow,U,V,W,Z);
 
 
         
