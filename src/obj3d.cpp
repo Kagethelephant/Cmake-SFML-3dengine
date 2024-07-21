@@ -55,25 +55,25 @@ void object3d::rotate(float u, float v, float w)
 //////////////////////////////////////////////////////////////////
 object3d::point object3d::projectPoint(point pin, float zoom)
 {
-            point pout;
-            // Rotate the view
-            pout = matMultiply(matMultiply(matMultiply(pin, m_matRotU), m_matRotV), m_matRotW);
-            
-            // Push farther into screen so we can see it
-            pout.z += zoom;
+    point pout;
+    // Rotate the view
+    pout = matMultiply(matMultiply(matMultiply(pin, m_matRotU), m_matRotV), m_matRotW);
+    
+    // Push farther into screen so we can see it
+    pout.z += zoom;
 
-            // Project 2D
-            pout = matMultiply(pout, m_matProj);
+    // Project 2D
+    pout = matMultiply(pout, m_matProj);
 
-            // Center on screen
-            pout.x += 2.2; 
-            pout.y += 1; 
+    // Center on screen
+    pout.x += 2.2; 
+    pout.y += 1; 
 
-            // Scale to size
-            pout.x *= 0.5f * 500/ m_aspectRatio;
-            pout.y *= 0.5f * 500;
+    // Scale to size
+    pout.x *= 0.5f * 500/ m_aspectRatio;
+    pout.y *= 0.5f * 500;
 
-            return pout;
+    return pout;
 }
 
 
@@ -157,5 +157,4 @@ void object3d::drawTriangle(sf::RenderTexture& texture, triangle tri, sf::Color 
     texture.draw(line1,2,sf::Lines);
     texture.draw(line2,2,sf::Lines);
     texture.draw(line3,2,sf::Lines);
-
 }

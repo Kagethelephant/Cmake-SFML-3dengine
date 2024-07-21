@@ -201,12 +201,18 @@ int main() {
         window.display();
     }
 
-
-
     //////////////////////////////////////////////////////////////////
     // DEBUG OUTPUTS
-    //////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////
+
+    float rad = .66;
 
     std::cout << "*****END***** "<< "\n" << std::endl;
+    std::cout << mat_sin(rad*3.14159) << std::endl;
+    std::cout << mat_cos(rad*3.14159) << std::endl;
+    std::cout << std::sinf(rad*3.14159) << std::endl;
+    std::cout << std::cosf(rad*3.14159) << std::endl;
+
+
     return 0;
 }
