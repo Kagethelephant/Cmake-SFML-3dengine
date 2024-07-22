@@ -186,9 +186,9 @@ int main() {
         rect.setPosition(mousePos.x, mousePos.y);
         rendWindow.draw(rect);
 
-        rect.setPosition(0,0);
+        rect.setPosition(1,1);
         rendWindow.draw(rect);
-        rect.setPosition(resWindow.x-200,resWindow.y-200);
+        rect.setPosition(resWindow.x-1,resWindow.y-1);
         rendWindow.draw(rect);
 
         cube.drawPointCloud(rendWindow,U,V,W,Z);
