@@ -12,7 +12,7 @@ int main() {
     sf::Vector2i resWindow;
     
     sf::RenderWindow window;
-    resWindow = windowSetup(window, 500, true, "CORONA",60);
+    resWindow = windowSetup(window, 400, true, "CORONA",60);
 
     sf::RenderTexture rendWindow;
     rendWindow.create(resWindow.x,resWindow.y);
@@ -185,6 +185,12 @@ int main() {
         rendWindow.clear(c_color(Black));
         rect.setPosition(mousePos.x, mousePos.y);
         rendWindow.draw(rect);
+
+        rect.setPosition(0,0);
+        rendWindow.draw(rect);
+        rect.setPosition(resWindow.x-200,resWindow.y-200);
+        rendWindow.draw(rect);
+
         cube.drawPointCloud(rendWindow,U,V,W,Z);
 
 
@@ -205,13 +211,16 @@ int main() {
     // DEBUG OUTPUTS
     /////////////////////////////////////////////////////////////////
 
-    float rad = .66;
-
     std::cout << "*****END***** "<< "\n" << std::endl;
-    std::cout << mat_sin(rad*3.14159) << std::endl;
-    std::cout << mat_cos(rad*3.14159) << std::endl;
-    std::cout << std::sinf(rad*3.14159) << std::endl;
-    std::cout << std::cosf(rad*3.14159) << std::endl;
+    std::cout << "Screen Width: "<< ((float)sf::VideoMode::getDesktopMode().width)<< std::endl;
+    std::cout << "Screen Height: "<< ((float)sf::VideoMode::getDesktopMode().height)<< std::endl;
+    std::cout << "Window Width: "<< window.getSize().x << std::endl;
+    std::cout << "Window Height: "<< window.getSize().y << std::endl;
+    std::cout << "Target Width: "<< resWindow.x << std::endl;
+    std::cout << "Target Height: "<< resWindow.y << std::endl;
+    std::cout << "View Height: "<< window.getView().getSize().x << std::endl;
+    std::cout << "View Width: "<< window.getView().getSize().y << std::endl;
+
 
 
     return 0;
