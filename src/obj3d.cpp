@@ -79,22 +79,179 @@ object3d::point object3d::projectPoint(point pin, float zoom)
 
 
 
+
+//////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+float object3d::dotProd(point pin1, point pin2)
+{
+    return ((pin1.x * pin2.x) + (pin1.y * pin2.y) + (pin1.z * pin2.z));
+}
+
+
+//////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+object3d::point object3d::vecNorm(point pin)
+{
+    point pout = pin;
+
+    float l = std::sqrtf(pin.x*pin.x + pin.y*pin.y + pin.z*pin.z);
+    pout.x /= l; pout.y /= l; pout.z /= l;
+
+    return pout;
+}
+
+//////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+object3d::triangle object3d::projectTriangle(triangle tri, float zoom)
+{
+
+    triangle triIn;
+    // // Rotate the view
+    // triIn.v[0] = matMultiply(matMultiply(matMultiply(tri.v[0], m_matRotU), m_matRotV), m_matRotW);
+    // triIn.v[1] = matMultiply(matMultiply(matMultiply(tri.v[1], m_matRotU), m_matRotV), m_matRotW);
+    // triIn.v[2] = matMultiply(matMultiply(matMultiply(tri.v[2], m_matRotU), m_matRotV), m_matRotW);
+    
+    // // Push farther into screen so we can see it
+    // triIn.v[0].z += zoom;
+    // triIn.v[1].z += zoom;
+    // triIn.v[2].z += zoom;
+
+    // object3d::point norm, line1, line2;
+
+    // line1.x = triIn.v[1].x - triIn.v[0].x;
+    // line1.y = triIn.v[1].y - triIn.v[0].y;
+    // line1.z = triIn.v[1].z - triIn.v[0].z;
+
+    // line2.x = triIn.v[2].x - triIn.v[0].x;
+    // line2.y = triIn.v[2].y - triIn.v[0].y;
+    // line2.z = triIn.v[2].z - triIn.v[0].z;
+
+    // norm.x = line1.y * line2.z - line1.z *line2.y;
+    // norm.y = line1.z * line2.x - line1.x *line2.z;
+    // norm.z = line1.x * line2.y - line1.y *line2.x;
+
+    // float l = std::sqrt(norm.x*norm.x + norm.y*norm.y + norm.z*norm.z);
+    // norm.x /= l; norm.y /= l; norm.z /= l; 
+
+    // if(norm.z <0)
+    //     {
+    //     // Project 2D
+    //     triIn.v[0] = matMultiply(triIn.v[0], m_matProj);
+    //     triIn.v[1] = matMultiply(triIn.v[1], m_matProj);
+    //     triIn.v[2] = matMultiply(triIn.v[2], m_matProj);
+
+    //     // Center on screen
+    //     triIn.v[0].x += 1;
+    //     triIn.v[0].y += 1;
+
+    //     triIn.v[1].x += 1;
+    //     triIn.v[1].y += 1;
+
+    //     triIn.v[2].x += 1;
+    //     triIn.v[2].y += 1;
+
+
+    //     // Scale to size
+    //     triIn.v[0].x *= 0.5f * 500/ m_aspectRatio;
+    //     triIn.v[0].y *= 0.5f * 500;
+
+    //     triIn.v[1].x *= 0.5f * 500/ m_aspectRatio;
+    //     triIn.v[1].y *= 0.5f * 500;
+
+    //     triIn.v[2].x *= 0.5f * 500/ m_aspectRatio;
+    //     triIn.v[2].y *= 0.5f * 500;
+    //     }
+    return triIn;
+}
+
+
+
+
+
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////
 void object3d::drawMesh(sf::RenderTexture& texture, float u, float v, float w, float zoom)
 {
     rotate(u,v,w);
-    triangle tri;
-    for(auto i: mesh)
+
+    point cam;
+    point light;
+
+    cam.x = 0; cam.y = 0, cam.z = 0;
+    light.x = 1; light.y = 1, light.z = 1;
+
+    light = vecNorm(light);
+
+    for(triangle i: mesh)
     {
-        tri = i;
+        triangle triIn;
+
+        // Rotate the view
+        triIn.v[0] = matMultiply(matMultiply(matMultiply(i.v[0], m_matRotU), m_matRotV), m_matRotW);
+        triIn.v[1] = matMultiply(matMultiply(matMultiply(i.v[1], m_matRotU), m_matRotV), m_matRotW);
+        triIn.v[2] = matMultiply(matMultiply(matMultiply(i.v[2], m_matRotU), m_matRotV), m_matRotW);
+
+        object3d::point norm, line1, line2;
+
+        line1.x = triIn.v[1].x - triIn.v[0].x;
+        line1.y = triIn.v[1].y - triIn.v[0].y;
+        line1.z = triIn.v[1].z - triIn.v[0].z;
+
+        line2.x = triIn.v[2].x - triIn.v[0].x;
+        line2.y = triIn.v[2].y - triIn.v[0].y;
+        line2.z = triIn.v[2].z - triIn.v[0].z;
+
+        norm.x = line1.y * line2.z - line1.z *line2.y;
+        norm.y = line1.z * line2.x - line1.x *line2.z;
+        norm.z = line1.x * line2.y - line1.y *line2.x;
+
+        // Push farther into screen so we can see it
+        triIn.v[0].z += zoom;
+        triIn.v[1].z += zoom;
+        triIn.v[2].z += zoom;
+
+        float l = std::sqrtf(norm.x*norm.x + norm.y*norm.y + norm.z*norm.z);
+        norm.x /= l; norm.y /= l; norm.z /= l; 
+
+        float dot = (norm.x * (triIn.v[1].x - cam.x)) + (norm.y * (triIn.v[1].y - cam.y)) + (norm.z * (triIn.v[1].z - cam.z));
+
+
+        float color = dotProd(norm,light);
+
+        if(dot > 0)
+            {
+
+            // Project 2D
+            triIn.v[0] = matMultiply(triIn.v[0], m_matProj);
+            triIn.v[1] = matMultiply(triIn.v[1], m_matProj);
+            triIn.v[2] = matMultiply(triIn.v[2], m_matProj);
+
+            // Center on screen
+            triIn.v[0].x += 1;
+            triIn.v[0].y += 1;
+
+            triIn.v[1].x += 1;
+            triIn.v[1].y += 1;
+
+            triIn.v[2].x += 1;
+            triIn.v[2].y += 1;
+
+
+            // Scale to size
+            triIn.v[0].x *= 0.5f * 500/ m_aspectRatio;
+            triIn.v[0].y *= 0.5f * 500;
+
+            triIn.v[1].x *= 0.5f * 500/ m_aspectRatio;
+            triIn.v[1].y *= 0.5f * 500;
+
+            triIn.v[2].x *= 0.5f * 500/ m_aspectRatio;
+            triIn.v[2].y *= 0.5f * 500;
+
+            
+            drawTriangle(texture, triIn, sf::Color(65,95,120,155+(color*100)));
+            }
+
         
-        for (int z = 0; z<3; z++)
-        {  
-            // Rotate the view
-            tri.v[z] = projectPoint(tri.v[z],zoom);
-        }
-        drawTriangle(texture, tri);
     }
 }
 
@@ -114,7 +271,10 @@ void object3d::drawPointCloud(sf::RenderTexture& texture, float u, float v, floa
         p = i;
         p = projectPoint(p,zoom);
 
-        sf::Vertex pout(sf::Vector2f(p.x, p.y), c_color(Blue));
+        int alpha = 255;
+        if (p.z > .5) alpha = 100;
+
+        sf::Vertex pout(sf::Vector2f(p.x, p.y), c_color(Blue,alpha));
         texture.draw(&pout, 1, sf::Points);
     }
 }
@@ -140,15 +300,30 @@ object3d::point object3d::matMultiply(point pin, mat4x4 mat)
 
 
 
-
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////
 void object3d::drawTriangle(sf::RenderTexture& texture, triangle tri, sf::Color col) 
 {
+
+    sf::VertexArray triangle(sf::Triangles, 3);
+
+    triangle[0].color = col;
+    triangle[1].color = col; 
+    triangle[2].color = col; 
+
+    triangle[0].position = sf::Vector2f(tri.v[0].x, tri.v[0].y);
+    triangle[1].position = sf::Vector2f(tri.v[1].x, tri.v[1].y);
+    triangle[2].position = sf::Vector2f(tri.v[2].x, tri.v[2].y);
+
+    texture.draw(triangle);
+
+    sf::Color col2 = c_color(Light_Blue);
+
     sf::Vertex line1[2], line2[2], line3[2];
-    line1[0].color = col; line1[1].color = col;
-    line2[0].color = col; line2[1].color = col;
-    line3[0].color = col; line3[1].color = col;
+    
+    line1[0].color = col2; line1[1].color = col2;
+    line2[0].color = col2; line2[1].color = col2;
+    line3[0].color = col2; line3[1].color = col2;
 
     line1[0].position = sf::Vector2f(tri.v[0].x, tri.v[0].y); line1[1].position = sf::Vector2f(tri.v[1].x, tri.v[1].y);
     line2[0].position = sf::Vector2f(tri.v[1].x, tri.v[1].y); line2[1].position = sf::Vector2f(tri.v[2].x, tri.v[2].y);

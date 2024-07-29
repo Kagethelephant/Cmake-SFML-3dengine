@@ -22,54 +22,70 @@ int main() {
 
     object3d cube;
 
-    float phi = 3.14159 * std::sqrt(5)-1;
-    int n = 400;
-
-    for(int i=0; i<n; i++)
+    int N = 400;
+    float dlong = 3.151592653*(3-sqrt(5));  /* ~2.39996323 */
+    float dz = 2.0/N;
+    float lng = 0.0f;
+    float z = 1 - dz/2;
+    for (int k = 0; k < N; k++)
     {
-        float x, y, z;
-        y = 1 - (i / float(n - 1)) * 2;
-        float rad = std::sqrt(1 - y * y);
-
-        float theta = phi * i;
-
-        x = mat_cos(theta) * rad;
-        z = mat_sin(theta) * rad;
-
+        float r  = sqrt(1-z*z);
         object3d::point pnew;
-        pnew.x = x; pnew.y = y; pnew.z = z;
-
+        pnew.x = cos(lng)*r; pnew.y = sin(lng)*r; pnew.z = z;
         cube.pointCloud.push_back(pnew);
+        z  = z - dz;
+        lng += dlong;
     }
 
 
-    float lo = -1.0f;
-    float hi = 1.0f;
+    // float phi = 3.14159 * std::sqrt(5)-1;
+    // int n = 400;
+
+    // for(int i=0; i<n; i++)
+    // {
+    //     float x, y, z;
+    //     y = 1 - (i / float(n - 1)) * 2;
+    //     float rad = std::sqrt(1 - y * y);
+
+    //     float theta = phi * i;
+
+    //     x = mat_cos(theta) * rad;
+    //     z = mat_sin(theta) * rad;
+
+    //     object3d::point pnew;
+    //     pnew.x = x; pnew.y = y; pnew.z = z;
+
+    //     cube.pointCloud.push_back(pnew);
+    // }
+
+
+    float l = 0.0f;
+    float h = 1.0f;
     cube.mesh = {
 
         // Front
-        {hi,hi,lo,   lo,hi,lo,   hi,lo,lo}, 
-        {lo,lo,lo,   hi,lo,lo,   lo,hi,lo},
+        {h,h,l,   l,h,l,   l,l,l}, 
+        {l,l,l,   h,l,l,   h,h,l},
 
         // Back
-        {lo,hi,hi,   hi,hi,hi,   lo,lo,hi}, 
-        {hi,lo,hi,   lo,lo,hi,   hi,hi,hi},
+        {h,l,h,   l,l,h,   l,h,h}, 
+        {l,h,h,   h,h,h,   h,l,h},
 
         // Righ
-        {hi,hi,hi,   hi,hi,lo,   hi,lo,hi}, 
-        {hi,lo,lo,   hi,lo,hi,   hi,hi,lo},
+        {h,h,h,   h,h,l,   h,l,l}, 
+        {h,l,l,   h,l,h,   h,h,h},
 
         // Left
-        {lo,hi,lo,   lo,hi,hi,   lo,lo,lo}, 
-        {lo,lo,hi,   lo,lo,lo,   lo,hi,hi},
+        {l,h,l,   l,h,h,   l,l,h}, 
+        {l,l,h,   l,l,l,   l,h,l},
 
         // Top
-        {lo,lo,lo,   lo,lo,hi,   hi,lo,lo}, 
-        {hi,lo,hi,   hi,lo,lo,   lo,lo,hi},
+        {l,l,l,   l,l,h,   h,l,h}, 
+        {h,l,h,   h,l,l,   l,l,l},
 
         // Bottom
-        {hi,hi,lo,   hi,hi,hi,   lo,hi,lo}, 
-        {lo,hi,hi,   lo,hi,lo,   hi,hi,hi},
+        {l,h,h,   l,h,l,   h,h,l}, 
+        {h,h,l,   h,h,h,   l,h,h},
     };
 
     
@@ -186,12 +202,12 @@ int main() {
         rect.setPosition(mousePos.x, mousePos.y);
         rendWindow.draw(rect);
 
-        rect.setPosition(0,0);
+        rect.setPosition(1,1);
         rendWindow.draw(rect);
-        rect.setPosition(resWindow.x-200,resWindow.y-200);
+        rect.setPosition(resWindow.x-2,resWindow.y-2);
         rendWindow.draw(rect);
 
-        cube.drawPointCloud(rendWindow,U,V,W,Z);
+        cube.drawMesh(rendWindow,U,V,W,Z);
 
 
         
@@ -220,8 +236,6 @@ int main() {
     std::cout << "Target Height: "<< resWindow.y << std::endl;
     std::cout << "View Height: "<< window.getView().getSize().x << std::endl;
     std::cout << "View Width: "<< window.getView().getSize().y << std::endl;
-
-
 
     return 0;
 }
