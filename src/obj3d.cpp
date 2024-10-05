@@ -53,9 +53,9 @@ void object3d::rotate(float u, float v, float w)
 
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////
-object3d::point object3d::projectPoint(point pin, float zoom)
+object3d::vec3d object3d::projectPoint(vec3d pin, float zoom)
 {
-    point pout;
+    vec3d pout;
     // Rotate the view
     pout = matMultiply(matMultiply(matMultiply(pin, m_matRotU), m_matRotV), m_matRotW);
     
@@ -77,12 +77,9 @@ object3d::point object3d::projectPoint(point pin, float zoom)
 }
 
 
-
-
-
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////
-float object3d::dotProd(point pin1, point pin2)
+float object3d::dotProd(vec3d pin1, vec3d pin2)
 {
     return ((pin1.x * pin2.x) + (pin1.y * pin2.y) + (pin1.z * pin2.z));
 }
@@ -90,82 +87,15 @@ float object3d::dotProd(point pin1, point pin2)
 
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////
-object3d::point object3d::vecNorm(point pin)
+object3d::vec3d object3d::normalize(vec3d pin)
 {
-    point pout = pin;
+    vec3d pout = pin;
 
     float l = std::sqrtf(pin.x*pin.x + pin.y*pin.y + pin.z*pin.z);
     pout.x /= l; pout.y /= l; pout.z /= l;
 
     return pout;
 }
-
-//////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////
-object3d::triangle object3d::projectTriangle(triangle tri, float zoom)
-{
-
-    triangle triIn;
-    // // Rotate the view
-    // triIn.v[0] = matMultiply(matMultiply(matMultiply(tri.v[0], m_matRotU), m_matRotV), m_matRotW);
-    // triIn.v[1] = matMultiply(matMultiply(matMultiply(tri.v[1], m_matRotU), m_matRotV), m_matRotW);
-    // triIn.v[2] = matMultiply(matMultiply(matMultiply(tri.v[2], m_matRotU), m_matRotV), m_matRotW);
-    
-    // // Push farther into screen so we can see it
-    // triIn.v[0].z += zoom;
-    // triIn.v[1].z += zoom;
-    // triIn.v[2].z += zoom;
-
-    // object3d::point norm, line1, line2;
-
-    // line1.x = triIn.v[1].x - triIn.v[0].x;
-    // line1.y = triIn.v[1].y - triIn.v[0].y;
-    // line1.z = triIn.v[1].z - triIn.v[0].z;
-
-    // line2.x = triIn.v[2].x - triIn.v[0].x;
-    // line2.y = triIn.v[2].y - triIn.v[0].y;
-    // line2.z = triIn.v[2].z - triIn.v[0].z;
-
-    // norm.x = line1.y * line2.z - line1.z *line2.y;
-    // norm.y = line1.z * line2.x - line1.x *line2.z;
-    // norm.z = line1.x * line2.y - line1.y *line2.x;
-
-    // float l = std::sqrt(norm.x*norm.x + norm.y*norm.y + norm.z*norm.z);
-    // norm.x /= l; norm.y /= l; norm.z /= l; 
-
-    // if(norm.z <0)
-    //     {
-    //     // Project 2D
-    //     triIn.v[0] = matMultiply(triIn.v[0], m_matProj);
-    //     triIn.v[1] = matMultiply(triIn.v[1], m_matProj);
-    //     triIn.v[2] = matMultiply(triIn.v[2], m_matProj);
-
-    //     // Center on screen
-    //     triIn.v[0].x += 1;
-    //     triIn.v[0].y += 1;
-
-    //     triIn.v[1].x += 1;
-    //     triIn.v[1].y += 1;
-
-    //     triIn.v[2].x += 1;
-    //     triIn.v[2].y += 1;
-
-
-    //     // Scale to size
-    //     triIn.v[0].x *= 0.5f * 500/ m_aspectRatio;
-    //     triIn.v[0].y *= 0.5f * 500;
-
-    //     triIn.v[1].x *= 0.5f * 500/ m_aspectRatio;
-    //     triIn.v[1].y *= 0.5f * 500;
-
-    //     triIn.v[2].x *= 0.5f * 500/ m_aspectRatio;
-    //     triIn.v[2].y *= 0.5f * 500;
-    //     }
-    return triIn;
-}
-
-
-
 
 
 //////////////////////////////////////////////////////////////////
@@ -174,13 +104,13 @@ void object3d::drawMesh(sf::RenderTexture& texture, float u, float v, float w, f
 {
     rotate(u,v,w);
 
-    point cam;
-    point light;
+    vec3d cam;
+    vec3d light;
 
     cam.x = 0; cam.y = 0, cam.z = 0;
     light.x = 1; light.y = 1, light.z = 1;
 
-    light = vecNorm(light);
+    light = normalize(light);
 
     for(triangle i: mesh)
     {
@@ -191,7 +121,7 @@ void object3d::drawMesh(sf::RenderTexture& texture, float u, float v, float w, f
         triIn.v[1] = matMultiply(matMultiply(matMultiply(i.v[1], m_matRotU), m_matRotV), m_matRotW);
         triIn.v[2] = matMultiply(matMultiply(matMultiply(i.v[2], m_matRotU), m_matRotV), m_matRotW);
 
-        object3d::point norm, line1, line2;
+        object3d::vec3d norm, line1, line2;
 
         line1.x = triIn.v[1].x - triIn.v[0].x;
         line1.y = triIn.v[1].y - triIn.v[0].y;
@@ -210,16 +140,13 @@ void object3d::drawMesh(sf::RenderTexture& texture, float u, float v, float w, f
         triIn.v[1].z += zoom;
         triIn.v[2].z += zoom;
 
-        float l = std::sqrtf(norm.x*norm.x + norm.y*norm.y + norm.z*norm.z);
-        norm.x /= l; norm.y /= l; norm.z /= l; 
-
-        float dot = (norm.x * (triIn.v[1].x - cam.x)) + (norm.y * (triIn.v[1].y - cam.y)) + (norm.z * (triIn.v[1].z - cam.z));
-
+        norm = normalize(norm);
 
         float color = dotProd(norm,light);
+        
 
-        if(dot > 0)
-            {
+        if(dotProd(norm,triIn.v[1]) > 0)
+        {
 
             // Project 2D
             triIn.v[0] = matMultiply(triIn.v[0], m_matProj);
@@ -249,24 +176,19 @@ void object3d::drawMesh(sf::RenderTexture& texture, float u, float v, float w, f
 
             
             drawTriangle(texture, triIn, sf::Color(65,95,120,155+(color*100)));
-            }
-
-        
+        }
     }
 }
 
 
-
-
-
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////
-void object3d::drawPointCloud(sf::RenderTexture& texture, float u, float v, float w, float zoom)
+void object3d::drawVecCloud(sf::RenderTexture& texture, float u, float v, float w, float zoom)
 {
     rotate(u,v,w);
-    point p;
+    vec3d p;
 
-    for(auto i: pointCloud)
+    for(auto i: vecCloud)
     {   
         p = i;
         p = projectPoint(p,zoom);
@@ -280,13 +202,11 @@ void object3d::drawPointCloud(sf::RenderTexture& texture, float u, float v, floa
 }
 
 
-
-
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////
-object3d::point object3d::matMultiply(point pin, mat4x4 mat)
+object3d::vec3d object3d::matMultiply(vec3d pin, mat4x4 mat)
 {
-    point pout;
+    vec3d pout;
 
     pout.x = pin.x * mat.m[0][0] + pin.y * mat.m[1][0] + pin.z * mat.m[2][0] + mat.m[3][0];
     pout.y = pin.x * mat.m[0][1] + pin.y * mat.m[1][1] + pin.z * mat.m[2][1] + mat.m[3][1];
@@ -297,7 +217,6 @@ object3d::point object3d::matMultiply(point pin, mat4x4 mat)
     
     return pout;
 }
-
 
 
 //////////////////////////////////////////////////////////////////

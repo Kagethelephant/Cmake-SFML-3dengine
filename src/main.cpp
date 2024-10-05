@@ -30,9 +30,9 @@ int main() {
     for (int k = 0; k < N; k++)
     {
         float r  = sqrt(1-z*z);
-        object3d::point pnew;
+        object3d::vec3d pnew;
         pnew.x = cos(lng)*r; pnew.y = sin(lng)*r; pnew.z = z;
-        cube.pointCloud.push_back(pnew);
+        cube.vecCloud.push_back(pnew);
         z  = z - dz;
         lng += dlong;
     }
@@ -96,11 +96,11 @@ int main() {
     // GLYPHS
     //////////////////////////////////////////////////////////////////
 
-    // // load font
-    // sf::Font fontSmall;
-    // if (!fontSmall.loadFromFile("../resources/font/small_pixel.ttf")) return 1;
+    // load font
+    sf::Font fontSmall;
+    if (!fontSmall.loadFromFile("../resources/font/small_pixel.ttf")) return 1;
     
-    // // Text for the cursor position and debugging
+    // Text for the cursor position and debugging
     // sf::Text textSmall;
     // textSmall.setFont(fontSmall);
     // textSmall.setString("Hello world");
@@ -122,7 +122,7 @@ int main() {
     float W = 0;
     float Z = 3;
 
-
+    float theta = 0;
     //////////////////////////////////////////////////////////////////
     // DRAW STATIC
     //////////////////////////////////////////////////////////////////
@@ -180,6 +180,7 @@ int main() {
         // Create a vector with the pixel coord's in the actual window not the display
         mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
         
+        //theta += (down - up)*1;
         U += (down - up)*.1;
         V += (left - right)*.1;
         Z += (keyD - keyA)*.1;
@@ -204,11 +205,16 @@ int main() {
 
         rect.setPosition(1,1);
         rendWindow.draw(rect);
+        
         rect.setPosition(resWindow.x-2,resWindow.y-2);
         rendWindow.draw(rect);
 
-        cube.drawMesh(rendWindow,U,V,W,Z);
+        // textSmall.setPosition(5,5);
+        // textSmall.setString("Somthing");
+        // rendWindow.draw(textSmall);
 
+        //cube.drawPointCloud(rendWindow,U,V,W,Z);
+        cube.drawMesh(rendWindow,U,V,W,Z);
 
         
 

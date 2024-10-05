@@ -18,7 +18,8 @@ int randRange(int min, int max)
 
 
 //////////////////////////////////////////////////////////////////
-/// \brief Array containing the 
+/// \brief Array containing the the lookup values for sin
+/// This accepts 1/128th of a pi Radian
 //////////////////////////////////////////////////////////////////
 uint16_t SIN[129] =
 {
@@ -35,7 +36,6 @@ uint16_t SIN[129] =
 	39375, 38125, 36852, 35556, 34240, 32903, 31545, 30169, 28775, 27364, 
 	25935, 24492, 23033, 21561, 20076, 18578, 17070, 15551, 14022, 12486, 
 	10942, 9391, 7834, 6273, 4708, 3140, 1571, 0
-
 };
 
 
@@ -43,14 +43,18 @@ uint16_t SIN[129] =
 //////////////////////////////////////////////////////////////////
 float mat_sin(float theta)
 {
-	theta /= 3.141592653;
-	theta /= 2;
-	theta -= (int)theta;
-	theta *= 2;
-
 	float sign = 1.0f;
 
-	if (theta < 0) theta += 2;
+	// Turn the radians into pi-radians
+	theta /= 3.141592653;
+	// Get the amount of whole 2 pi radians off 
+	int half = (int)abs(theta/2);
+
+	// If it is more than 2 pi radians or les then zero, wrap it
+	if (theta < 0) theta += half*2+2;
+	else if (theta > 2) theta -= half*2;
+
+	// If it is the second half of the sine curve make it negative
 	if (theta >= 1) { theta -= 1; sign = -1.0f;}
 	theta *= 128;
 
@@ -64,35 +68,13 @@ float mat_sin(float theta)
     return result;
 }
 
-
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////
 float mat_cos(float theta)
 {
-
-
-	theta /= (3.141592653);
-	theta += .5;
-	theta /= 2;
-	theta -= (int)theta;
-	theta *= 2;
-	
-	float sign = 1.0f;
-
-	if (theta < 0) theta += 2;
-	if (theta >= 1) { theta -= 1; sign = -1.0f;}
-	theta *= 128;
-
-	int deg = (int)theta;
-	float extrp = theta - deg;
-	float va = sign*SIN[deg]/64000;
-	float vb = sign*SIN[deg + 1]/64000;
-
-	float result = va + (vb-va)*extrp;
-
-    return result;
+	theta += .5*3.141592653;
+    return mat_sin(theta);
 }
-
 
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////
