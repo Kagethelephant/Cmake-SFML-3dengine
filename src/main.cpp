@@ -31,7 +31,7 @@ int main() {
     {
         float r  = sqrt(1-z*z);
         object3d::vec3d pnew;
-        pnew.x = cos(lng)*r; pnew.y = sin(lng)*r; pnew.z = z;
+        pnew.x = mat_cos(lng)*r; pnew.y = mat_sin(lng)*r; pnew.z = z;
         cube.vecCloud.push_back(pnew);
         z  = z - dz;
         lng += dlong;
@@ -59,34 +59,34 @@ int main() {
     // }
 
 
-    float l = 0.0f;
-    float h = 1.0f;
-    cube.mesh = {
+    // float l = 0.0f;
+    // float h = 1.0f;
+    // cube.mesh = {
 
-        // Front
-        {h,h,l,   l,h,l,   l,l,l}, 
-        {l,l,l,   h,l,l,   h,h,l},
+    //     // Front
+    //     {h,h,l,   l,h,l,   l,l,l}, 
+    //     {l,l,l,   h,l,l,   h,h,l},
 
-        // Back
-        {h,l,h,   l,l,h,   l,h,h}, 
-        {l,h,h,   h,h,h,   h,l,h},
+    //     // Back
+    //     {h,l,h,   l,l,h,   l,h,h}, 
+    //     {l,h,h,   h,h,h,   h,l,h},
 
-        // Righ
-        {h,h,h,   h,h,l,   h,l,l}, 
-        {h,l,l,   h,l,h,   h,h,h},
+    //     // Righ
+    //     {h,h,h,   h,h,l,   h,l,l}, 
+    //     {h,l,l,   h,l,h,   h,h,h},
 
-        // Left
-        {l,h,l,   l,h,h,   l,l,h}, 
-        {l,l,h,   l,l,l,   l,h,l},
+    //     // Left
+    //     {l,h,l,   l,h,h,   l,l,h}, 
+    //     {l,l,h,   l,l,l,   l,h,l},
 
-        // Top
-        {l,l,l,   l,l,h,   h,l,h}, 
-        {h,l,h,   h,l,l,   l,l,l},
+    //     // Top
+    //     {l,l,l,   l,l,h,   h,l,h}, 
+    //     {h,l,h,   h,l,l,   l,l,l},
 
-        // Bottom
-        {l,h,h,   l,h,l,   h,h,l}, 
-        {h,h,l,   h,h,h,   l,h,h},
-    };
+    //     // Bottom
+    //     {l,h,h,   l,h,l,   h,h,l}, 
+    //     {h,h,l,   h,h,h,   l,h,h},
+    // };
 
     
 
@@ -213,8 +213,8 @@ int main() {
         // textSmall.setString("Somthing");
         // rendWindow.draw(textSmall);
 
-        //cube.drawPointCloud(rendWindow,U,V,W,Z);
-        cube.drawMesh(rendWindow,U,V,W,Z);
+        cube.drawVecCloud(rendWindow,U,V,W,Z);
+        // cube.drawMesh(rendWindow,U,V,W,Z);
 
         
 
@@ -234,14 +234,6 @@ int main() {
     /////////////////////////////////////////////////////////////////
 
     std::cout << "*****END***** "<< "\n" << std::endl;
-    std::cout << "Screen Width: "<< ((float)sf::VideoMode::getDesktopMode().width)<< std::endl;
-    std::cout << "Screen Height: "<< ((float)sf::VideoMode::getDesktopMode().height)<< std::endl;
-    std::cout << "Window Width: "<< window.getSize().x << std::endl;
-    std::cout << "Window Height: "<< window.getSize().y << std::endl;
-    std::cout << "Target Width: "<< resWindow.x << std::endl;
-    std::cout << "Target Height: "<< resWindow.y << std::endl;
-    std::cout << "View Height: "<< window.getView().getSize().x << std::endl;
-    std::cout << "View Width: "<< window.getView().getSize().y << std::endl;
 
     return 0;
 }

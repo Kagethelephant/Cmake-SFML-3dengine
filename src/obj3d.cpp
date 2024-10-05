@@ -55,9 +55,7 @@ void object3d::rotate(float u, float v, float w)
 //////////////////////////////////////////////////////////////////
 object3d::vec3d object3d::projectPoint(vec3d pin, float zoom)
 {
-    vec3d pout;
-    // Rotate the view
-    pout = matMultiply(matMultiply(matMultiply(pin, m_matRotU), m_matRotV), m_matRotW);
+    vec3d pout = pin;
     
     // Push farther into screen so we can see it
     pout.z += zoom;
@@ -76,6 +74,14 @@ object3d::vec3d object3d::projectPoint(vec3d pin, float zoom)
     return pout;
 }
 
+//////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+object3d::vec3d object3d::rotatePoint(vec3d pin)
+{
+    vec3d pout;
+     pout = matMultiply(matMultiply(matMultiply(pin, m_matRotU), m_matRotV), m_matRotW);
+    return pout;
+}
 
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////
@@ -191,12 +197,12 @@ void object3d::drawVecCloud(sf::RenderTexture& texture, float u, float v, float 
     for(auto i: vecCloud)
     {   
         p = i;
+    
+        p = rotatePoint(p);
+
         p = projectPoint(p,zoom);
 
-        int alpha = 255;
-        if (p.z > .5) alpha = 100;
-
-        sf::Vertex pout(sf::Vector2f(p.x, p.y), c_color(Blue,alpha));
+        sf::Vertex pout(sf::Vector2f(p.x, p.y), c_color(Blue));
         texture.draw(&pout, 1, sf::Points);
     }
 }
