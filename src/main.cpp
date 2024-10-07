@@ -18,77 +18,48 @@ int main() {
     rendWindow.create(resWindow.x,resWindow.y);
 
 
+    rend3d::object3d cube;
 
-
-    object3d cube;
-
-    int N = 400;
-    float dlong = 3.151592653*(3-sqrt(5));  /* ~2.39996323 */
-    float dz = 2.0/N;
-    float lng = 0.0f;
-    float z = 1 - dz/2;
-    for (int k = 0; k < N; k++)
-    {
-        float r  = sqrt(1-z*z);
-        object3d::vec3d pnew;
-        pnew.x = mat_cos(lng)*r; pnew.y = mat_sin(lng)*r; pnew.z = z;
-        cube.vecCloud.push_back(pnew);
-        z  = z - dz;
-        lng += dlong;
-    }
-
-
-    // float phi = 3.14159 * std::sqrt(5)-1;
-    // int n = 400;
-
-    // for(int i=0; i<n; i++)
+    // int N = 400;
+    // float dlong = 3.151592653*(3-sqrt(5));  /* ~2.39996323 */
+    // float dz = 2.0/N;
+    // float lng = 0.0f;
+    // float z = 1 - dz/2;
+    // for (int k = 0; k < N; k++)
     // {
-    //     float x, y, z;
-    //     y = 1 - (i / float(n - 1)) * 2;
-    //     float rad = std::sqrt(1 - y * y);
-
-    //     float theta = phi * i;
-
-    //     x = mat_cos(theta) * rad;
-    //     z = mat_sin(theta) * rad;
-
-    //     object3d::point pnew;
-    //     pnew.x = x; pnew.y = y; pnew.z = z;
-
-    //     cube.pointCloud.push_back(pnew);
+    //     float r  = sqrt(1-z*z);
+    //     vector3 pnew;
+    //     pnew.x = mat_cos(lng)*r; pnew.y = mat_sin(lng)*r; pnew.z = z;
+    //     cube.cloud.push_back(pnew);
+    //     z  = z - dz;
+    //     lng += dlong;
     // }
 
 
-    // float l = 0.0f;
+    cube.loadObj("../resources/objects/cow.obj");
+
+    // float l = -1.0f;
     // float h = 1.0f;
     // cube.mesh = {
-
     //     // Front
-    //     {h,h,l,   l,h,l,   l,l,l}, 
-    //     {l,l,l,   h,l,l,   h,h,l},
-
+    //     rend3d::triangle(vector3(h,h,l),   vector3(l,h,l),   vector3(l,l,l)),  
+    //     rend3d::triangle(vector3(l,l,l),   vector3(h,l,l),   vector3(h,h,l)),
     //     // Back
-    //     {h,l,h,   l,l,h,   l,h,h}, 
-    //     {l,h,h,   h,h,h,   h,l,h},
-
-    //     // Righ
-    //     {h,h,h,   h,h,l,   h,l,l}, 
-    //     {h,l,l,   h,l,h,   h,h,h},
-
+    //     rend3d::triangle(vector3(h,l,h),   vector3(l,l,h),   vector3(l,h,h)), 
+    //     rend3d::triangle(vector3(l,h,h),   vector3(h,h,h),   vector3(h,l,h)),
+    //     // Right
+    //     rend3d::triangle(vector3(h,h,h),   vector3(h,h,l),   vector3(h,l,l)), 
+    //     rend3d::triangle(vector3(h,l,l),   vector3(h,l,h),   vector3(h,h,h)),
     //     // Left
-    //     {l,h,l,   l,h,h,   l,l,h}, 
-    //     {l,l,h,   l,l,l,   l,h,l},
-
+    //     rend3d::triangle(vector3(l,h,l),   vector3(l,h,h),   vector3(l,l,h)), 
+    //     rend3d::triangle(vector3(l,l,h),   vector3(l,l,l),   vector3(l,h,l)),
     //     // Top
-    //     {l,l,l,   l,l,h,   h,l,h}, 
-    //     {h,l,h,   h,l,l,   l,l,l},
-
+    //     rend3d::triangle(vector3(l,l,l),   vector3(l,l,h),   vector3(h,l,h)), 
+    //     rend3d::triangle(vector3(h,l,h),   vector3(h,l,l),   vector3(l,l,l)),
     //     // Bottom
-    //     {l,h,h,   l,h,l,   h,h,l}, 
-    //     {h,h,l,   h,h,h,   l,h,h},
+    //     rend3d::triangle(vector3(l,h,h),   vector3(l,h,l),   vector3(h,h,l)), 
+    //     rend3d::triangle(vector3(h,h,l),   vector3(h,h,h),   vector3(l,h,h)),
     // };
-
-    
 
 
 
@@ -97,8 +68,8 @@ int main() {
     //////////////////////////////////////////////////////////////////
 
     // load font
-    sf::Font fontSmall;
-    if (!fontSmall.loadFromFile("../resources/font/small_pixel.ttf")) return 1;
+    // sf::Font fontSmall;
+    // if (!fontSmall.loadFromFile("../resources/font/small_pixel.ttf")) return 1;
     
     // Text for the cursor position and debugging
     // sf::Text textSmall;
@@ -154,13 +125,13 @@ int main() {
                 // Keyboard input
                 case sf::Event::KeyPressed:
                     if (event.key.code == sf::Keyboard::Escape) { window.close(); }
-                    else if (event.key.code == sf::Keyboard::Up) { up = 1; }
-                    else if (event.key.code == sf::Keyboard::Down) { down = 1; }
-                    else if (event.key.code == sf::Keyboard::Right) { right = 1; }
-                    else if (event.key.code == sf::Keyboard::Left) { left = 1; }
+                    else if (event.key.code == sf::Keyboard::Up) { up = 1; cube.rotateObject(U,V,W);}
+                    else if (event.key.code == sf::Keyboard::Down) { down = 1; cube.rotateObject(U,V,W);}
+                    else if (event.key.code == sf::Keyboard::Right) { right = 1; cube.rotateObject(U,V,W);}
+                    else if (event.key.code == sf::Keyboard::Left) { left = 1; cube.rotateObject(U,V,W);}
                     else if (event.key.code == sf::Keyboard::Space) { space = 1; }
-                    else if (event.key.code == sf::Keyboard::A) { keyA = 1; }
-                    else if (event.key.code == sf::Keyboard::D) { keyD = 1; }
+                    else if (event.key.code == sf::Keyboard::A) { keyA = 1; cube.rotateObject(U,V,W);}
+                    else if (event.key.code == sf::Keyboard::D) { keyD = 1; cube.rotateObject(U,V,W);}
                     break;
             }
         }
@@ -185,13 +156,8 @@ int main() {
         V += (left - right)*.1;
         Z += (keyD - keyA)*.1;
 
-        if(space)
-        {
-            U = 0;
-            V = 0;
-            Z = 0;
-        }
-
+        // Reset view
+        if(space){U = 0; V = 0; Z = 100;}
         
 
         //////////////////////////////////////////////////////////////////
@@ -213,8 +179,7 @@ int main() {
         // textSmall.setString("Somthing");
         // rendWindow.draw(textSmall);
 
-        cube.drawVecCloud(rendWindow,U,V,W,Z);
-        // cube.drawMesh(rendWindow,U,V,W,Z);
+        cube.drawMesh(rendWindow,resWindow,Z);
 
         
 
@@ -223,7 +188,6 @@ int main() {
         //////////////////////////////////////////////////////////////////
 
         // Display canvas layers to screen
-        //canvas.display(window);
         rendWindow.display();
         window.draw(sf::Sprite(rendWindow.getTexture()));
         window.display();

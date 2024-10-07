@@ -1,8 +1,33 @@
 #include "math.hpp"
 
+vector3 crossProd(vector3 v1, vector3 v2)
+{
+	vector3 vout;
+	vout.x = v1.y * v2.z - v1.z *v2.y;
+    vout.y = v1.z * v2.x - v1.x *v2.z;
+    vout.z = v1.x * v2.y - v1.y *v2.x;
+    return vout;
+}
+
+//////////////////////////////////////////////////////////////////
+float dotProd(vector3 v1, vector3 v2, vector3 v3)
+{
+    return ((v1.x * (v2.x - v3.x)) + (v1.y * (v2.y - v3.y)) + (v1.z * (v2.z - v3.z)));
+}
 
 
 //////////////////////////////////////////////////////////////////
+vector3 normalize(vector3 vin)
+{
+    vector3 vout = vin;
+
+    float l = std::sqrtf(vin.x*vin.x + vin.y*vin.y + vin.z*vin.z);
+    vout.x /= l; vout.y /= l; vout.z /= l;
+
+    return vout;
+}
+
+
 //////////////////////////////////////////////////////////////////
 int randRange(int min, int max)
 {
@@ -40,7 +65,6 @@ uint16_t SIN[129] =
 
 
 //////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////
 float mat_sin(float theta)
 {
 	float sign = 1.0f;
@@ -69,7 +93,6 @@ float mat_sin(float theta)
 }
 
 //////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////
 float mat_cos(float theta)
 {
 	theta += .5*3.141592653;
@@ -77,9 +100,10 @@ float mat_cos(float theta)
 }
 
 //////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////
 float mat_tan(float theta)
 {
 	float result = mat_sin(theta)/mat_cos(theta);
     return result;
 }
+
+

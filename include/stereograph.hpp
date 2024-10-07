@@ -6,6 +6,8 @@
 #include "math.hpp"
 
 
+
+
 //////////////////////////////////////////////////////////////////
 /// \brief Projects points on a 2D surface on to a sphere
 //////////////////////////////////////////////////////////////////
@@ -18,7 +20,6 @@ public:
     ~stereograph();
 
     struct vec3d{float x,y,z;};
-
     struct point{float x,y;};
 
     std::vector<vec3d> sphere;
