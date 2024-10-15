@@ -17,9 +17,6 @@ int main() {
     sf::RenderTexture rendWindow;
     rendWindow.create(resWindow.x,resWindow.y);
 
-
-    rend3d::object3d cube;
-
     // int N = 400;
     // float dlong = 3.151592653*(3-sqrt(5));  /* ~2.39996323 */
     // float dz = 2.0/N;
@@ -29,37 +26,15 @@ int main() {
     // {
     //     float r  = sqrt(1-z*z);
     //     vector3 pnew;
-    //     pnew.x = mat_cos(lng)*r; pnew.y = mat_sin(lng)*r; pnew.z = z;
+    //     pnew.x = math_cos(lng)*r; pnew.y = math_sin(lng)*r; pnew.z = z;
     //     cube.cloud.push_back(pnew);
     //     z  = z - dz;
     //     lng += dlong;
     // }
 
-
-    cube.loadObj("../resources/objects/cow.obj");
-
-    // float l = -1.0f;
-    // float h = 1.0f;
-    // cube.mesh = {
-    //     // Front
-    //     rend3d::triangle(vector3(h,h,l),   vector3(l,h,l),   vector3(l,l,l)),  
-    //     rend3d::triangle(vector3(l,l,l),   vector3(h,l,l),   vector3(h,h,l)),
-    //     // Back
-    //     rend3d::triangle(vector3(h,l,h),   vector3(l,l,h),   vector3(l,h,h)), 
-    //     rend3d::triangle(vector3(l,h,h),   vector3(h,h,h),   vector3(h,l,h)),
-    //     // Right
-    //     rend3d::triangle(vector3(h,h,h),   vector3(h,h,l),   vector3(h,l,l)), 
-    //     rend3d::triangle(vector3(h,l,l),   vector3(h,l,h),   vector3(h,h,h)),
-    //     // Left
-    //     rend3d::triangle(vector3(l,h,l),   vector3(l,h,h),   vector3(l,l,h)), 
-    //     rend3d::triangle(vector3(l,l,h),   vector3(l,l,l),   vector3(l,h,l)),
-    //     // Top
-    //     rend3d::triangle(vector3(l,l,l),   vector3(l,l,h),   vector3(h,l,h)), 
-    //     rend3d::triangle(vector3(h,l,h),   vector3(h,l,l),   vector3(l,l,l)),
-    //     // Bottom
-    //     rend3d::triangle(vector3(l,h,h),   vector3(l,h,l),   vector3(h,h,l)), 
-    //     rend3d::triangle(vector3(h,h,l),   vector3(h,h,h),   vector3(l,h,h)),
-    // };
+    rend3d::object3d object;
+    
+    object.load("../resources/objects/cow.obj");
 
 
 
@@ -88,12 +63,8 @@ int main() {
     rect.setOutlineThickness(2);
     rect.setOrigin(1, 1);
 
-    float U = 0;
-    float V = 0;
-    float W = 0;
-    float Z = 3;
 
-    float theta = 0;
+
     //////////////////////////////////////////////////////////////////
     // DRAW STATIC
     //////////////////////////////////////////////////////////////////
@@ -109,7 +80,8 @@ int main() {
 
     while (window.isOpen()) 
     {
-        bool up = 0, down = 0, right = 0, left = 0, space = 0, keyA = 0, keyD = 0;
+        bool up = 0, down = 0, right = 0, left = 0, space = 0, keyA = 0, keyD = 0, user_input = 0;
+
         
         // Event handler
         sf::Event event; 
@@ -125,13 +97,13 @@ int main() {
                 // Keyboard input
                 case sf::Event::KeyPressed:
                     if (event.key.code == sf::Keyboard::Escape) { window.close(); }
-                    else if (event.key.code == sf::Keyboard::Up) { up = 1; cube.rotateObject(U,V,W);}
-                    else if (event.key.code == sf::Keyboard::Down) { down = 1; cube.rotateObject(U,V,W);}
-                    else if (event.key.code == sf::Keyboard::Right) { right = 1; cube.rotateObject(U,V,W);}
-                    else if (event.key.code == sf::Keyboard::Left) { left = 1; cube.rotateObject(U,V,W);}
-                    else if (event.key.code == sf::Keyboard::Space) { space = 1; }
-                    else if (event.key.code == sf::Keyboard::A) { keyA = 1; cube.rotateObject(U,V,W);}
-                    else if (event.key.code == sf::Keyboard::D) { keyD = 1; cube.rotateObject(U,V,W);}
+                    else if (event.key.code == sf::Keyboard::Up) { up = 1; user_input = 1;}
+                    else if (event.key.code == sf::Keyboard::Down) { down = 1; user_input = 1;}
+                    else if (event.key.code == sf::Keyboard::Right) { right = 1; user_input = 1;}
+                    else if (event.key.code == sf::Keyboard::Left) { left = 1; user_input = 1;}
+                    else if (event.key.code == sf::Keyboard::Space) { space = 1; user_input = 1;}
+                    else if (event.key.code == sf::Keyboard::A) { keyA = 1; user_input = 1;}
+                    else if (event.key.code == sf::Keyboard::D) { keyD = 1; user_input = 1;}
                     break;
             }
         }
@@ -150,15 +122,15 @@ int main() {
 
         // Create a vector with the pixel coord's in the actual window not the display
         mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
-        
-        //theta += (down - up)*1;
-        U += (down - up)*.1;
-        V += (left - right)*.1;
-        Z += (keyD - keyA)*.1;
 
-        // Reset view
-        if(space){U = 0; V = 0; Z = 100;}
-        
+        object.z += (down - up)*.1;
+        object.x += (left - right)*.1;
+        object.v += (keyD - keyA)*.1;
+
+        // Update if a key is pressed
+        if(user_input) object.update();
+
+
 
         //////////////////////////////////////////////////////////////////
         // DRAW
@@ -178,11 +150,10 @@ int main() {
         // textSmall.setPosition(5,5);
         // textSmall.setString("Somthing");
         // rendWindow.draw(textSmall);
-
-        cube.drawMesh(rendWindow,resWindow,Z);
-
         
 
+        object.draw (rendWindow,resWindow);
+        
         //////////////////////////////////////////////////////////////////
         // DISPLAY TO SCREEN
         //////////////////////////////////////////////////////////////////
