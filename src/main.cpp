@@ -32,9 +32,11 @@ int main() {
     //     lng += dlong;
     // }
 
-    rend3d::object3d object;
+    object3d object;
+    camera cam;
     
     object.load("../resources/objects/cow.obj");
+    object.z = 10;
 
 
 
@@ -123,12 +125,16 @@ int main() {
         // Create a vector with the pixel coord's in the actual window not the display
         mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
 
-        object.z += (down - up)*.1;
-        object.x += (left - right)*.1;
-        object.v += (keyD - keyA)*.1;
+        float move_x = 0;
+        float move_z = 0;
+
+        move_z += (up - down)*.1;
+        move_x += (left - right)*.1;
+        cam.v += (keyA - keyD)*.1;
 
         // Update if a key is pressed
-        if(user_input) object.update();
+        cam.move(move_x,0,move_z);
+        cam.update();
 
 
 
@@ -152,7 +158,7 @@ int main() {
         // rendWindow.draw(textSmall);
         
 
-        object.draw (rendWindow,resWindow);
+        object.draw (rendWindow,resWindow,cam);
         
         //////////////////////////////////////////////////////////////////
         // DISPLAY TO SCREEN
