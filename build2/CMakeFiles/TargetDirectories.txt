@@ -1,3 +1,0 @@
-C:/Users/kaget/Documents/repos/corona/build2/CMakeFiles/TST.dir
-C:/Users/kaget/Documents/repos/corona/build2/CMakeFiles/edit_cache.dir
-C:/Users/kaget/Documents/repos/corona/build2/CMakeFiles/rebuild_cache.dir
