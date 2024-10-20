@@ -4,8 +4,9 @@
 
 int main() {
 
-    // Test git graph and merge in terminal
-    int test = 1;
+    // Test on the other side
+
+    float test = 2;
 
     //////////////////////////////////////////////////////////////////
     // Setup for SFML window and resolution
