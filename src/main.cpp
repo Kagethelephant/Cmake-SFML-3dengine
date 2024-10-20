@@ -20,78 +20,37 @@ int main() {
     sf::RenderTexture rendWindow;
     rendWindow.create(resWindow.x,resWindow.y);
 
-
-
-
-    object3d cube;
-
-    int N = 400;
-    float dlong = 3.151592653*(3-sqrt(5));  /* ~2.39996323 */
-    float dz = 2.0/N;
-    float lng = 0.0f;
-    float z = 1 - dz/2;
-    for (int k = 0; k < N; k++)
-    {
-        float r  = sqrt(1-z*z);
-        object3d::vec3d pnew;
-        pnew.x = cos(lng)*r; pnew.y = sin(lng)*r; pnew.z = z;
-        cube.vecCloud.push_back(pnew);
-        z  = z - dz;
-        lng += dlong;
-    }
-
-
-    // float phi = 3.14159 * std::sqrt(5)-1;
-    // int n = 400;
-
-    // for(int i=0; i<n; i++)
+    // int N = 400;
+    // float dlong = 3.151592653*(3-sqrt(5));  /* ~2.39996323 */
+    // float dz = 2.0/N;
+    // float lng = 0.0f;
+    // float z = 1 - dz/2;
+    // for (int k = 0; k < N; k++)
     // {
-    //     float x, y, z;
-    //     y = 1 - (i / float(n - 1)) * 2;
-    //     float rad = std::sqrt(1 - y * y);
-
-    //     float theta = phi * i;
-
-    //     x = mat_cos(theta) * rad;
-    //     z = mat_sin(theta) * rad;
-
-    //     object3d::point pnew;
-    //     pnew.x = x; pnew.y = y; pnew.z = z;
-
-    //     cube.pointCloud.push_back(pnew);
+    //     float r  = sqrt(1-z*z);
+    //     vector3 pnew;
+    //     pnew.x = math_cos(lng)*r; pnew.y = math_sin(lng)*r; pnew.z = z;
+    //     cube.cloud.push_back(pnew);
+    //     z  = z - dz;
+    //     lng += dlong;
     // }
 
-
-    float l = 0.0f;
-    float h = 1.0f;
-    cube.mesh = {
-
-        // Front
-        {h,h,l,   l,h,l,   l,l,l}, 
-        {l,l,l,   h,l,l,   h,h,l},
-
-        // Back
-        {h,l,h,   l,l,h,   l,h,h}, 
-        {l,h,h,   h,h,h,   h,l,h},
-
-        // Righ
-        {h,h,h,   h,h,l,   h,l,l}, 
-        {h,l,l,   h,l,h,   h,h,h},
-
-        // Left
-        {l,h,l,   l,h,h,   l,l,h}, 
-        {l,l,h,   l,l,l,   l,h,l},
-
-        // Top
-        {l,l,l,   l,l,h,   h,l,h}, 
-        {h,l,h,   h,l,l,   l,l,l},
-
-        // Bottom
-        {l,h,h,   l,h,l,   h,h,l}, 
-        {h,h,l,   h,h,h,   l,h,h},
-    };
-
     
+    camera cam;
+    
+    object3d object;
+    object.load("../resources/objects/cow.obj");
+    object.z = 10;
+
+    object3d object2;
+    object2.load("../resources/objects/cow.obj");
+    object2.z = 5;
+    object2.x = -10;
+
+    object3d object3;
+    object3.load("../resources/objects/cow.obj");
+    object3.z = 15;
+    object3.x = 20;
 
 
 
@@ -100,8 +59,8 @@ int main() {
     //////////////////////////////////////////////////////////////////
 
     // load font
-    sf::Font fontSmall;
-    if (!fontSmall.loadFromFile("../resources/font/small_pixel.ttf")) return 1;
+    // sf::Font fontSmall;
+    // if (!fontSmall.loadFromFile("../resources/font/small_pixel.ttf")) return 1;
     
     // Text for the cursor position and debugging
     // sf::Text textSmall;
@@ -120,12 +79,8 @@ int main() {
     rect.setOutlineThickness(2);
     rect.setOrigin(1, 1);
 
-    float U = 0;
-    float V = 0;
-    float W = 0;
-    float Z = 3;
 
-    float theta = 0;
+
     //////////////////////////////////////////////////////////////////
     // DRAW STATIC
     //////////////////////////////////////////////////////////////////
@@ -141,7 +96,8 @@ int main() {
 
     while (window.isOpen()) 
     {
-        bool up = 0, down = 0, right = 0, left = 0, space = 0, keyA = 0, keyD = 0;
+        bool up = 0, down = 0, right = 0, left = 0, space = 0, keyA = 0, keyD = 0, user_input = 0;
+
         
         // Event handler
         sf::Event event; 
@@ -157,13 +113,13 @@ int main() {
                 // Keyboard input
                 case sf::Event::KeyPressed:
                     if (event.key.code == sf::Keyboard::Escape) { window.close(); }
-                    else if (event.key.code == sf::Keyboard::Up) { up = 1; }
-                    else if (event.key.code == sf::Keyboard::Down) { down = 1; }
-                    else if (event.key.code == sf::Keyboard::Right) { right = 1; }
-                    else if (event.key.code == sf::Keyboard::Left) { left = 1; }
-                    else if (event.key.code == sf::Keyboard::Space) { space = 1; }
-                    else if (event.key.code == sf::Keyboard::A) { keyA = 1; }
-                    else if (event.key.code == sf::Keyboard::D) { keyD = 1; }
+                    else if (event.key.code == sf::Keyboard::Up) { up = 1; user_input = 1;}
+                    else if (event.key.code == sf::Keyboard::Down) { down = 1; user_input = 1;}
+                    else if (event.key.code == sf::Keyboard::Right) { right = 1; user_input = 1;}
+                    else if (event.key.code == sf::Keyboard::Left) { left = 1; user_input = 1;}
+                    else if (event.key.code == sf::Keyboard::Space) { space = 1; user_input = 1;}
+                    else if (event.key.code == sf::Keyboard::A) { keyA = 1; user_input = 1;}
+                    else if (event.key.code == sf::Keyboard::D) { keyD = 1; user_input = 1;}
                     break;
             }
         }
@@ -182,20 +138,19 @@ int main() {
 
         // Create a vector with the pixel coord's in the actual window not the display
         mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
-        
-        //theta += (down - up)*1;
-        U += (down - up)*.1;
-        V += (left - right)*.1;
-        Z += (keyD - keyA)*.1;
 
-        if(space)
-        {
-            U = 0;
-            V = 0;
-            Z = 0;
-        }
+        float move_x = 0;
+        float move_z = 0;
 
-        
+        move_z += (up - down)*.1;
+        move_x += (left - right)*.1;
+        cam.v += (keyA - keyD)*.1;
+
+        // Update if a key is pressed
+        cam.move(move_x,0,move_z);
+        cam.update();
+
+
 
         //////////////////////////////////////////////////////////////////
         // DRAW
@@ -215,18 +170,17 @@ int main() {
         // textSmall.setPosition(5,5);
         // textSmall.setString("Somthing");
         // rendWindow.draw(textSmall);
-
-        //cube.drawPointCloud(rendWindow,U,V,W,Z);
-        cube.drawMesh(rendWindow,U,V,W,Z);
-
         
 
+        object.draw (rendWindow,resWindow,cam);
+        object2.draw (rendWindow,resWindow,cam);
+        object3.draw (rendWindow,resWindow,cam);
+        
         //////////////////////////////////////////////////////////////////
         // DISPLAY TO SCREEN
         //////////////////////////////////////////////////////////////////
 
         // Display canvas layers to screen
-        //canvas.display(window);
         rendWindow.display();
         window.draw(sf::Sprite(rendWindow.getTexture()));
         window.display();
@@ -237,14 +191,6 @@ int main() {
     /////////////////////////////////////////////////////////////////
 
     std::cout << "*****END***** "<< "\n" << std::endl;
-    std::cout << "Screen Width: "<< ((float)sf::VideoMode::getDesktopMode().width)<< std::endl;
-    std::cout << "Screen Height: "<< ((float)sf::VideoMode::getDesktopMode().height)<< std::endl;
-    std::cout << "Window Width: "<< window.getSize().x << std::endl;
-    std::cout << "Window Height: "<< window.getSize().y << std::endl;
-    std::cout << "Target Width: "<< resWindow.x << std::endl;
-    std::cout << "Target Height: "<< resWindow.y << std::endl;
-    std::cout << "View Height: "<< window.getView().getSize().x << std::endl;
-    std::cout << "View Width: "<< window.getView().getSize().y << std::endl;
 
     return 0;
 }

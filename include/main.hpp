@@ -10,6 +10,7 @@
 #include "math.hpp"
 #include "data.hpp"
 #include "obj3d.hpp"
+#include "stereograph.hpp"
 
 
 

@@ -2,228 +2,137 @@
 
 
 //////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////
 object3d::object3d()
 {
+    u = 0, v = 0, w = 0 , x = 0 , y = 0 , z = 0;
+    update();
     m_aspectRatio = ((float)sf::VideoMode::getDesktopMode().width) / ((float)sf::VideoMode::getDesktopMode().height);
 
-    float fNear = 0.1f;
-    float fFar = 1000.0f;
-    float fFov = 90.0f;
-    float fFovRad = 1.0f / mat_tan(fFov * 0.5f/ 180.0f * 3.14159f);
-
-    m_matProj.m[0][0] = m_aspectRatio * fFovRad;
-    m_matProj.m[1][1] = fFovRad;
-    m_matProj.m[2][2] = fFar / (fFar- fNear);
-    m_matProj.m[3][2] = (-fFar * fNear) / (fFar - fNear);
-    m_matProj.m[2][3] = 1.0f;
-    m_matProj.m[3][3] = 0.0f;
-}
-
-
-
-
-//////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////
-void object3d::rotate(float u, float v, float w)
-{
-    m_matRotU.m[0][0] = 1;               //    1    0    0    0
-    m_matRotU.m[1][1] = mat_cos(u);    //    0   cos -sin   0
-    m_matRotU.m[1][2] = mat_sin(u);    //    0   sin  cos   0     for dividing by z when
-    m_matRotU.m[2][1] = -mat_sin(u);   //    0    0    0    1 <<  scaling distant objects
-    m_matRotU.m[2][2] = mat_cos(u);
-    m_matRotU.m[3][3] = 1;
-
-    m_matRotV.m[0][0] = mat_cos(v);    //   cos   0   sin   0
-    m_matRotV.m[1][1] = 1;               //    0    1    0    0
-    m_matRotV.m[2][0] = mat_sin(v);    //  -sin   0   cos   0
-    m_matRotV.m[0][2] = -mat_sin(v);   //    0    0    0    1
-    m_matRotV.m[2][2] = mat_cos(v);
-    m_matRotV.m[3][3] = 1;
-
-    m_matRotW.m[0][0] = mat_cos(w);    //   cos -sin   0    0
-    m_matRotW.m[0][1] = mat_sin(w);    //   sin  cos   0    0
-    m_matRotW.m[1][0] = -mat_sin(w);   //    0    0    0    0
-    m_matRotW.m[1][1] = mat_cos(w);    //    0    0    0    1
-    m_matRotW.m[2][2] = 1;
-    m_matRotW.m[3][3] = 1;
-}
-
-
-
-//////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////
-object3d::vec3d object3d::projectPoint(vec3d pin, float zoom)
-{
-    vec3d pout;
-    // Rotate the view
-    pout = matMultiply(matMultiply(matMultiply(pin, m_matRotU), m_matRotV), m_matRotW);
-    
-    // Push farther into screen so we can see it
-    pout.z += zoom;
-
-    // Project 2D
-    pout = matMultiply(pout, m_matProj);
-
-    // Center on screen
-    pout.x += 2.2; 
-    pout.y += 1; 
-
-    // Scale to size
-    pout.x *= 0.5f * 500/ m_aspectRatio;
-    pout.y *= 0.5f * 500;
-
-    return pout;
+    m_matProj = project_matrix(90.0f,m_aspectRatio,0.1f,1000.0f);  
 }
 
 
 //////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////
-float object3d::dotProd(vec3d pin1, vec3d pin2)
-{
-    return ((pin1.x * pin2.x) + (pin1.y * pin2.y) + (pin1.z * pin2.z));
+void object3d::update()
+{ 
+    m_matTransform = translate_matrix(x,y,z) * rotate_x_matrix(u) * rotate_y_matrix(v) * rotate_z_matrix(w);
 }
 
 
 //////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////
-object3d::vec3d object3d::normalize(vec3d pin)
+void object3d::draw(sf::RenderTexture& texture, sf::Vector2i res, camera c)
 {
-    vec3d pout = pin;
+    update();
+    // Create a vector for the camera and light direction (not position)
+    vec3 cam(0,0,0);
+    vec3 light(-1,1,-1);
+    light = light.norm();
 
-    float l = std::sqrtf(pin.x*pin.x + pin.y*pin.y + pin.z*pin.z);
-    pout.x /= l; pout.y /= l; pout.z /= l;
+    std::vector<tri3d> buffer;
 
-    return pout;
-}
-
-
-//////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////
-void object3d::drawMesh(sf::RenderTexture& texture, float u, float v, float w, float zoom)
-{
-    rotate(u,v,w);
-
-    vec3d cam;
-    vec3d light;
-
-    cam.x = 0; cam.y = 0, cam.z = 0;
-    light.x = 1; light.y = 1, light.z = 1;
-
-    light = normalize(light);
-
-    for(triangle i: mesh)
+    for(tri3d i: mesh)
     {
-        triangle triIn;
+        tri3d triIn;
 
-        // Rotate the view
-        triIn.v[0] = matMultiply(matMultiply(matMultiply(i.v[0], m_matRotU), m_matRotV), m_matRotW);
-        triIn.v[1] = matMultiply(matMultiply(matMultiply(i.v[1], m_matRotU), m_matRotV), m_matRotW);
-        triIn.v[2] = matMultiply(matMultiply(matMultiply(i.v[2], m_matRotU), m_matRotV), m_matRotW);
+        triIn.v[0] = i.v[0] * m_matTransform;
+        triIn.v[1] = i.v[1] * m_matTransform;
+        triIn.v[2] = i.v[2] * m_matTransform;
 
-        object3d::vec3d norm, line1, line2;
-
-        line1.x = triIn.v[1].x - triIn.v[0].x;
-        line1.y = triIn.v[1].y - triIn.v[0].y;
-        line1.z = triIn.v[1].z - triIn.v[0].z;
-
-        line2.x = triIn.v[2].x - triIn.v[0].x;
-        line2.y = triIn.v[2].y - triIn.v[0].y;
-        line2.z = triIn.v[2].z - triIn.v[0].z;
-
-        norm.x = line1.y * line2.z - line1.z *line2.y;
-        norm.y = line1.z * line2.x - line1.x *line2.z;
-        norm.z = line1.x * line2.y - line1.y *line2.x;
-
-        // Push farther into screen so we can see it
-        triIn.v[0].z += zoom;
-        triIn.v[1].z += zoom;
-        triIn.v[2].z += zoom;
-
-        norm = normalize(norm);
-
-        float color = dotProd(norm,light);
+        // Get the normal vector to the triangle
+        vec3 norm = triIn.norm();
         
-
-        if(dotProd(norm,triIn.v[1]) > 0)
+        // Only draw if the triangle is visable
+        // position of any point on the triangle - cam position will give the vector to check against the normal
+        if(norm.dot(triIn.v[0] - c.position) < 0 ) 
         {
+            triIn.v[0] = triIn.v[0] * c.view;
+            triIn.v[1] = triIn.v[1] * c.view;
+            triIn.v[2] = triIn.v[2] * c.view;
 
-            // Project 2D
-            triIn.v[0] = matMultiply(triIn.v[0], m_matProj);
-            triIn.v[1] = matMultiply(triIn.v[1], m_matProj);
-            triIn.v[2] = matMultiply(triIn.v[2], m_matProj);
-
-            // Center on screen
-            triIn.v[0].x += 1;
-            triIn.v[0].y += 1;
-
-            triIn.v[1].x += 1;
-            triIn.v[1].y += 1;
-
-            triIn.v[2].x += 1;
-            triIn.v[2].y += 1;
+            buffer.push_back(triIn);
+        }
+    }
+    
+    // sort by z midpoint
+    std::sort(buffer.begin(),buffer.end(), [](tri3d &t1, tri3d &t2)
+    {
+            float z1 = (t1.v[0].z + t1.v[1].z + t1.v[2].z)/3.0f;
+            float z2 = (t2.v[0].z + t2.v[1].z + t2.v[2].z)/3.0f;
+            return z1 > z2;
+    });
 
 
-            // Scale to size
-            triIn.v[0].x *= 0.5f * 500/ m_aspectRatio;
-            triIn.v[0].y *= 0.5f * 500;
+    //project and draw
+    for(tri3d tri : buffer)
+    {
+        vec3 norm = tri.norm();
+        float color = norm.dot(light);
 
-            triIn.v[1].x *= 0.5f * 500/ m_aspectRatio;
-            triIn.v[1].y *= 0.5f * 500;
+            for (int i = 0; i < 3; i++)
+            {
+                // Project 2D
+                tri.v[i] = tri.v[i] * m_matProj;
 
-            triIn.v[2].x *= 0.5f * 500/ m_aspectRatio;
-            triIn.v[2].y *= 0.5f * 500;
+                // Why i have to multiply this by the aspect ratio i have no idea
+                // Center on screen
+                tri.v[i].x += 1*m_aspectRatio;
+                tri.v[i].y += 1/m_aspectRatio;
 
-            
-            drawTriangle(texture, triIn, sf::Color(65,95,120,155+(color*100)));
+                // Why these are swapped i have no idea
+                // Scale to size
+                tri.v[i].x *= 0.5f * res.y;
+                tri.v[i].y *= 0.5f * res.x;
+            }
+        drawTriangle(texture, res,tri, sf::Color(65+(color*50),95+(color*75),120+(color*75)));
+    }
+}
+
+
+//////////////////////////////////////////////////////////////////
+void object3d::load(std::string fileName)
+{
+    std::ifstream obj(fileName);
+    if (!obj.is_open())
+    {
+        std::cout << "error: cannot load 3d object" << std::endl;
+        return;
+    }
+    
+    std::vector<vec3> verts;
+
+    while(!obj.eof())
+    {
+        char line[128];
+        obj.getline(line,128);
+
+        std::strstream stream;
+        stream << line;
+
+        char junk;
+        if(line[0] == 'v')
+        {
+            vec3 v;
+            stream >> junk >> v.x >> v.y >> v.z;
+            verts.push_back(v);
+        }
+        if(line[0] == 'f')
+        {
+            int f[3];
+            stream >> junk >> f[0] >> f[1] >> f[2];
+            mesh.push_back(tri3d(verts[f[0] - 1], verts[f[1] - 1], verts[f[2] - 1]));
         }
     }
 }
 
 
-//////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////
-void object3d::drawVecCloud(sf::RenderTexture& texture, float u, float v, float w, float zoom)
-{
-    rotate(u,v,w);
-    vec3d p;
-
-    for(auto i: vecCloud)
-    {   
-        p = i;
-        p = projectPoint(p,zoom);
-
-        int alpha = 255;
-        if (p.z > .5) alpha = 100;
-
-        sf::Vertex pout(sf::Vector2f(p.x, p.y), c_color(Blue,alpha));
-        texture.draw(&pout, 1, sf::Points);
-    }
-}
-
 
 //////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////
-object3d::vec3d object3d::matMultiply(vec3d pin, mat4x4 mat)
-{
-    vec3d pout;
-
-    pout.x = pin.x * mat.m[0][0] + pin.y * mat.m[1][0] + pin.z * mat.m[2][0] + mat.m[3][0];
-    pout.y = pin.x * mat.m[0][1] + pin.y * mat.m[1][1] + pin.z * mat.m[2][1] + mat.m[3][1];
-    pout.z = pin.x * mat.m[0][2] + pin.y * mat.m[1][2] + pin.z * mat.m[2][2] + mat.m[3][2];
-    float w = pin.x * mat.m[0][3] + pin.y * mat.m[1][3] + pin.z * mat.m[2][3] + mat.m[3][3];
-
-    if ( w != 0.0f) {pout.x /= w; pout.y /= w; pout.z /= w;}
-    
-    return pout;
-}
-
-
-//////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////
-void object3d::drawTriangle(sf::RenderTexture& texture, triangle tri, sf::Color col) 
+void object3d::drawTriangle(sf::RenderTexture& texture,sf::Vector2i res, tri3d tri, sf::Color col) 
 {
 
+    // for cliping count points outside of view,
+    // 2 points in view means need to create another triangle
+    // for tris that clip 2 or more edges itterate through all edges and clip it multiple times
     sf::VertexArray triangle(sf::Triangles, 3);
 
     triangle[0].color = col;
@@ -234,21 +143,52 @@ void object3d::drawTriangle(sf::RenderTexture& texture, triangle tri, sf::Color 
     triangle[1].position = sf::Vector2f(tri.v[1].x, tri.v[1].y);
     triangle[2].position = sf::Vector2f(tri.v[2].x, tri.v[2].y);
 
-    texture.draw(triangle);
+    bool inframe1 = (triangle[0].position.x > 0 && triangle[0].position.x < res.x && triangle[0].position.y > 0 && triangle[0].position.y < res.y);
+    bool inframe2 = (triangle[1].position.x > 0 && triangle[1].position.x < res.x && triangle[1].position.y > 0 && triangle[1].position.y < res.y);
+    bool inframe3 = (triangle[2].position.x > 0 && triangle[2].position.x < res.x && triangle[2].position.y > 0 && triangle[2].position.y < res.y);
 
-    sf::Color col2 = c_color(Light_Blue);
-
-    sf::Vertex line1[2], line2[2], line3[2];
+    if(inframe1 || inframe2 || inframe3) texture.draw(triangle);
     
-    line1[0].color = col2; line1[1].color = col2;
-    line2[0].color = col2; line2[1].color = col2;
-    line3[0].color = col2; line3[1].color = col2;
 
-    line1[0].position = sf::Vector2f(tri.v[0].x, tri.v[0].y); line1[1].position = sf::Vector2f(tri.v[1].x, tri.v[1].y);
-    line2[0].position = sf::Vector2f(tri.v[1].x, tri.v[1].y); line2[1].position = sf::Vector2f(tri.v[2].x, tri.v[2].y);
-    line3[0].position = sf::Vector2f(tri.v[2].x, tri.v[2].y); line3[1].position = sf::Vector2f(tri.v[0].x, tri.v[0].y);
 
-    texture.draw(line1,2,sf::Lines);
-    texture.draw(line2,2,sf::Lines);
-    texture.draw(line3,2,sf::Lines);
+    // // Draw the lines
+    // sf::Color col2 = c_color(White);
+
+    // sf::Vertex line1[2], line2[2], line3[2];
+    
+    // line1[0].color = col2; line1[1].color = col2;
+    // line2[0].color = col2; line2[1].color = col2;
+    // line3[0].color = col2; line3[1].color = col2;
+
+    // line1[0].position = sf::Vector2f(tri.v[0].x, tri.v[0].y); line1[1].position = sf::Vector2f(tri.v[1].x, tri.v[1].y);
+    // line2[0].position = sf::Vector2f(tri.v[1].x, tri.v[1].y); line2[1].position = sf::Vector2f(tri.v[2].x, tri.v[2].y);
+    // line3[0].position = sf::Vector2f(tri.v[2].x, tri.v[2].y); line3[1].position = sf::Vector2f(tri.v[0].x, tri.v[0].y);
+
+    // texture.draw(line1,2,sf::Lines);
+    // texture.draw(line2,2,sf::Lines);
+    // texture.draw(line3,2,sf::Lines);
+}
+
+
+
+mat4x4 camera::update()
+{
+    direction = vec3(0,0,1) * (rotate_x_matrix(u) * rotate_y_matrix(v) * rotate_z_matrix(w));
+    direction = direction.norm();
+    // position = vec3(x,y,z);
+    
+    target = (position + direction);
+
+    point = point_matrix(position,target,up);
+    view = view_matrix(point);
+
+    return view;
+}
+
+
+void camera::move(float _x, float _y, float _z)
+{
+    vec3 move = (direction * _z) + (direction.cross(up) * _x);
+
+    position = position + move;
 }
