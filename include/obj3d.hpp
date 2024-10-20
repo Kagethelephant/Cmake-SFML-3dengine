@@ -27,7 +27,7 @@ struct tri3d
     tri3d() : v{vec3(0,0,0),vec3(0,0,0),vec3(0,0,0)}{};
     
     // Gets the normal vector of a triangle by getting the lines branching from the tris 0 point and getting the normal of the 2 lines
-    vec3 norm() {return ((this-> v[1] - this-> v[0]).cross(this-> v[2] - this-> v[0])).norm(); }
+    vec3 norm() {return ((this-> v[0] - this-> v[1]).cross(this-> v[0] - this-> v[2])).norm(); }
     
 };
 
@@ -40,8 +40,8 @@ class camera
 {
     public:
 
-        float x = 0, y = 0, z = 0, u = 0, v = 0, w = 0;
-
+        float  u = 0, v = 0, w = 0; //x = 0, y = 0, z = 0,
+    
         vec3 direction = vec3(0,0,1);
         vec3 position = vec3(0,0,0);
         vec3 up = vec3(0,1,0);
@@ -107,6 +107,6 @@ class object3d
         mat4x4 mat_veiw(vec3& pos, vec3& target, vec3& up);
 
         /// simple draw 2d triangles
-        void drawTriangle(sf::RenderTexture& texture, tri3d tri, sf::Color col = c_color(Blue));
+        void drawTriangle(sf::RenderTexture& texture, sf::Vector2i res, tri3d tri, sf::Color col = c_color(Blue));
 };
 

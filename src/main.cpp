@@ -32,11 +32,22 @@ int main() {
     //     lng += dlong;
     // }
 
-    object3d object;
+    
     camera cam;
     
+    object3d object;
     object.load("../resources/objects/cow.obj");
     object.z = 10;
+
+    object3d object2;
+    object2.load("../resources/objects/cow.obj");
+    object2.z = 5;
+    object2.x = -10;
+
+    object3d object3;
+    object3.load("../resources/objects/cow.obj");
+    object3.z = 15;
+    object3.x = 20;
 
 
 
@@ -159,6 +170,8 @@ int main() {
         
 
         object.draw (rendWindow,resWindow,cam);
+        object2.draw (rendWindow,resWindow,cam);
+        object3.draw (rendWindow,resWindow,cam);
         
         //////////////////////////////////////////////////////////////////
         // DISPLAY TO SCREEN

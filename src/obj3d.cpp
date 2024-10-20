@@ -25,7 +25,7 @@ void object3d::draw(sf::RenderTexture& texture, sf::Vector2i res, camera c)
     update();
     // Create a vector for the camera and light direction (not position)
     vec3 cam(0,0,0);
-    vec3 light(1,1,1);
+    vec3 light(-1,1,-1);
     light = light.norm();
 
     std::vector<tri3d> buffer;
@@ -38,16 +38,19 @@ void object3d::draw(sf::RenderTexture& texture, sf::Vector2i res, camera c)
         triIn.v[1] = i.v[1] * m_matTransform;
         triIn.v[2] = i.v[2] * m_matTransform;
 
-        triIn.v[0] = triIn.v[0] * c.view;
-        triIn.v[1] = triIn.v[1] * c.view;
-        triIn.v[2] = triIn.v[2] * c.view;
-
         // Get the normal vector to the triangle
         vec3 norm = triIn.norm();
         
         // Only draw if the triangle is visable
         // position of any point on the triangle - cam position will give the vector to check against the normal
-        if(norm.dot(triIn.v[0] - cam) > 0) buffer.push_back(triIn);
+        if(norm.dot(triIn.v[0] - c.position) < 0 ) 
+        {
+            triIn.v[0] = triIn.v[0] * c.view;
+            triIn.v[1] = triIn.v[1] * c.view;
+            triIn.v[2] = triIn.v[2] * c.view;
+
+            buffer.push_back(triIn);
+        }
     }
     
     // sort by z midpoint
@@ -80,7 +83,7 @@ void object3d::draw(sf::RenderTexture& texture, sf::Vector2i res, camera c)
                 tri.v[i].x *= 0.5f * res.y;
                 tri.v[i].y *= 0.5f * res.x;
             }
-        drawTriangle(texture, tri, sf::Color(65+(color*50),95+(color*75),120+(color*75)));
+        drawTriangle(texture, res,tri, sf::Color(65+(color*50),95+(color*75),120+(color*75)));
     }
 }
 
@@ -124,7 +127,7 @@ void object3d::load(std::string fileName)
 
 
 //////////////////////////////////////////////////////////////////
-void object3d::drawTriangle(sf::RenderTexture& texture, tri3d tri, sf::Color col) 
+void object3d::drawTriangle(sf::RenderTexture& texture,sf::Vector2i res, tri3d tri, sf::Color col) 
 {
 
     // for cliping count points outside of view,
@@ -140,7 +143,12 @@ void object3d::drawTriangle(sf::RenderTexture& texture, tri3d tri, sf::Color col
     triangle[1].position = sf::Vector2f(tri.v[1].x, tri.v[1].y);
     triangle[2].position = sf::Vector2f(tri.v[2].x, tri.v[2].y);
 
-    texture.draw(triangle);
+    bool inframe1 = (triangle[0].position.x > 0 && triangle[0].position.x < res.x && triangle[0].position.y > 0 && triangle[0].position.y < res.y);
+    bool inframe2 = (triangle[1].position.x > 0 && triangle[1].position.x < res.x && triangle[1].position.y > 0 && triangle[1].position.y < res.y);
+    bool inframe3 = (triangle[2].position.x > 0 && triangle[2].position.x < res.x && triangle[2].position.y > 0 && triangle[2].position.y < res.y);
+
+    if(inframe1 || inframe2 || inframe3) texture.draw(triangle);
+    
 
 
     // // Draw the lines
@@ -161,12 +169,15 @@ void object3d::drawTriangle(sf::RenderTexture& texture, tri3d tri, sf::Color col
     // texture.draw(line3,2,sf::Lines);
 }
 
+
+
 mat4x4 camera::update()
 {
     direction = vec3(0,0,1) * (rotate_x_matrix(u) * rotate_y_matrix(v) * rotate_z_matrix(w));
+    direction = direction.norm();
     // position = vec3(x,y,z);
     
-    target = position + direction;
+    target = (position + direction);
 
     point = point_matrix(position,target,up);
     view = view_matrix(point);
