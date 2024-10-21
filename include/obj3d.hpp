@@ -67,7 +67,7 @@ class object3d
         object3d();
         
         //////////////////////////////////////////////////////////////////
-        /// @brief Object position and orientation variables
+        /// \brief Object position and orientation variables
         //////////////////////////////////////////////////////////////////
         float u,v,w,x,y,z;
 
