@@ -48,12 +48,6 @@ struct vec2
     vec2 operator - (const vec2& v) {return vec2(this->x - v.x, this->y - v.y); }
     vec2 operator * (const float& f) {return vec2(this->x * f, this->y * f); }
     vec2 operator / (const float& f) {return vec2(this->x / f, this->y / f); }
-
-    // Modify overloads
-    vec2& operator += (const vec2& v) {this->x += v.x; this->y += v.y; }
-    vec2& operator -= (const vec2& v) {this->x -= v.x; this->y -= v.y; }
-    vec2& operator *= (const float& f) {this->x *= f; this->y *= f; }
-    vec2& operator /= (const float& f) {this->x /= f; this->y /= f; }
 };
 
 
@@ -80,12 +74,6 @@ struct vec3
     vec3 operator - (const vec3& v) {return vec3(this->x - v.x, this->y - v.y, this->z - v.z); }
     vec3 operator * (const float& f) {return vec3(this->x * f, this->y * f, this->z * f); }
     vec3 operator / (const float& f) {return vec3(this->x / f, this->y / f, this->z / f); }
-
-    // Modify overloads
-    vec3& operator += (const vec3& v) {this->x += v.x; this->y += v.y; this->z += v.z; }
-    vec3& operator -= (const vec3& v) {this->x -= v.x; this->y -= v.y; this->z -= v.z; }
-    vec3& operator *= (const float& f) {this->x *= f; this->y *= f; this->z *= f; }
-    vec3& operator /= (const float& f) {this->x /= f; this->y /= f; this->z /= f; }
 
     // Multiple object overloads
     vec3 operator * (const mat4x4& m) 

@@ -191,7 +191,17 @@ int main() {
     // DEBUG OUTPUTS
     /////////////////////////////////////////////////////////////////
 
-    std::cout << "*****END***** "<< "\n" << std::endl;
+    std::cout << "*******END******* "<< std::endl;
+    
+    // std::cout << "      v                           __   _      "<< std::endl;
+    // std::cout << "    > 0 <    ___          v      (  )_( )_    "<< std::endl;
+    // std::cout << "      ^     (    )_    v    v   (   __   _)   "<< std::endl;
+    // std::cout << "           _(   (  _)          (______) (__)  "<< std::endl;
+    // std::cout << "          (___________)                       "<< std::endl;
+    // std::cout << "              ____                            "<< std::endl;
+    // std::cout << " ---------:--/  | \--p -----------------------"<< std::endl;
+    // std::cout << " -  -  -  '-O------O-'   -  -  -  -  -  -  -  "<< std::endl;
+    // std::cout << "----------------------------------------------"<< std::endl;
 
     return 0;
 }

@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+
 set(SOURCE_FILES
     src/main.cpp
     src/display.cpp
@@ -16,6 +17,7 @@ set(SOURCE_FILES
     src/stereograph.cpp)
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
+# set(SFML_STATIC_LIBRARIES TRUE)
 
 # This is the master change
 #Message(${CMAKE_CXX_COMPILER_ID})
@@ -24,5 +26,5 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 # Find SFML
-find_package(SFML 2 REQUIRED graphics window audio network system)
+find_package(SFML REQUIRED graphics window audio network system)
 target_link_libraries(${PROJECT_NAME} sfml-graphics sfml-window sfml-audio sfml-network sfml-system)
