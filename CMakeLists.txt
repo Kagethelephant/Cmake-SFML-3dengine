@@ -1,5 +1,5 @@
 # Require cmake 3.25
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.22)
 project(TST LANGUAGES CXX)
 
 # Require C++14
