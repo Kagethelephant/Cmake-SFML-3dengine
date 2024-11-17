@@ -23,7 +23,7 @@ sf::Vector2i windowSetup(sf::RenderWindow& window, int height, bool fullscreen =
 
 	// Set the size and position of the view
 	sf::View view;
-	view.setCenter(sf::Vector2f(res.x/ 2, res.y / 2));
+	view.setCenter(sf::Vector2f(res.x/ 2.0f, res.y / 2.0f));
 	view.setSize(sf::Vector2f(res.x, res.y));
 
 	// Asign the view to the window
