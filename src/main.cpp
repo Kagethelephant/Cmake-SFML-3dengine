@@ -99,7 +99,7 @@ int main() {
     {
         bool up = 0, down = 0, right = 0, left = 0, space = 0, keyA = 0, keyD = 0, user_input = 0;
 
-        
+                  
         // Event handler
         sf::Event event; 
         while (window.pollEvent(event)) 
