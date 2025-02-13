@@ -1,4 +1,5 @@
 #include "main.hpp"
+#include "data.hpp"
 
 
 
@@ -36,6 +37,7 @@ int main() {
     //     lng += dlong;
     // }
 
+
     
     camera cam;
     
@@ -72,10 +74,11 @@ int main() {
     // textSmall.setStyle(sf::Text::Regular);
     // textSmall.setPosition(5, 5);
 
+    rgb col1 = rgb(40,150,140);
     // Rectangles to draw the grids
     sf::RectangleShape rect;
     rect.setSize(sf::Vector2f(3,3));
-    rect.setFillColor(c_color(White));
+    rect.setFillColor(to_sfml_color(col1));
     rect.setOutlineColor(sf::Color::Transparent);
     rect.setOutlineThickness(2);
     rect.setOrigin(1, 1);
