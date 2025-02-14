@@ -1,18 +1,9 @@
-#include "math.hpp"
-
-
+#pragma once
 //////////////////////////////////////////////////////////////////
-int randRange(int min, int max)
-{
-	// Obtain a random number from hardware
-	std::random_device rd;
-	// Seed the generator
-	std::mt19937 gen(rd());
-	// Define the range
-	std::uniform_int_distribution<> distr(min, max);
-
-	return distr(gen);
-}
+// Headers
+//////////////////////////////////////////////////////////////////
+#include <random>
+#include "math.hpp"
 
 
 mat4x4 identity_matrix()
@@ -67,14 +58,15 @@ mat4x4 translate_matrix(float x, float y, float z)
 
 mat4x4 project_matrix(float fFovDegrees, float fAspectRatio, float fNear, float fFar)
 {
-	
+    // m[1][1] is not normally negative but since we are drawing as y = 0 is at the top of the screen
+    // we need to invert the y values since y = 0 should be towards the bottom of the screen for most models
 	float fFovRad = 1.0f / tanf(fFovDegrees * 0.5f / 180.0f * 3.14159f);
 	float fDisRatio = fFar / (fFar - fNear);
 	mat4x4 m;
-	m.m[0][0] = fAspectRatio * fFovRad; m.m[1][0] = 0.0f;    m.m[2][0] = 0.0f;      m.m[3][0] = 0.0f;
-	m.m[0][1] = 0.0f;                   m.m[1][1] = fFovRad; m.m[2][1] = 0.0f;      m.m[3][1] = 0.0f;
-	m.m[0][2] = 0.0f;                   m.m[1][2] = 0.0f;    m.m[2][2] = fDisRatio; m.m[3][2] = (-fFar * fNear) / (fFar - fNear);
-	m.m[0][3] = 0.0f;                   m.m[1][3] = 0.0f;    m.m[2][3] = 1.0f;      m.m[3][3] = 0.0f;
+	m.m[0][0] = fAspectRatio * fFovRad; m.m[1][0] = 0.0f;     m.m[2][0] = 0.0f;      m.m[3][0] = 0.0f;
+	m.m[0][1] = 0.0f;                   m.m[1][1] = -fFovRad; m.m[2][1] = 0.0f;      m.m[3][1] = 0.0f;
+	m.m[0][2] = 0.0f;                   m.m[1][2] = 0.0f;     m.m[2][2] = fDisRatio; m.m[3][2] = (-fFar * fNear) / (fFar - fNear);
+	m.m[0][3] = 0.0f;                   m.m[1][3] = 0.0f;     m.m[2][3] = 1.0f;      m.m[3][3] = 0.0f;
 	return m;
 }
 
@@ -126,6 +118,32 @@ vec3 mat_multiply(vec3& v, mat4x4& m)
 
 
 
+//////////////////////////////////////////////////////////////////
+int randRange(int min, int max)
+{
+	// Obtain a random number from hardware
+	std::random_device rd;
+	// Seed the generator
+	std::mt19937 gen(rd());
+	// Define the range
+	std::uniform_int_distribution<> distr(min, max);
+
+	return distr(gen);
+}
+
+
+//////////////////////////////////////////////////////////////////
+int rollDie(int sides)
+{
+	// Obtain a random number from hardware
+	std::random_device rd;
+	// Seed the generator
+	std::mt19937 gen(rd());
+	// Define the range
+	std::uniform_int_distribution<> distr(min, max);
+
+	return distr(gen);
+}
 
 //////////////////////////////////////////////////////////////////
 /// \brief Array containing the the lookup values for sin

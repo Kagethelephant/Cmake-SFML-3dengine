@@ -1,13 +1,22 @@
-#include "main.hpp"
+#pragma once
+
+//////////////////////////////////////////////////////////////////
+// Headers
+//////////////////////////////////////////////////////////////////
+#include <SFML/Graphics.hpp>
+#include <string>
+#include <iostream>
+#include "display.hpp"
+#include "math.hpp"
 #include "data.hpp"
+#include "obj3d.hpp"
+#include "stereograph.hpp"
 
 
 
 int main() {
 
-    // Test on the other side
-
-    float test = 2;
+    defineGlobal();
 
     //////////////////////////////////////////////////////////////////
     // Setup for SFML window and resolution
@@ -15,7 +24,7 @@ int main() {
 
     sf::Vector2f mousePos;
     sf::Vector2i resWindow;
-    
+
     sf::RenderWindow window;
     resWindow = windowSetup(window, 400, true, "CORONA",60);
 
@@ -30,6 +39,7 @@ int main() {
     // for (int k = 0; k < N; k++)
     // {
     //     float r  = sqrt(1-z*z);
+    //
     //     vector3 pnew;
     //     pnew.x = math_cos(lng)*r; pnew.y = math_sin(lng)*r; pnew.z = z;
     //     cube.cloud.push_back(pnew);
@@ -38,9 +48,9 @@ int main() {
     // }
 
 
-    
+
     camera cam;
-    
+
     object3d object;
     object.load("../resources/objects/cow.obj");
     object.z = 10;
@@ -64,7 +74,7 @@ int main() {
     // load font
     // sf::Font fontSmall;
     // if (!fontSmall.loadFromFile("../resources/font/small_pixel.ttf")) return 1;
-    
+
     // Text for the cursor position and debugging
     // sf::Text textSmall;
     // textSmall.setFont(fontSmall);
@@ -74,11 +84,11 @@ int main() {
     // textSmall.setStyle(sf::Text::Regular);
     // textSmall.setPosition(5, 5);
 
-    rgb col1 = rgb(40,150,140);
+    sf::Color col1 = rgb(40,150,140);
     // Rectangles to draw the grids
     sf::RectangleShape rect;
     rect.setSize(sf::Vector2f(3,3));
-    rect.setFillColor(to_sfml_color(col1));
+    rect.setFillColor(col1);
     rect.setOutlineColor(sf::Color::Transparent);
     rect.setOutlineThickness(2);
     rect.setOrigin(1, 1);
@@ -102,7 +112,7 @@ int main() {
     {
         bool up = 0, down = 0, right = 0, left = 0, space = 0, keyA = 0, keyD = 0, user_input = 0;
 
-                  
+
         // Event handler
         sf::Event event; 
         while (window.pollEvent(event)) 
@@ -124,6 +134,10 @@ int main() {
                     else if (event.key.code == sf::Keyboard::Space) { space = 1; user_input = 1;}
                     else if (event.key.code == sf::Keyboard::A) { keyA = 1; user_input = 1;}
                     else if (event.key.code == sf::Keyboard::D) { keyD = 1; user_input = 1;}
+                    break;
+
+                default:
+                    // Do nothing
                     break;
             }
         }
@@ -161,25 +175,25 @@ int main() {
         ////////////////////////////////////////////////////////////////// 
 
         // Move the rectangle to the correct position before drawing
-        rendWindow.clear(c_color(Black));
+        rendWindow.clear(black);
         rect.setPosition(mousePos.x, mousePos.y);
         rendWindow.draw(rect);
 
         rect.setPosition(1,1);
         rendWindow.draw(rect);
-        
+
         rect.setPosition(resWindow.x-2,resWindow.y-2);
         rendWindow.draw(rect);
 
         // textSmall.setPosition(5,5);
         // textSmall.setString("Somthing");
         // rendWindow.draw(textSmall);
-        
+
 
         object.draw (rendWindow,resWindow,cam);
         object2.draw (rendWindow,resWindow,cam);
         object3.draw (rendWindow,resWindow,cam);
-        
+
         //////////////////////////////////////////////////////////////////
         // DISPLAY TO SCREEN
         //////////////////////////////////////////////////////////////////
@@ -195,14 +209,14 @@ int main() {
     /////////////////////////////////////////////////////////////////
 
     std::cout << "*******END******* "<< std::endl;
-    
+
     std::cout << "      v                           __   _      "<< std::endl;
     std::cout << "    > 0 <    ___          v      (  )_( )_    "<< std::endl;
     std::cout << "      ^     (    )_    v    v   (   __   _)   "<< std::endl;
     std::cout << "           _(   (  _)          (______) (__)  "<< std::endl;
     std::cout << "          (___________)                       "<< std::endl;
     std::cout << "              ____                            "<< std::endl;
-    std::cout << " ---------:--/  | \--p -----------------------"<< std::endl;
+    std::cout << " ---------:--/  | |--p -----------------------"<< std::endl;
     std::cout << " -  -  -  '-O------O-'   -  -  -  -  -  -  -  "<< std::endl;
     std::cout << "----------------------------------------------"<< std::endl;
 

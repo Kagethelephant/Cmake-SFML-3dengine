@@ -107,6 +107,6 @@ class object3d
         mat4x4 mat_veiw(vec3& pos, vec3& target, vec3& up);
 
         /// simple draw 2d triangles
-        void drawTriangle(sf::RenderTexture& texture, sf::Vector2i res, tri3d tri, sf::Color col = c_color(Blue));
+        void drawTriangle(sf::RenderTexture& texture, sf::Vector2i res, tri3d tri, sf::Color col = blue);
 };
 

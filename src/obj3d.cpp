@@ -1,4 +1,11 @@
+#pragma once
+
 #include "obj3d.hpp"
+#include "data.hpp"
+#include <SFML/Graphics/Color.hpp>
+#include <algorithm>
+#include <iostream>
+#include <ostream>
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -40,50 +47,67 @@ void object3d::draw(sf::RenderTexture& texture, sf::Vector2i res, camera c)
 
         // Get the normal vector to the triangle
         vec3 norm = triIn.norm();
-        
+
         // Only draw if the triangle is visable
         // position of any point on the triangle - cam position will give the vector to check against the normal
         // if(norm.dot(triIn.v[0] - cam) < 0 ) 
         // {
-            triIn.v[0] = triIn.v[0] * c.view;
-            triIn.v[1] = triIn.v[1] * c.view;
-            triIn.v[2] = triIn.v[2] * c.view;
+        triIn.v[0] = triIn.v[0] * c.view;
+        triIn.v[1] = triIn.v[1] * c.view;
+        triIn.v[2] = triIn.v[2] * c.view;
 
-            buffer.push_back(triIn);
+        buffer.push_back(triIn);
         // }
     }
-    
+
     // sort by z midpoint
     std::sort(buffer.begin(),buffer.end(), [](tri3d &t1, tri3d &t2)
-    {
-            float z1 = (t1.v[0].z + t1.v[1].z + t1.v[2].z)/3.0f;
-            float z2 = (t2.v[0].z + t2.v[1].z + t2.v[2].z)/3.0f;
-            return z1 > z2;
-    });
+              {
+              float z1 = (t1.v[0].z + t1.v[1].z + t1.v[2].z)/3.0f;
+              float z2 = (t2.v[0].z + t2.v[1].z + t2.v[2].z)/3.0f;
+              return z1 > z2;
+              });
 
-
+    int testCount = 0;
     //project and draw
     for(tri3d tri : buffer)
     {
         vec3 norm = tri.norm();
-        float color = norm.dot(light);
+        float shade = norm.dot(light);
 
-            for (int i = 0; i < 3; i++)
-            {
-                // Project 2D
-                tri.v[i] = tri.v[i] * m_matProj;
 
-                // Why i have to multiply this by the aspect ratio i have no idea
-                // Center on screen
-                tri.v[i].x += 1*m_aspectRatio;
-                tri.v[i].y += 1/m_aspectRatio;
+        // std::cout << shade << std::endl;
+        // std::cout << norm.x << std::endl;
+        // std::cout << norm.y << std::endl;
+        // std::cout << norm.z << std::endl;
+        // std::cout << light.x << std::endl;
+        // std::cout << light.y << std::endl;
+        // std::cout << light.z << std::endl;
 
-                // Why these are swapped i have no idea
-                // Scale to size
-                tri.v[i].x *= 0.5f * res.y;
-                tri.v[i].y *= 0.5f * res.x;
-            }
-        drawTriangle(texture, res,tri, sf::Color(65+(color*50),95+(color*75),120+(color*75)));
+
+        for (int i = 0; i < 3; i++)
+        {
+            // Project 2D
+            tri.v[i] = tri.v[i] * m_matProj;
+
+            // Why i have to multiply this by the aspect ratio i have no idea
+            // Center on screen
+            tri.v[i].x += 1*m_aspectRatio;
+            tri.v[i].y += 1/m_aspectRatio;
+
+            // Why these are swapped i have no idea
+            // Scale to size
+            tri.v[i].x *= 0.5f * res.y;
+            tri.v[i].y *= 0.5f * res.x;
+        }
+        sf::Color tempCol = yellow;
+
+        int r = (tempCol.r/2)*(shade+1);
+        int g = (tempCol.g/2)*(shade+1);
+        int b = (tempCol.b/2)*(shade+1);
+
+
+        drawTriangle(texture, res,tri, rgb(r,g,b));
     }
 }
 
@@ -97,7 +121,7 @@ void object3d::load(std::string fileName)
         std::cout << "error: cannot load 3d object" << std::endl;
         return;
     }
-    
+
     std::vector<vec3> verts;
 
     while(!obj.eof())
@@ -148,14 +172,14 @@ void object3d::drawTriangle(sf::RenderTexture& texture,sf::Vector2i res, tri3d t
     bool inframe3 = (triangle[2].position.x > 0 && triangle[2].position.x < res.x && triangle[2].position.y > 0 && triangle[2].position.y < res.y);
 
     if(inframe1 || inframe2 || inframe3) texture.draw(triangle);
-    
+
 
 
     // // Draw the lines
     // sf::Color col2 = c_color(White);
 
     // sf::Vertex line1[2], line2[2], line3[2];
-    
+
     // line1[0].color = col2; line1[1].color = col2;
     // line2[0].color = col2; line2[1].color = col2;
     // line3[0].color = col2; line3[1].color = col2;
@@ -176,7 +200,7 @@ mat4x4 camera::update()
     direction = vec3(0,0,1) * (rotate_x_matrix(u) * rotate_y_matrix(v) * rotate_z_matrix(w));
     direction = direction.norm();
     // position = vec3(x,y,z);
-    
+
     target = (position + direction);
 
     point = point_matrix(position,target,up);

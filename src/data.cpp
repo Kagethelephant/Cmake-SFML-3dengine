@@ -1,30 +1,32 @@
+#pragma once
+
 #include "data.hpp"
 
 
-
+sf::Color red;
+sf::Color blue;
+sf::Color green;
+sf::Color yellow;
+sf::Color purple;
+sf::Color orange;
+sf::Color black;
+sf::Color white;
 
 //////////////////////////////////////////////////////////////////
-sf::Color c_color(COLOR color, int alpha)
-{
-  if(color == COLOR::Black) return sf::Color(15,15,25,alpha);
-  else if(color == COLOR::Dark_Blue) return sf::Color(25,45,105,alpha);
-  else if(color == COLOR::Blue) return sf::Color(45,80,115,alpha);
-  else if(color == COLOR::Light_Blue) return sf::Color(65,95,120,alpha);
-  else if(color == COLOR::Tan) return sf::Color(115,115,90,alpha);
-  else if(color == COLOR::Green) return sf::Color(50,85,75,alpha);
-  else if(color == COLOR::Dark_Green) return sf::Color(35,55,60,alpha);
-  else if(color == COLOR::Purple) return sf::Color(75,60,85,alpha);
-  else if(color == COLOR::Dark_Purple) return sf::Color(45,40,50,alpha);
-  else if(color == COLOR::White) return sf::Color(180,180,180,alpha);
-
-  else {return sf::Color(255,255,255,alpha);}
+sf::Color rgb(unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
+  return sf::Color(r,g,b,a);
 };
 
-sf::Color to_sfml_color(rgb color){
+//////////////////////////////////////////////////////////////////
+void defineGlobal() {
 
-  sf::Color col = sf::Color(color.r,color.g,color.b,color.a);
+  red = rgb(201, 62, 52);
+  blue = rgb(43, 77, 161);
+  green = rgb(40, 133, 97);
+  yellow = rgb(222, 178, 69);
+  purple = rgb(103, 66, 199);
+  orange = rgb(214, 142, 60);
+  black = rgb(15, 18, 23);
+  white = rgb(224, 222, 215);
 
-  return col;
-};
-
-
+}

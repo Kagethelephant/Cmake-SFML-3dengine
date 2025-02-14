@@ -1,6 +1,7 @@
+#pragma once
+
 #include "display.hpp"
-
-
+#include <cmath>
 
 //////////////////////////////////////////////////////////////////
 sf::Vector2i windowSetup(sf::RenderWindow& window, int height, bool fullscreen = true, sf::String title = "Window", int fps = 60)
@@ -10,7 +11,7 @@ sf::Vector2i windowSetup(sf::RenderWindow& window, int height, bool fullscreen =
 	float aspectRatio = ((float)sf::VideoMode::getDesktopMode().width) / ((float)sf::VideoMode::getDesktopMode().height);
 
 	// Create a static window width in pixels and calculate the width based on the aspect ratio
-	sf::Vector2i res (abs(height *aspectRatio), height);
+	sf::Vector2i res (std::fabs(height *aspectRatio), height);
 
 	// Initialize the view with the calculated resolution 
 	if (fullscreen) window.create(sf::VideoMode::getDesktopMode(), title, sf::Style::Fullscreen);
