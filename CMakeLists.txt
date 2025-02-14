@@ -14,8 +14,7 @@ set(SOURCE_FILES
     src/display.cpp
     src/math.cpp
     src/data.cpp
-    src/obj3d.cpp
-    src/stereograph.cpp)
+    src/obj3d.cpp)
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 # set(SFML_STATIC_LIBRARIES TRUE)

@@ -2,8 +2,10 @@
 //////////////////////////////////////////////////////////////////
 // Headers
 //////////////////////////////////////////////////////////////////
+#include <cmath>
 #include <random>
 #include "math.hpp"
+#include <iostream>
 
 
 mat4x4 identity_matrix()
@@ -117,33 +119,37 @@ vec3 mat_multiply(vec3& v, mat4x4& m)
 }
 
 
-
 //////////////////////////////////////////////////////////////////
-int randRange(int min, int max)
+int iRand(int min, int max, int seed)
 {
-	// Obtain a random number from hardware
-	std::random_device rd;
-	// Seed the generator
-	std::mt19937 gen(rd());
-	// Define the range
-	std::uniform_int_distribution<> distr(min, max);
+    if (seed == -1) {
+        std::random_device rd; // Obtain a random number from hardware
+        seed = rd();
+
+        // std::cout << "no seed provided" << std::endl;
+    }
+    
+	std::minstd_rand gen(seed); // Create and seed the generator (Was using mt19937 but that is a little unecessary
+	std::uniform_int_distribution<> distr(min, max); // Use the random number against a distribution range
 
 	return distr(gen);
 }
 
-
 //////////////////////////////////////////////////////////////////
-int rollDie(int sides)
+int fRand(float min, float max, int seed)
 {
-	// Obtain a random number from hardware
-	std::random_device rd;
-	// Seed the generator
-	std::mt19937 gen(rd());
-	// Define the range
-	std::uniform_int_distribution<> distr(min, max);
+    if (seed == -1) {
+        std::random_device rd; // Obtain a random number from hardware
+        seed = rd();
+        // std::cout << "no seed provided" << std::endl;
+    }
+    
+	std::minstd_rand gen(seed); // Create and seed the generator (Was using mt19937 but that is a little unecessary
+	std::uniform_real_distribution<> distr(min, max); // Use the random number against a distribution range
 
 	return distr(gen);
 }
+
 
 //////////////////////////////////////////////////////////////////
 /// \brief Array containing the the lookup values for sin
@@ -175,7 +181,7 @@ float math_sin(float theta)
 	// Turn the radians into pi-radians
 	theta /= 3.141592653;
 	// Get the amount of whole 2 pi radians off 
-	int half = (int)abs(theta/2);
+	int half = (int)fabs(theta/2);
 
 	// If it is more than 2 pi radians or les then zero, wrap it
 	if (theta < 0) theta += half*2+2;

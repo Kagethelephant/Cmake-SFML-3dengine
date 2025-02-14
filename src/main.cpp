@@ -4,13 +4,13 @@
 // Headers
 //////////////////////////////////////////////////////////////////
 #include <SFML/Graphics.hpp>
+#include <ostream>
 #include <string>
 #include <iostream>
 #include "display.hpp"
 #include "math.hpp"
 #include "data.hpp"
 #include "obj3d.hpp"
-#include "stereograph.hpp"
 
 
 
@@ -209,6 +209,10 @@ int main() {
     /////////////////////////////////////////////////////////////////
 
     std::cout << "*******END******* "<< std::endl;
+    std::cout << iRand(1,200,26123489) << std::endl;
+    std::cout << iRand(1,200,73246922) << std::endl;
+    std::cout << iRand(1,200,19232143) << std::endl;
+    std::cout << iRand(1,200,48572734) << std::endl;
 
     std::cout << "      v                           __   _      "<< std::endl;
     std::cout << "    > 0 <    ___          v      (  )_( )_    "<< std::endl;

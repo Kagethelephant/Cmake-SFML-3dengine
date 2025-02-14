@@ -5,10 +5,6 @@
 //////////////////////////////////////////////////////////////////
 #include <SFML/Graphics.hpp>
 #include <string>
-#include <fstream>
-#include <iostream>
-#include <strstream>
-#include <algorithm>
 #include "data.hpp"
 #include "math.hpp"
 

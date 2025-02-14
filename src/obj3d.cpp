@@ -1,10 +1,15 @@
 #pragma once
 
+//////////////////////////////////////////////////////////////////
+// Headers
+//////////////////////////////////////////////////////////////////
 #include "obj3d.hpp"
-#include "data.hpp"
-#include <SFML/Graphics/Color.hpp>
 #include <algorithm>
 #include <iostream>
+#include <fstream>
+#include <strstream>
+//#include <sstream> // Use this instead, strstream is depricated because it returns
+// a char pointer with no way to know how it was initialized (dont know if we need to dealocate the memory)
 #include <ostream>
 
 
@@ -102,9 +107,9 @@ void object3d::draw(sf::RenderTexture& texture, sf::Vector2i res, camera c)
         }
         sf::Color tempCol = yellow;
 
-        int r = (tempCol.r/2)*(shade+1);
-        int g = (tempCol.g/2)*(shade+1);
-        int b = (tempCol.b/2)*(shade+1);
+        int r = (tempCol.r/2.0)*(shade+1);
+        int g = (tempCol.g/2.0)*(shade+1);
+        int b = (tempCol.b/2.0)*(shade+1);
 
 
         drawTriangle(texture, res,tri, rgb(r,g,b));
