@@ -10,12 +10,14 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # create complie_commands.json so nvim can
 
 
 set(SOURCE_FILES
-    src/app/main.cpp
-    src/app/display.cpp
-    src/utils/math.cpp
-    src/utils/data.cpp
-    src/3d/obj3d.cpp
-    src/utils/matrix.cpp)
+   src/app/main.cpp
+   src/app/display.cpp
+   src/utils/random.cpp
+   src/utils/data.cpp
+   src/3d/obj3d.cpp
+   src/utils/matrix.cpp
+   src/3d/camera.cpp
+   src/3d/polygon.cpp)
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 # set(SFML_STATIC_LIBRARIES TRUE)

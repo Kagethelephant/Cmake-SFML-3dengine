@@ -1,36 +1,38 @@
 
+//////////////////////////////////////////////////////////////////
+// Headers
+//////////////////////////////////////////////////////////////////
 #include "display.hpp"
 #include <cmath>
 
 //////////////////////////////////////////////////////////////////
-sf::Vector2i windowSetup(sf::RenderWindow& window, int height, bool fullscreen = true, sf::String title = "Window", int fps = 60)
-{
-	
-	// Get the display dimmensions and calculate the aspect ratio
-	float aspectRatio = ((float)sf::VideoMode::getDesktopMode().width) / ((float)sf::VideoMode::getDesktopMode().height);
+sf::Vector2i windowSetup(sf::RenderWindow& window, int height, bool fullscreen = true, sf::String title = "Window", int fps = 60) {
 
-	// Create a static window width in pixels and calculate the width based on the aspect ratio
-	sf::Vector2i res (std::fabs(height *aspectRatio), height);
+   // Get the display dimmensions and calculate the aspect ratio
+   float aspectRatio = ((float)sf::VideoMode::getDesktopMode().width) / ((float)sf::VideoMode::getDesktopMode().height);
 
-	// Initialize the view with the calculated resolution 
-	if (fullscreen) window.create(sf::VideoMode::getDesktopMode(), title, sf::Style::Fullscreen);
-	else window.create(sf::VideoMode::getDesktopMode(), title, sf::Style::Default);
+   // Create a static window width in pixels and calculate the width based on the aspect ratio
+   sf::Vector2i res (std::fabs(height *aspectRatio), height);
 
-	// Set the frame rate and hide the cursor so we can draw our own
-	window.setFramerateLimit(fps);
-	window.setVerticalSyncEnabled(true);
-	window.setMouseCursorVisible(false);
+   // Initialize the view with the calculated resolution 
+   if (fullscreen) window.create(sf::VideoMode::getDesktopMode(), title, sf::Style::Fullscreen);
+   else window.create(sf::VideoMode::getDesktopMode(), title, sf::Style::Default);
 
-	// Set the size and position of the view
-	sf::View view;
-	view.setCenter(sf::Vector2f(res.x/ 2.0f, res.y / 2.0f));
-	view.setSize(sf::Vector2f(res.x, res.y));
+   // Set the frame rate and hide the cursor so we can draw our own
+   window.setFramerateLimit(fps);
+   window.setVerticalSyncEnabled(true);
+   window.setMouseCursorVisible(false);
 
-	// Asign the view to the window
-	window.setView(view);
+   // Set the size and position of the view
+   sf::View view;
+   view.setCenter(sf::Vector2f(res.x/ 2.0f, res.y / 2.0f));
+   view.setSize(sf::Vector2f(res.x, res.y));
 
-	// Return the calculated width and height of the window in pixels
-	return res;
+   // Asign the view to the window
+   window.setView(view);
+
+   // Return the calculated width and height of the window in pixels
+   return res;
 }
 
 
