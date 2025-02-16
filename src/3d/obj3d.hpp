@@ -5,8 +5,9 @@
 //////////////////////////////////////////////////////////////////
 #include <SFML/Graphics.hpp>
 #include <string>
-#include "data.hpp"
-#include "math.hpp"
+#include "utils/data.hpp"
+#include "utils/math.hpp"
+#include "utils/matrix.hpp"
 
 
 
@@ -80,7 +81,7 @@ class object3d
         //////////////////////////////////////////////////////////////////
         /// \brief Called externally to draw the triangles in the mesh 
         //////////////////////////////////////////////////////////////////
-        void draw(sf:: RenderTexture& texture, sf::Vector2i res, camera c);
+        void draw(sf:: RenderTexture& texture, sf::Vector2i res, camera c,sf::Color col = sf::Color::Green);
 
         //////////////////////////////////////////////////////////////////
         /// \brief Load an OBJ file

@@ -10,11 +10,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # create complie_commands.json so nvim can
 
 
 set(SOURCE_FILES
-    src/main.cpp
-    src/display.cpp
-    src/math.cpp
-    src/data.cpp
-    src/obj3d.cpp)
+    src/app/main.cpp
+    src/app/display.cpp
+    src/utils/math.cpp
+    src/utils/data.cpp
+    src/3d/obj3d.cpp
+    src/utils/matrix.cpp)
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 # set(SFML_STATIC_LIBRARIES TRUE)
@@ -23,7 +24,7 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 #Message(${CMAKE_CXX_COMPILER_ID})
 
 # Include other header files
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
 # Find SFML
 find_package(SFML REQUIRED graphics window audio network system)

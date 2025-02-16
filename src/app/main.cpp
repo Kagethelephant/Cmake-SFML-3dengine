@@ -1,4 +1,3 @@
-#pragma once
 
 //////////////////////////////////////////////////////////////////
 // Headers
@@ -8,9 +7,12 @@
 #include <string>
 #include <iostream>
 #include "display.hpp"
-#include "math.hpp"
-#include "data.hpp"
-#include "obj3d.hpp"
+#include "utils/math.hpp"
+#include "utils/data.hpp"
+#include "3d/obj3d.hpp"
+
+#include <chrono>
+#include <cmath>
 
 
 
@@ -26,27 +28,10 @@ int main() {
     sf::Vector2i resWindow;
 
     sf::RenderWindow window;
-    resWindow = windowSetup(window, 400, true, "CORONA",60);
+    resWindow = windowSetup(window, 1600, true, "CORONA",60);
 
     sf::RenderTexture rendWindow;
     rendWindow.create(resWindow.x,resWindow.y);
-
-    // int N = 400;
-    // float dlong = 3.151592653*(3-sqrt(5));  /* ~2.39996323 */
-    // float dz = 2.0/N;
-    // float lng = 0.0f;
-    // float z = 1 - dz/2;
-    // for (int k = 0; k < N; k++)
-    // {
-    //     float r  = sqrt(1-z*z);
-    //
-    //     vector3 pnew;
-    //     pnew.x = math_cos(lng)*r; pnew.y = math_sin(lng)*r; pnew.z = z;
-    //     cube.cloud.push_back(pnew);
-    //     z  = z - dz;
-    //     lng += dlong;
-    // }
-
 
 
     camera cam;
@@ -54,6 +39,7 @@ int main() {
     object3d object;
     object.load("../resources/objects/cow.obj");
     object.z = 10;
+    object.x = 0;
 
     object3d object2;
     object2.load("../resources/objects/cow.obj");
@@ -75,14 +61,6 @@ int main() {
     // sf::Font fontSmall;
     // if (!fontSmall.loadFromFile("../resources/font/small_pixel.ttf")) return 1;
 
-    // Text for the cursor position and debugging
-    // sf::Text textSmall;
-    // textSmall.setFont(fontSmall);
-    // textSmall.setString("Hello world");
-    // textSmall.setCharacterSize(8);
-    // textSmall.setFillColor(c_color(White));
-    // textSmall.setStyle(sf::Text::Regular);
-    // textSmall.setPosition(5, 5);
 
     sf::Color col1 = rgb(40,150,140);
     // Rectangles to draw the grids
@@ -111,7 +89,6 @@ int main() {
     while (window.isOpen()) 
     {
         bool up = 0, down = 0, right = 0, left = 0, space = 0, keyA = 0, keyD = 0, user_input = 0;
-
 
         // Event handler
         sf::Event event; 
@@ -185,14 +162,10 @@ int main() {
         rect.setPosition(resWindow.x-2,resWindow.y-2);
         rendWindow.draw(rect);
 
-        // textSmall.setPosition(5,5);
-        // textSmall.setString("Somthing");
-        // rendWindow.draw(textSmall);
 
-
-        object.draw (rendWindow,resWindow,cam);
-        object2.draw (rendWindow,resWindow,cam);
-        object3.draw (rendWindow,resWindow,cam);
+        object.draw (rendWindow,resWindow,cam,red);
+        object2.draw (rendWindow,resWindow,cam,yellow);
+        object3.draw (rendWindow,resWindow,cam,green);
 
         //////////////////////////////////////////////////////////////////
         // DISPLAY TO SCREEN
@@ -208,21 +181,27 @@ int main() {
     // DEBUG OUTPUTS
     /////////////////////////////////////////////////////////////////
 
-    std::cout << "*******END******* "<< std::endl;
-    std::cout << iRand(1,200,26123489) << std::endl;
-    std::cout << iRand(1,200,73246922) << std::endl;
-    std::cout << iRand(1,200,19232143) << std::endl;
-    std::cout << iRand(1,200,48572734) << std::endl;
+    // for (float i = 0;i < 8.0; i += .45) {
+    //     std::cout << math_sin(i) << std::endl;
+    //     std::cout << sin(i) << std::endl;
+    // }
 
-    std::cout << "      v                           __   _      "<< std::endl;
-    std::cout << "    > 0 <    ___          v      (  )_( )_    "<< std::endl;
-    std::cout << "      ^     (    )_    v    v   (   __   _)   "<< std::endl;
-    std::cout << "           _(   (  _)          (______) (__)  "<< std::endl;
-    std::cout << "          (___________)                       "<< std::endl;
-    std::cout << "              ____                            "<< std::endl;
-    std::cout << " ---------:--/  | |--p -----------------------"<< std::endl;
-    std::cout << " -  -  -  '-O------O-'   -  -  -  -  -  -  -  "<< std::endl;
-    std::cout << "----------------------------------------------"<< std::endl;
+
+    // auto start = std::chrono::high_resolution_clock::now();
+    // for (float i = 0;i < 1000000; i ++) {
+    //     math_sin(i);
+    // }
+    // auto stop = std::chrono::high_resolution_clock::now();
+    // auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    // std::cout << duration.count() << std::endl;
+
+
+    // std::cout << iRand(1,200,26123489) << std::endl;
+    // std::cout << iRand(1,200,73246922) << std::endl;
+    // std::cout << iRand(1,200,19232143) << std::endl;
+    // std::cout << iRand(1,200,48572734) << std::endl;
+
+    std::cout << "*******END******* "<< std::endl;
 
     return 0;
 }

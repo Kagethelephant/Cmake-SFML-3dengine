@@ -1,11 +1,9 @@
-#pragma once
+
 //////////////////////////////////////////////////////////////////
 // Headers
 //////////////////////////////////////////////////////////////////
-#include <cmath>
-#include <random>
+#include "matrix.hpp"
 #include "math.hpp"
-#include <iostream>
 
 
 mat4x4 identity_matrix()
@@ -97,14 +95,14 @@ mat4x4 point_matrix(vec3 &pos, vec3 &target, vec3 &up)
 mat4x4 view_matrix(mat4x4 &m) // Only for Rotation/Translation Matrices
 {
 	mat4x4 m2;
-		m2.m[0][0] = m.m[0][0]; m2.m[0][1] = m.m[1][0]; m2.m[0][2] = m.m[2][0]; m2.m[0][3] = 0.0f;
-		m2.m[1][0] = m.m[0][1]; m2.m[1][1] = m.m[1][1]; m2.m[1][2] = m.m[2][1]; m2.m[1][3] = 0.0f;
-		m2.m[2][0] = m.m[0][2]; m2.m[2][1] = m.m[1][2]; m2.m[2][2] = m.m[2][2]; m2.m[2][3] = 0.0f;
+    m2.m[0][0] = m.m[0][0]; m2.m[0][1] = m.m[1][0]; m2.m[0][2] = m.m[2][0]; m2.m[0][3] = 0.0f;
+    m2.m[1][0] = m.m[0][1]; m2.m[1][1] = m.m[1][1]; m2.m[1][2] = m.m[2][1]; m2.m[1][3] = 0.0f;
+    m2.m[2][0] = m.m[0][2]; m2.m[2][1] = m.m[1][2]; m2.m[2][2] = m.m[2][2]; m2.m[2][3] = 0.0f;
 
-		m2.m[3][0] = -(m.m[3][0] * m2.m[0][0] + m.m[3][1] * m2.m[1][0] + m.m[3][2] * m2.m[2][0]);
-		m2.m[3][1] = -(m.m[3][0] * m2.m[0][1] + m.m[3][1] * m2.m[1][1] + m.m[3][2] * m2.m[2][1]);
-		m2.m[3][2] = -(m.m[3][0] * m2.m[0][2] + m.m[3][1] * m2.m[1][2] + m.m[3][2] * m2.m[2][2]);
-		m2.m[3][3] = 1.0f;
+    m2.m[3][0] = -(m.m[3][0] * m2.m[0][0] + m.m[3][1] * m2.m[1][0] + m.m[3][2] * m2.m[2][0]);
+    m2.m[3][1] = -(m.m[3][0] * m2.m[0][1] + m.m[3][1] * m2.m[1][1] + m.m[3][2] * m2.m[2][1]);
+    m2.m[3][2] = -(m.m[3][0] * m2.m[0][2] + m.m[3][1] * m2.m[1][2] + m.m[3][2] * m2.m[2][2]);
+    m2.m[3][3] = 1.0f;
 	return m2;
 }
 
@@ -117,102 +115,3 @@ vec3 mat_multiply(vec3& v, mat4x4& m)
     v2.w = v.x * m.m[0][3] + v.y * m.m[1][3] + v.z * m.m[2][3] + v.w * m.m[3][3];
     return v2;
 }
-
-
-//////////////////////////////////////////////////////////////////
-int iRand(int min, int max, int seed)
-{
-    if (seed == -1) {
-        std::random_device rd; // Obtain a random number from hardware
-        seed = rd();
-
-        // std::cout << "no seed provided" << std::endl;
-    }
-    
-	std::minstd_rand gen(seed); // Create and seed the generator (Was using mt19937 but that is a little unecessary
-	std::uniform_int_distribution<> distr(min, max); // Use the random number against a distribution range
-
-	return distr(gen);
-}
-
-//////////////////////////////////////////////////////////////////
-int fRand(float min, float max, int seed)
-{
-    if (seed == -1) {
-        std::random_device rd; // Obtain a random number from hardware
-        seed = rd();
-        // std::cout << "no seed provided" << std::endl;
-    }
-    
-	std::minstd_rand gen(seed); // Create and seed the generator (Was using mt19937 but that is a little unecessary
-	std::uniform_real_distribution<> distr(min, max); // Use the random number against a distribution range
-
-	return distr(gen);
-}
-
-
-//////////////////////////////////////////////////////////////////
-/// \brief Array containing the the lookup values for sin
-/// This accepts 1/128th of a pi Radian
-//////////////////////////////////////////////////////////////////
-uint16_t SIN[129] =
-{
-	0, 1571, 3140, 4708, 6273, 7834, 9391, 10942, 12486, 14022, 15551,
-	17070, 18578, 20076, 21561, 23033, 24492, 25935, 27364, 28775, 30169,
-	31545, 32903, 34240, 35556, 36852, 38125, 39375, 40601, 41803, 42980,
-	44131, 45255, 46352, 47421, 48461, 49473, 50454, 51405, 52325, 53214,
-	54071, 54895, 55686, 56443, 57166, 57855, 58509, 59128, 59712, 60259, 
-	60770, 61244, 61682, 62082, 62445, 62770, 63058, 63307, 63519, 63692, 
-	63827, 63923, 63981, 64000, 63981, 63923, 63827, 63692, 63519, 63307, 
-	63058, 62770, 62445, 62082, 61682, 61244, 60770, 60259, 59712, 59128, 
-	58509, 57855, 57166, 56443, 55686, 54895, 54071, 53214, 52325, 51405, 
-	50454, 49473, 48461, 47421, 46352, 45255, 44131, 42980, 41803, 40601, 
-	39375, 38125, 36852, 35556, 34240, 32903, 31545, 30169, 28775, 27364, 
-	25935, 24492, 23033, 21561, 20076, 18578, 17070, 15551, 14022, 12486, 
-	10942, 9391, 7834, 6273, 4708, 3140, 1571, 0
-};
-
-
-//////////////////////////////////////////////////////////////////
-float math_sin(float theta)
-{
-	float sign = 1.0f;
-
-	// Turn the radians into pi-radians
-	theta /= 3.141592653;
-	// Get the amount of whole 2 pi radians off 
-	int half = (int)fabs(theta/2);
-
-	// If it is more than 2 pi radians or les then zero, wrap it
-	if (theta < 0) theta += half*2+2;
-	else if (theta > 2) theta -= half*2;
-
-	// If it is the second half of the sine curve make it negative
-	if (theta >= 1) { theta -= 1; sign = -1.0f;}
-	theta *= 128;
-
-	int deg = (int)theta;
-	float extrp = theta - (float)deg;
-	float va = sign*SIN[deg]/64000;
-	float vb = sign*SIN[deg + 1]/64000;
-
-	float result = va + (vb-va)*extrp;
-
-    return result;
-}
-
-//////////////////////////////////////////////////////////////////
-float math_cos(float theta)
-{
-	theta += .5*3.141592653;
-    return math_sin(theta);
-}
-
-//////////////////////////////////////////////////////////////////
-float math_tan(float theta)
-{
-	float result = math_sin(theta)/math_cos(theta);
-    return result;
-}
-
-

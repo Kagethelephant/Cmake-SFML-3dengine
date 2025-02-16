@@ -1,4 +1,3 @@
-#pragma once
 
 //////////////////////////////////////////////////////////////////
 // Headers
@@ -25,14 +24,13 @@ object3d::object3d()
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void object3d::update()
-{ 
-    m_matTransform = translate_matrix(x,y,z) * rotate_x_matrix(u) * rotate_y_matrix(v) * rotate_z_matrix(w);
-}
+void object3d::update(){ m_matTransform = translate_matrix(x,y,z) * rotate_x_matrix(u) * rotate_y_matrix(v) * rotate_z_matrix(w);}
+
+
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void object3d::draw(sf::RenderTexture& texture, sf::Vector2i res, camera c)
+void object3d::draw(sf::RenderTexture& texture, sf::Vector2i res, camera c, sf::Color col)
 {
     update();
     // Create a vector for the camera and light direction (not position)
@@ -49,20 +47,17 @@ void object3d::draw(sf::RenderTexture& texture, sf::Vector2i res, camera c)
         triIn.v[0] = i.v[0] * m_matTransform;
         triIn.v[1] = i.v[1] * m_matTransform;
         triIn.v[2] = i.v[2] * m_matTransform;
-
         // Get the normal vector to the triangle
-        vec3 norm = triIn.norm();
-
-        // Only draw if the triangle is visable
-        // position of any point on the triangle - cam position will give the vector to check against the normal
-        // if(norm.dot(triIn.v[0] - cam) < 0 ) 
-        // {
+        // vec3 norm = triIn.norm();
+        
+        // I think we can put something here to stop the inside out-ghost cows
+        // This is moving/transforming the item into view relitive to the camera
         triIn.v[0] = triIn.v[0] * c.view;
         triIn.v[1] = triIn.v[1] * c.view;
         triIn.v[2] = triIn.v[2] * c.view;
 
+
         buffer.push_back(triIn);
-        // }
     }
 
     // sort by z midpoint
@@ -74,20 +69,12 @@ void object3d::draw(sf::RenderTexture& texture, sf::Vector2i res, camera c)
               });
 
     int testCount = 0;
+
     //project and draw
     for(tri3d tri : buffer)
     {
         vec3 norm = tri.norm();
         float shade = norm.dot(light);
-
-
-        // std::cout << shade << std::endl;
-        // std::cout << norm.x << std::endl;
-        // std::cout << norm.y << std::endl;
-        // std::cout << norm.z << std::endl;
-        // std::cout << light.x << std::endl;
-        // std::cout << light.y << std::endl;
-        // std::cout << light.z << std::endl;
 
 
         for (int i = 0; i < 3; i++)
@@ -105,12 +92,11 @@ void object3d::draw(sf::RenderTexture& texture, sf::Vector2i res, camera c)
             tri.v[i].x *= 0.5f * res.y;
             tri.v[i].y *= 0.5f * res.x;
         }
-        sf::Color tempCol = yellow;
-
-        int r = (tempCol.r/2.0)*(shade+1);
-        int g = (tempCol.g/2.0)*(shade+1);
-        int b = (tempCol.b/2.0)*(shade+1);
-
+        
+        // Get the color based on the light angle relitive to the face normal
+        int r = (col.r/2.0)*(shade+1);
+        int g = (col.g/2.0)*(shade+1);
+        int b = (col.b/2.0)*(shade+1);
 
         drawTriangle(texture, res,tri, rgb(r,g,b));
     }
@@ -210,7 +196,6 @@ mat4x4 camera::update()
 
     point = point_matrix(position,target,up);
     view = view_matrix(point);
-
     return view;
 }
 
@@ -218,6 +203,5 @@ mat4x4 camera::update()
 void camera::move(float _x, float _y, float _z)
 {
     vec3 move = (direction * _z) + (direction.cross(up) * _x);
-
     position = position + move;
 }
