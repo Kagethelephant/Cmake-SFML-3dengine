@@ -1,6 +1,6 @@
 
 //////////////////////////////////////////////////////////////////
-// Headers
+// Header
 //////////////////////////////////////////////////////////////////
 #include "obj3d.hpp"
 #include "utils/matrix.hpp"
@@ -16,79 +16,78 @@ object3d::object3d() {
    u = 0, v = 0, w = 0 , x = 0 , y = 0 , z = 0;
    update();
    m_aspectRatio = ((float)sf::VideoMode::getDesktopMode().width) / ((float)sf::VideoMode::getDesktopMode().height);
+   std::cout << m_aspectRatio << std::endl;
 
    m_matProj = project_matrix(90.0f,m_aspectRatio,0.1f,1000.0f);  
 }
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void object3d::update(){ m_matTransform = translate_matrix(x,y,z) * rotate_x_matrix(u) * rotate_y_matrix(v) * rotate_z_matrix(w);}
+void object3d::update(){ m_matTransform = transformation_matrix(x, y, z, u, v, w);}
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void object3d::draw(sf::RenderTexture& texture, sf::Vector2i res, camera c, sf::Color col) {
+   
+   // This is some code that will create a test cube instead of a mesh
+   // mesh.push_back(tri3d(vec3(-1.0f,-1.0f,0.0f),vec3(-1.0f,1.0f,0.0f),vec3(1.0f,-1.0f,0.0f)));
+   // mesh.push_back(tri3d(vec3(1.0f,1.0f,0.0f),vec3(1.0f,-1.0f,0.0f),vec3(-1.0f,1.0f,0.0f)));
 
    update();
    // Create a vector for the camera and light direction (not position)
    vec3 light(-1,1,-1);
-   light = light.norm();
+   light.normalize();
 
    std::vector<tri3d> buffer;
-
    for(tri3d i: mesh) {
+      
+      // Transform the objects position and rotation by multiplying it by
+      // this objects transformation matrix populated by "update()"
+      tri3d tri = i;
+      tri.v[0] *= m_matTransform;
+      tri.v[1] *= m_matTransform;
+      tri.v[2] *= m_matTransform;
 
-      tri3d triIn;
-
-      triIn.v[0] = i.v[0] * m_matTransform;
-      triIn.v[1] = i.v[1] * m_matTransform;
-      triIn.v[2] = i.v[2] * m_matTransform;
-
-      // Get the normal vector to the triangle
-      vec3 triNorm = triIn.norm();
-      vec3 camToTri = vec3(triIn.v[0].x-c.position.x,triIn.v[0].y-c.position.y,triIn.v[0].z-c.position.z);
+      // Get the normal vector to the triangle and the vector pointing
+      // from the camera to the triangle to determine if we should draw it
+      vec3 triNorm = tri.normal();
+      vec3 camToTri = vec3(tri.v[0].x-c.position.x,tri.v[0].y-c.position.y,tri.v[0].z-c.position.z);
 
       // This makes sure we only draw triangles are facing us and are in our line-of-sight 
       if((camToTri.dot(triNorm) < 0.1) && (camToTri.dot(c.direction) > 0)) {
 
-         triIn.v[0] = triIn.v[0] * c.view;
-         triIn.v[1] = triIn.v[1] * c.view;
-         triIn.v[2] = triIn.v[2] * c.view;
-
-         buffer.push_back(triIn);
+         tri.v[0] *= c.view;
+         tri.v[1] *= c.view;
+         tri.v[2] *= c.view;
+         buffer.push_back(tri);
       }
    }
 
    // sort by z midpoint
    std::sort(buffer.begin(),buffer.end(), [](tri3d &t1, tri3d &t2) {
-
+      // Check the z position of the midpoint to decide what triangles to draw first
       float z1 = (t1.v[0].z + t1.v[1].z + t1.v[2].z)/3.0f;
       float z2 = (t2.v[0].z + t2.v[1].z + t2.v[2].z)/3.0f;
       return z1 > z2;
    });
 
-   int testCount = 0;
 
    //project and draw
    for(tri3d tri : buffer) {
 
-      vec3 norm = tri.norm();
+      vec3 norm = tri.normal();
       float shade = norm.dot(light);
-
 
       for (int i = 0; i < 3; i++) {
 
          // Project 2D
-         tri.v[i] = tri.v[i] * m_matProj;
-
-         // Why i have to multiply this by the aspect ratio i have no idea
-         // Center on screen
-         tri.v[i].x += 1*m_aspectRatio;
-         tri.v[i].y += 1/m_aspectRatio;
-
-         // Why these are swapped i have no idea
-         // Scale to size
-         tri.v[i].x *= 0.5f * res.y;
-         tri.v[i].y *= 0.5f * res.x;
+         tri.v[i] *= m_matProj;
+         // This is centering the view on the screen by scaling the aspect ratio
+         tri.v[i].x += 1;
+         tri.v[i].y += 1;
+         // This scales the x and y to position in the center of the screen
+         tri.v[i].x *= 0.5f * res.x;
+         tri.v[i].y *= 0.5f * res.y;
       }
 
       // Get the color based on the light angle relitive to the face normal
@@ -112,7 +111,6 @@ void object3d::load(std::string fileName) {
    }
 
    std::vector<vec3> verts;
-
    while(!obj.eof()) {
 
       char line[128];

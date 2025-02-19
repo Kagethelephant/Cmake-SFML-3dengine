@@ -3,24 +3,33 @@
 // Headers
 //////////////////////////////////////////////////////////////////
 #include "camera.hpp"
+#include "utils/matrix.hpp"
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 mat4x4 camera::update() {
 
-   direction = vec3(0,0,1) * (rotate_x_matrix(u) * rotate_y_matrix(v) * rotate_z_matrix(w));
-   direction = direction.norm();
-   // position = vec3(x,y,z);
-
+   // Why is this vector only have z = 1?
+   // Rotate using the rotation matricies and normalize it
+   direction = vec3(0,0,1) * transformation_matrix(0, 0, 0, rotation.x, rotation.y, rotation.z);
+   direction.normalize();
+   // Target can be any distance away from the object as long as it is the correct direction
    target = (position + direction);
-
-   point = point_matrix(position,target,up);
+   // Calculate the point at matrix and view matrix (black box)
+   point = point_matrix(position, target, up);
    view = view_matrix(point);
    return view;
 }
 
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void camera::move(float _x, float _y, float _z) {
+   position += (direction * _z) + (direction.cross(up) * _x);
+   update();
+}
 
-   vec3 move = (direction * _z) + (direction.cross(up) * _x);
-   position = position + move;
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void camera::rotate(float _u, float _v, float _w) {
+   rotation += vec3(_u,_v,_w);
+   update();
 }

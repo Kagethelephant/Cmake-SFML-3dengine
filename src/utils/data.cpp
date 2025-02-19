@@ -3,6 +3,7 @@
 // Headers
 //////////////////////////////////////////////////////////////////
 #include "data.hpp"
+#include <SFML/Graphics/Font.hpp>
 
 
 sf::Color red;

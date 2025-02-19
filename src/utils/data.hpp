@@ -4,6 +4,7 @@
 // Headers
 //////////////////////////////////////////////////////////////////
 #include <SFML/Graphics.hpp>
+#include <SFML/Graphics/Font.hpp>
 
 extern sf::Color red;
 extern sf::Color blue;

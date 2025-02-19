@@ -22,58 +22,51 @@ int main() {
    //////////////////////////////////////////////////////////////////
    // Setup for SFML window and resolution
    //////////////////////////////////////////////////////////////////
-
    sf::Vector2f mousePos;
    sf::Vector2i resWindow;
 
    sf::RenderWindow window;
-   resWindow = windowSetup(window, 1600, true, "CORONA",60);
-
+   resWindow = windowSetup(window, 400, true, "CORONA",60);
+   
    sf::RenderTexture rendWindow;
    rendWindow.create(resWindow.x,resWindow.y);
 
-
    camera cam;
+
 
    object3d object;
    object.load("../resources/objects/cow.obj");
-   object.z = 10;
-   object.x = 0;
+   object.z = 15;
+   object.x = 20;
 
    object3d object2;
    object2.load("../resources/objects/cow.obj");
-   object2.z = 5;
-   object2.x = -10;
+   object2.z = 10;
+   object2.x = 0;
 
    object3d object3;
    object3.load("../resources/objects/cow.obj");
-   object3.z = 15;
-   object3.x = 20;
-
-
-
-   //////////////////////////////////////////////////////////////////
-   // GLYPHS
-   //////////////////////////////////////////////////////////////////
-
-   // load font
-   // sf::Font fontSmall;
-   // if (!fontSmall.loadFromFile("../resources/font/small_pixel.ttf")) return 1;
-
-
-   // Rectangles to draw the grids
-   sf::RectangleShape rect;
-   rect.setSize(sf::Vector2f(3,3));
-   rect.setFillColor(orange);
-   rect.setOutlineColor(sf::Color::Transparent);
-   rect.setOutlineThickness(2);
-   rect.setOrigin(1, 1);
-
+   object3.z = 5;
+   object3.x = -10;
 
 
    //////////////////////////////////////////////////////////////////
    // DRAW STATIC
    //////////////////////////////////////////////////////////////////
+
+   sf::Font fontRegular;
+   fontRegular.loadFromFile("../resources/font/small_pixel.ttf");
+   fontRegular.setSmooth(false);
+
+   sf::Text textSmall;
+  textSmall.setString("Hello World");
+  textSmall.setFont(fontRegular);
+  textSmall.setFillColor(white);
+  textSmall.setCharacterSize(8);
+  textSmall.setPosition(5,5);
+
+
+
 
 
 
@@ -93,12 +86,10 @@ int main() {
       while (window.pollEvent(event)) {
 
          switch (event.type) {
-
             // If the X window button is pressed exit
             case sf::Event::Closed:
                window.close();
                break;
-
             // Keyboard input
             case sf::Event::KeyPressed:
                if (event.key.code == sf::Keyboard::Escape) { window.close(); }
@@ -110,18 +101,11 @@ int main() {
                else if (event.key.code == sf::Keyboard::A) { keyA = 1; user_input = 1;}
                else if (event.key.code == sf::Keyboard::D) { keyD = 1; user_input = 1;}
                break;
-
             default:
                // Do nothing
                break;
          }
       }
-
-      //////////////////////////////////////////////////////////////////
-      // MAIN LOOP
-      //////////////////////////////////////////////////////////////////
-
-
 
 
 
@@ -134,64 +118,54 @@ int main() {
 
       float move_x = 0;
       float move_z = 0;
+      float rot_v = 0;
 
       move_z += (up - down)*.1;
       move_x += (left - right)*.1;
-      cam.v += (keyA - keyD)*.1;
+      rot_v += (keyA - keyD)*.1;
 
       // Update if a key is pressed
       cam.move(move_x,0,move_z);
-      cam.update();
+      cam.rotate(0,rot_v,0);
 
 
 
       //////////////////////////////////////////////////////////////////
       // DRAW
       ////////////////////////////////////////////////////////////////// 
-
       // Move the rectangle to the correct position before drawing
       rendWindow.clear(black);
-      rect.setPosition(mousePos.x, mousePos.y);
-      rendWindow.draw(rect);
-
-      rect.setPosition(1,1);
-      rendWindow.draw(rect);
-
-      rect.setPosition(resWindow.x-2,resWindow.y-2);
-      rendWindow.draw(rect);
-
 
       object.draw (rendWindow,resWindow,cam,red);
       object2.draw (rendWindow,resWindow,cam,yellow);
       object3.draw (rendWindow,resWindow,cam,green);
 
+      textSmall.setString("X: "+std::to_string(cam.position.x));
+      textSmall.setPosition(5,10);
+      rendWindow.draw(textSmall);
+      textSmall.setString("Y: "+std::to_string(cam.position.y));
+      textSmall.setPosition(5,20);
+      rendWindow.draw(textSmall);
+      textSmall.setString("Z: "+std::to_string(cam.position.z));
+      textSmall.setPosition(5,30);
+      rendWindow.draw(textSmall);
+      textSmall.setString("V: "+std::to_string(cam.rotation.y));
+      textSmall.setPosition(5,40);
+      rendWindow.draw(textSmall);
+
       //////////////////////////////////////////////////////////////////
       // DISPLAY TO SCREEN
       //////////////////////////////////////////////////////////////////
-
       // Display canvas layers to screen
       rendWindow.display();
       window.draw(sf::Sprite(rendWindow.getTexture()));
       window.display();
    }
 
+
    //////////////////////////////////////////////////////////////////
    // DEBUG OUTPUTS
    /////////////////////////////////////////////////////////////////
-
-   // auto start = std::chrono::high_resolution_clock::now();
-   // for (float i = 0;i < 1000000; i ++) {
-   //     math_sin(i);
-   // }
-   // auto stop = std::chrono::high_resolution_clock::now();
-   // auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-   // std::cout << duration.count() << std::endl;
-
-
-   // std::cout << iRand(1,200,26123489) << std::endl;
-   // std::cout << iRand(1,200,73246922) << std::endl;
-   // std::cout << iRand(1,200,19232143) << std::endl;
-   // std::cout << iRand(1,200,48572734) << std::endl;
 
    std::cout << "*******END******* "<< std::endl;
 

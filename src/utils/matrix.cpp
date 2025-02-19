@@ -5,81 +5,47 @@
 #include "matrix.hpp"
 
 
-mat4x4 identity_matrix() {
+
+// This is a combination of 4 matrices, the translation matrix (for x,y,z) and 
+// the 3 rotation matrices; u - pitch, v - roll, and w - yaw, about the x,y,z axis respectively
+mat4x4 transformation_matrix(float x, float y, float z, float u, float v, float w) {
 
    mat4x4 m;
-   m.m[0][0] = 1.0f; m.m[1][0] = 0.0f; m.m[2][0] = 0.0f; m.m[3][0] = 0.0f;
-   m.m[0][1] = 0.0f; m.m[1][1] = 1.0f; m.m[2][1] = 0.0f; m.m[3][1] = 0.0f;
-   m.m[0][2] = 0.0f; m.m[1][2] = 0.0f; m.m[2][2] = 1.0f; m.m[3][2] = 0.0f;
-   m.m[0][3] = 0.0f; m.m[1][3] = 0.0f; m.m[2][3] = 0.0f; m.m[3][3] = 1.0f;	
+   m.m[0][0] = (cosf(v)*cosf(w)); m.m[1][0] = ((sinf(u)*-sinf(v))*cosf(w)) + (cosf(u)*-sinf(w)); m.m[2][0] = ((cosf(u)*-sinf(v))*cosf(w)) + (-sinf(u)*-sinf(w)); m.m[3][0] = x;
+   m.m[0][1] = (cosf(v)*sinf(w)); m.m[1][1] = ((sinf(u)*-sinf(v))*sinf(w)) + (cosf(u)*cosf(w));  m.m[2][1] = ((cosf(u)*-sinf(v))*sinf(w)) + (-sinf(u)*cosf(w));  m.m[3][1] = y;
+   m.m[0][2] = sinf(v);           m.m[1][2] = (sinf(u)*cos(v));                                  m.m[2][2] = (cos(u)*cos(v));                                    m.m[3][2] = z;
+   m.m[0][3] = 0.0f;              m.m[1][3] = 0.0f;                                              m.m[2][3] = 0.0f;                                               m.m[3][3] = 1.0f;
    return m;
 }
 
-mat4x4 rotate_x_matrix(float u) {
 
-   mat4x4 m;
-   m.m[0][0] = 1.0f; m.m[1][0] = 0.0f;    m.m[2][0] = 0.0f;     m.m[3][0] = 0.0f;
-   m.m[0][1] = 0.0f; m.m[1][1] = cosf(u); m.m[2][1] = -sinf(u); m.m[3][1] = 0.0f;
-   m.m[0][2] = 0.0f; m.m[1][2] = sinf(u); m.m[2][2] = cosf(u);  m.m[3][2] = 0.0f;
-   m.m[0][3] = 0.0f; m.m[1][3] = 0.0f;    m.m[2][3] = 0.0f;     m.m[3][3] = 1.0f;
-   return m;
-}
-
-mat4x4 rotate_y_matrix(float v) {
-
-   mat4x4 m;
-   m.m[0][0] = cosf(v); m.m[1][0] = 0.0f; m.m[2][0] = -sinf(v); m.m[3][0] = 0.0f;
-   m.m[0][1] = 0.0f;    m.m[1][1] = 1.0f; m.m[2][1] = 0.0f;     m.m[3][1] = 0.0f;
-   m.m[0][2] = sinf(v); m.m[1][2] = 0.0f; m.m[2][2] = cosf(v);  m.m[3][2] = 0.0f;
-   m.m[0][3] = 0.0f;    m.m[1][3] = 0.0f; m.m[2][3] = 0.0f;     m.m[3][3] = 1.0f;
-   return m;
-}
-
-mat4x4 rotate_z_matrix(float w) {
-
-   mat4x4 m;
-   m.m[0][0] = cosf(w); m.m[1][0] = -sinf(w); m.m[2][0] = 0.0f; m.m[3][0] = 0.0f;
-   m.m[0][1] = sinf(w); m.m[1][1] = cosf(w);  m.m[2][1] = 0.0f; m.m[3][1] = 0.0f;
-   m.m[0][2] = 0.0f;    m.m[1][2] = 0.0f;     m.m[2][2] = 1.0f; m.m[3][2] = 0.0f;
-   m.m[0][3] = 0.0f;    m.m[1][3] = 0.0f;     m.m[2][3] = 0.0f; m.m[3][3] = 1.0f;
-   return m;
-}
-
-mat4x4 translate_matrix(float x, float y, float z) {
-
-   mat4x4 m;
-   m.m[0][0] = 1.0f; m.m[1][0] = 0.0f; m.m[2][0] = 0.0f; m.m[3][0] = x;
-   m.m[0][1] = 0.0f; m.m[1][1] = 1.0f; m.m[2][1] = 0.0f; m.m[3][1] = y;
-   m.m[0][2] = 0.0f; m.m[1][2] = 0.0f; m.m[2][2] = 1.0f; m.m[3][2] = z;
-   m.m[0][3] = 0.0f; m.m[1][3] = 0.0f; m.m[2][3] = 0.0f; m.m[3][3] = 1.0f;
-   return m;
-}
-
+// This is the projection matrix it is responsible for mapping the canonical viewing volume
+// to the viewing frustum. This basically just applies perspective to the 3D objects
 mat4x4 project_matrix(float fFovDegrees, float fAspectRatio, float fNear, float fFar) {
    // m[1][1] is not normally negative but since we are drawing as y = 0 is at the top of the screen
    // we need to invert the y values since y = 0 should be towards the bottom of the screen for most models
    float fFovRad = 1.0f / tanf(fFovDegrees * 0.5f / 180.0f * 3.14159f);
    float fDisRatio = fFar / (fFar - fNear);
+
    mat4x4 m;
-   m.m[0][0] = fAspectRatio * fFovRad; m.m[1][0] = 0.0f;     m.m[2][0] = 0.0f;      m.m[3][0] = 0.0f;
-   m.m[0][1] = 0.0f;                   m.m[1][1] = -fFovRad; m.m[2][1] = 0.0f;      m.m[3][1] = 0.0f;
-   m.m[0][2] = 0.0f;                   m.m[1][2] = 0.0f;     m.m[2][2] = fDisRatio; m.m[3][2] = (-fFar * fNear) / (fFar - fNear);
-   m.m[0][3] = 0.0f;                   m.m[1][3] = 0.0f;     m.m[2][3] = 1.0f;      m.m[3][3] = 0.0f;
+   m.m[0][0] = fFovRad;   m.m[1][0] = 0.0f;                    m.m[2][0] = 0.0f;         m.m[3][0] = 0.0f;
+   m.m[0][1] = 0.0f;      m.m[1][1] = -fFovRad * fAspectRatio; m.m[2][1] = 0.0f;         m.m[3][1] = 0.0f;
+   m.m[0][2] = 0.0f;      m.m[1][2] = 0.0f;                    m.m[2][2] = fDisRatio;    m.m[3][2] = -fNear * fDisRatio;
+   m.m[0][3] = 0.0f;      m.m[1][3] = 0.0f;                    m.m[2][3] = 1.0f;         m.m[3][3] = 0.0f;
    return m;
 }
 
+
+
+// This matrix should make an object point at something else
 mat4x4 point_matrix(vec3 &pos, vec3 &target, vec3 &up) {
 
    mat4x4 m;
    // Calculate new forward direction
-   vec3 newForward = target - pos;
-   newForward = newForward.norm();
-
+   vec3 newForward = (target - pos).normal();
    // Calculate new Up direction
    vec3 a = newForward * up.dot(newForward);
-   vec3 newUp = up - a;
-   newUp = newUp.norm();
-
+   vec3 newUp = (up - a).normal();
    // New Right direction is easy, its just cross product
    vec3 newRight = newUp.cross(newForward);
 
@@ -90,6 +56,8 @@ mat4x4 point_matrix(vec3 &pos, vec3 &target, vec3 &up) {
    return m;
 }
 
+
+// This should move objects in the view matrix correctly with the context of the camera direction
 mat4x4 view_matrix(mat4x4 &m) { // Only for Rotation/Translation Matrices
 
    mat4x4 m2;
@@ -104,12 +72,3 @@ mat4x4 view_matrix(mat4x4 &m) { // Only for Rotation/Translation Matrices
    return m2;
 }
 
-vec3 mat_multiply(vec3& v, mat4x4& m) {
-
-   vec3 v2;
-   v2.x = v.x * m.m[0][0] + v.y * m.m[1][0] + v.z * m.m[2][0] + v.w * m.m[3][0];
-   v2.y = v.x * m.m[0][1] + v.y * m.m[1][1] + v.z * m.m[2][1] + v.w * m.m[3][1];
-   v2.z = v.x * m.m[0][2] + v.y * m.m[1][2] + v.z * m.m[2][2] + v.w * m.m[3][2];
-   v2.w = v.x * m.m[0][3] + v.y * m.m[1][3] + v.z * m.m[2][3] + v.w * m.m[3][3];
-   return v2;
-}

@@ -53,7 +53,6 @@ private:
    // Member variables: Matrices for rotating and projecting vertices/triangles
    mat4x4 m_matProj;
    mat4x4 m_matTransform;
-
    float m_aspectRatio;     
 
    /// Build the look at matrix
