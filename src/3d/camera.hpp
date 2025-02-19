@@ -12,8 +12,6 @@
 class camera {
 
 public:
-
-   // float  u = 0, v = 0, w = 0; //x = 0, y = 0, z = 0,
    
    // Position along x, y, z
    // Rotation about x, y, z (u-pitch, v-roll, w-yaw)
@@ -27,18 +25,15 @@ public:
    vec3 target = vec3(0,0,0);
    vec3 direction = vec3(0,0,1);
 
-
+   // The point matrix is just used to create the view matrix
+   // but the view matrix is used by all objects to put themselvs in the view
    mat4x4 point; 
    mat4x4 view; 
    
-   // Alter the position and rotation vectors
-   // the move function moves relitive to the look direction
-   void move(float _x, float _y, float _z);
-   void rotate(float _u, float _v, float _w);
+   // This updates all of the matrices based on the new position and rotation
+   // This gets called by the move and rotate functions
+   mat4x4 update(float x, float y, float z, float u, float v, float w);
 
 private:
 
-   // This updates all of the matrices based on the new position and rotation
-   // This gets called by the move and rotate functions
-   mat4x4 update();
 };

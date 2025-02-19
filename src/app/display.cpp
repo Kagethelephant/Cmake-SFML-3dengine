@@ -1,4 +1,3 @@
-
 //////////////////////////////////////////////////////////////////
 // Headers
 //////////////////////////////////////////////////////////////////
@@ -6,7 +5,10 @@
 #include <SFML/System/Vector2.hpp>
 #include <cmath>
 
-//////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// This is just to move the window setup stuff out of the main loop because all of this will generally be the same
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 sf::Vector2i windowSetup(sf::RenderWindow& window, int height, bool fullscreen = true, sf::String title = "Window", int fps = 60) {
 
    // Get the display dimmensions and calculate the aspect ratio
@@ -15,6 +17,7 @@ sf::Vector2i windowSetup(sf::RenderWindow& window, int height, bool fullscreen =
    sf::Vector2i res (std::fabs(height *aspectRatio), height);
 
    // Initialize the view with the calculated resolution 
+   // If not fullscreen then we need to set the window size as well as the resolution
    if (fullscreen) window.create(sf::VideoMode::getDesktopMode(), title, sf::Style::Fullscreen);
    else {
       window.setSize(sf::Vector2u(res.x,res.y));

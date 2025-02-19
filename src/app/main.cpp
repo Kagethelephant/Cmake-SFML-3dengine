@@ -9,7 +9,6 @@
 #include "display.hpp"
 #include "utils/data.hpp"
 #include "3d/obj3d.hpp"
-
 // #include <chrono>
 #include <cmath>
 
@@ -33,7 +32,7 @@ int main() {
 
    camera cam;
 
-
+   // ******************** CREATE 3D OBJECTS **********************
    object3d object;
    object.load("../resources/objects/cow.obj");
    object.z = 15;
@@ -53,7 +52,6 @@ int main() {
    //////////////////////////////////////////////////////////////////
    // DRAW STATIC
    //////////////////////////////////////////////////////////////////
-
    sf::Font fontRegular;
    fontRegular.loadFromFile("../resources/font/small_pixel.ttf");
    fontRegular.setSmooth(false);
@@ -64,11 +62,6 @@ int main() {
   textSmall.setFillColor(white);
   textSmall.setCharacterSize(8);
   textSmall.setPosition(5,5);
-
-
-
-
-
 
 
    //////////////////////////////////////////////////////////////////
@@ -112,7 +105,6 @@ int main() {
       //////////////////////////////////////////////////////////////////
       // UPDATE
       //////////////////////////////////////////////////////////////////    
-
       // Create a vector with the pixel coord's in the actual window not the display
       mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
 
@@ -125,9 +117,7 @@ int main() {
       rot_v += (keyA - keyD)*.1;
 
       // Update if a key is pressed
-      cam.move(move_x,0,move_z);
-      cam.rotate(0,rot_v,0);
-
+      cam.update(move_x,0,move_z,0,rot_v,0);
 
 
       //////////////////////////////////////////////////////////////////
@@ -161,7 +151,6 @@ int main() {
       window.draw(sf::Sprite(rendWindow.getTexture()));
       window.display();
    }
-
 
    //////////////////////////////////////////////////////////////////
    // DEBUG OUTPUTS
