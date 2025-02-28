@@ -1,0 +1,13 @@
+//////////////////////////////////////////////////////////////////
+// Headers
+//////////////////////////////////////////////////////////////////
+#include "icosahedron.hpp"
+#include "3d/polygon.hpp"
+
+
+std::vector<tri3d> icosahedron (){
+   std::vector<tri3d> mesh;
+   std::vector<vec3> vecs;
+
+   return mesh;
+}

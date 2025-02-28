@@ -4,7 +4,6 @@
 #include "matrix.hpp"
 
 
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// This will move and rotate a 3D object
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -19,7 +18,6 @@ mat4x4 transformation_matrix(float x, float y, float z, float u, float v, float 
    m.m[0][3] = 0.0f;              m.m[1][3] = 0.0f;                                              m.m[2][3] = 0.0f;                                               m.m[3][3] = 1.0f;
    return m;
 }
-
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42,22 +40,19 @@ mat4x4 project_matrix(float fFovDegrees, float fAspectRatio, float fNear, float 
 }
 
 
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// This makes a vector point at something else i think, need more research
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // This matrix should make an object point at something else
-mat4x4 point_matrix(vec3 &pos, vec3 &target, vec3 &up) {
+mat4x4 point_matrix(vec3 &pos, vec3 &newForward, vec3 &up) {
 
-   mat4x4 m;
-   // Calculate new forward direction
-   vec3 newForward = (target - pos).normal();
    // Calculate new Up direction
    vec3 a = newForward * up.dot(newForward);
    vec3 newUp = (up - a).normal();
    // New Right direction is easy, its just cross product
    vec3 newRight = newUp.cross(newForward);
 
+   mat4x4 m;
    m.m[0][0] = newRight.x; m.m[1][0] = newUp.x; m.m[2][0] = newForward.x; m.m[3][0] = pos.x;
    m.m[0][1] = newRight.y; m.m[1][1] = newUp.y; m.m[2][1] = newForward.y; m.m[3][1] = pos.y;
    m.m[0][2] = newRight.z; m.m[1][2] = newUp.z; m.m[2][2] = newForward.z; m.m[3][2] = pos.z;
@@ -66,11 +61,11 @@ mat4x4 point_matrix(vec3 &pos, vec3 &target, vec3 &up) {
 }
 
 
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// The transforms other objects into the view if they should be there based on the direction of the camera
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// This should move objects in the view matrix correctly with the context of the camera direction
+// This should move objects in the view matrix correctly with the context of the camera direction (takes the point matrix as parameter)
+// This basically just takes the inverse of the point at matrix
 mat4x4 view_matrix(mat4x4 &m) { // Only for Rotation/Translation Matrices
 
    mat4x4 m2;

@@ -9,6 +9,7 @@
 #include "display.hpp"
 #include "utils/data.hpp"
 #include "3d/obj3d.hpp"
+#include "utils/random.hpp"
 // #include <chrono>
 #include <cmath>
 
@@ -17,6 +18,7 @@
 int main() {
 
    defineGlobal();
+   randObj rander(13412234);
 
    //////////////////////////////////////////////////////////////////
    // Setup for SFML window and resolution
@@ -25,7 +27,7 @@ int main() {
    sf::Vector2i resWindow;
 
    sf::RenderWindow window;
-   resWindow = windowSetup(window, 400, true, "CORONA",60);
+   resWindow = windowSetup(window, 400, false, "CORONA",60);
    
    sf::RenderTexture rendWindow;
    rendWindow.create(resWindow.x,resWindow.y);

@@ -18,11 +18,7 @@ public:
    vec3 position = vec3(0,0,0);
    vec3 rotation = vec3(0,0,0);
    
-   // Up - vector storing up direction
-   // Target - the position of the look at target
-   // direction - vector storing the forward direction
-   vec3 up = vec3(0,1,0);
-   vec3 target = vec3(0,0,0);
+   // Vector storing the forward direction
    vec3 direction = vec3(0,0,1);
 
    // The point matrix is just used to create the view matrix
@@ -32,7 +28,7 @@ public:
    
    // This updates all of the matrices based on the new position and rotation
    // This gets called by the move and rotate functions
-   mat4x4 update(float x, float y, float z, float u, float v, float w);
+   void update(float x, float y, float z, float u, float v, float w);
 
 private:
 

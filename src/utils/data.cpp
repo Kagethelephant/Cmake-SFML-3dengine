@@ -38,3 +38,4 @@ void defineGlobal() {
    black = rgb(15, 18, 23);
    white = rgb(224, 222, 215);
 }
+

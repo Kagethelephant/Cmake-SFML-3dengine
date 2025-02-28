@@ -5,6 +5,7 @@
 //////////////////////////////////////////////////////////////////
 #include <SFML/Graphics.hpp>
 #include <SFML/Graphics/Font.hpp>
+#include "matrix.hpp"
 
 extern sf::Color red;
 extern sf::Color blue;
@@ -32,6 +33,3 @@ sf::Color rgb(unsigned char r, unsigned char g, unsigned char b, unsigned char a
 /// \brief This initializes all of the variables above
 //////////////////////////////////////////////////////////////////
 void defineGlobal();
-
-
-

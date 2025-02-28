@@ -17,11 +17,8 @@ object3d::object3d() {
    u = 0, v = 0, w = 0 , x = 0 , y = 0 , z = 0;
    update();
    m_aspectRatio = ((float)sf::VideoMode::getDesktopMode().width) / ((float)sf::VideoMode::getDesktopMode().height);
-   std::cout << m_aspectRatio << std::endl;
-
    m_matProj = project_matrix(90.0f,m_aspectRatio,0.1f,1000.0f);  
 }
-
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -30,16 +27,11 @@ object3d::object3d() {
 void object3d::update(){ m_matTransform = transformation_matrix(x, y, z, u, v, w);}
 
 
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// This is the main function and probably needs to be broken up into more functions
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void object3d::draw(sf::RenderTexture& texture, sf::Vector2i res, camera c, sf::Color col) {
+void object3d::draw(sf::RenderTexture& texture, sf::Vector2i res, camera camera, sf::Color color) {
    
-   // This is some code that will create a test cube instead of a mesh
-   // mesh.push_back(tri3d(vec3(-1.0f,-1.0f,0.0f),vec3(-1.0f,1.0f,0.0f),vec3(1.0f,-1.0f,0.0f)));
-   // mesh.push_back(tri3d(vec3(1.0f,1.0f,0.0f),vec3(1.0f,-1.0f,0.0f),vec3(-1.0f,1.0f,0.0f)));
-
    // ************************** MOVE AND ROTATE **************************
    update();
 
@@ -52,27 +44,20 @@ void object3d::draw(sf::RenderTexture& texture, sf::Vector2i res, camera c, sf::
       
       // Transform the objects position and rotation by multiplying it by
       // this objects transformation matrix populated by "update()"
-      tri3d tri = i;
-      tri.v[0] *= m_matTransform;
-      tri.v[1] *= m_matTransform;
-      tri.v[2] *= m_matTransform;
-
+      tri3d tri = i * m_matTransform;
 
       // ************************** CHECK VISABILITY, MOVE TO CAMERA **************************
       // Get the normal vector to the triangle and the vector pointing
       // from the camera to the triangle to determine if we should draw it
       vec3 triNorm = tri.normal();
-      vec3 camToTri = vec3(tri.v[0].x-c.position.x,tri.v[0].y-c.position.y,tri.v[0].z-c.position.z);
+      vec3 camToTri = tri.v[0] - camera.position;
       // This makes sure we only draw triangles are facing us and are in our line-of-sight 
-      if((camToTri.dot(triNorm) < 0.1) && (camToTri.dot(c.direction) > 0)) {
+      if((camToTri.dot(triNorm) < 0.1) && (camToTri.dot(camera.direction) > 0)) {
 
-         tri.v[0] *= c.view;
-         tri.v[1] *= c.view;
-         tri.v[2] *= c.view;
+         tri *= camera.view;
          buffer.push_back(tri);
       }
    }
-
 
    // ************************** SORT TRIANGLE BY Z **************************
    // Sort all of the triangles in the buffer by their mmidpoint z value to draw the farther triangles first
@@ -82,13 +67,22 @@ void object3d::draw(sf::RenderTexture& texture, sf::Vector2i res, camera c, sf::
       return z1 > z2;
    });
 
-
    //project and draw
    for(tri3d tri : buffer) {
 
+   // ************************** GET COLOR AND DRAW TRIANGLE **************************
+      // Take the normal of the triangle and compare it to 
+      // the direction of the light source to get the shade
+      if (!tri.clippedToPlain(vec3(-1,0,0), vec3(1,0,0))) color = blue;
+      float shade = tri.normal().dot(light);
+      // Get the color based on the light angle relitive to the face normal
+      int r = (color.r/2.0)*(shade+1);
+      int g = (color.g/2.0)*(shade+1);
+      int b = (color.b/2.0)*(shade+1);
+
    // ************************** PROJECT, SHIFT, AND SCALE POINTS **************************
       for (int i = 0; i < 3; i++) {
-         // Project 2D
+         // Use projection matrix to convert 3D points to 2D points on the screen
          tri.v[i] *= m_matProj;
          // This is centering the view on the screen by scaling the aspect ratio
          tri.v[i].x += 1;
@@ -97,16 +91,8 @@ void object3d::draw(sf::RenderTexture& texture, sf::Vector2i res, camera c, sf::
          tri.v[i].x *= 0.5f * res.x;
          tri.v[i].y *= 0.5f * res.y;
       }
-
-   // ************************** GET COLOR AND DRAW TRIANGLE **************************
-      // Take the normal of the triangle and compare it to 
-      // the direction of the light source to get the shade
-      float shade = tri.normal().dot(light);
-      // Get the color based on the light angle relitive to the face normal
-      int r = (col.r/2.0)*(shade+1);
-      int g = (col.g/2.0)*(shade+1);
-      int b = (col.b/2.0)*(shade+1);
-
+      
+      // Draw the triangle after the projection is done
       tri.draw(texture, res, rgb(r,g,b));
    }
 }
@@ -123,7 +109,6 @@ void object3d::load(std::string fileName) {
       std::cout << "error: cannot load 3d object" << std::endl;
       return;
    }
-
    // Create an array to hold the chars of each line
    // cycle through all the lines in the file until we are at the end
    std::vector<vec3> verts;
