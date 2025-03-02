@@ -17,6 +17,7 @@ void camera::update(float x, float y, float z, float u, float v, float w) {
 
    // Update the xyz and uvw values (the position is changing direction based on look direction)
    position += (direction * z) + (direction.cross(up) * x);
+   position.y += y;
    rotation += vec3(u,v,w);
 
    // Calculate the point at matrix and view matrix (black box)

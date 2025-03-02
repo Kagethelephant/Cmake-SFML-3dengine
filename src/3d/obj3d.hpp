@@ -25,7 +25,8 @@ public:
    //////////////////////////////////////////////////////////////////
    /// \brief Object position and orientation variables
    //////////////////////////////////////////////////////////////////
-   float u,v,w,x,y,z;
+   vec3 position = vec3(0,0,0);
+   vec3 direction = vec3(0,0,0);
 
    //////////////////////////////////////////////////////////////////
    /// \brief Holds trianles or points for 3D mesh or point cloud
@@ -60,6 +61,5 @@ private:
 
    /// Build view matrix
    mat4x4 mat_veiw(vec3& pos, vec3& target, vec3& up);
-
 };
 

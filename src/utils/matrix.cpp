@@ -25,17 +25,17 @@ mat4x4 transformation_matrix(float x, float y, float z, float u, float v, float 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // This is the projection matrix it is responsible for mapping the canonical viewing volume
 // to the viewing frustum. This basically just applies perspective to the 3D objects
-mat4x4 project_matrix(float fFovDegrees, float fAspectRatio, float fNear, float fFar) {
+mat4x4 project_matrix(float fov, float a, float n, float f) {
    // m[1][1] is not normally negative but since we are drawing as y = 0 is at the top of the screen
    // we need to invert the y values since y = 0 should be towards the bottom of the screen for most models
-   float fFovRad = 1.0f / tanf(fFovDegrees * 0.5f / 180.0f * 3.14159f);
-   float fDisRatio = fFar / (fFar - fNear);
+   float r = n * tanf(fov * 0.5f / 180.0f * 3.14159f);
+   float t = r / a;
 
    mat4x4 m;
-   m.m[0][0] = fFovRad;   m.m[1][0] = 0.0f;                    m.m[2][0] = 0.0f;         m.m[3][0] = 0.0f;
-   m.m[0][1] = 0.0f;      m.m[1][1] = -fFovRad * fAspectRatio; m.m[2][1] = 0.0f;         m.m[3][1] = 0.0f;
-   m.m[0][2] = 0.0f;      m.m[1][2] = 0.0f;                    m.m[2][2] = fDisRatio;    m.m[3][2] = -fNear * fDisRatio;
-   m.m[0][3] = 0.0f;      m.m[1][3] = 0.0f;                    m.m[2][3] = 1.0f;         m.m[3][3] = 0.0f;
+   m.m[0][0] = -n / r; m.m[1][0] = 0.0f;  m.m[2][0] = 0.0f;         m.m[3][0] = 0.0f;
+   m.m[0][1] = 0.0f;  m.m[1][1] = n / t; m.m[2][1] = 0.0f;         m.m[3][1] = 0.0f;
+   m.m[0][2] = 0.0f;  m.m[1][2] = 0.0f;  m.m[2][2] = (f+n)/(n-f);  m.m[3][2] = (2*f*n)/(n-f);
+   m.m[0][3] = 0.0f;  m.m[1][3] = 0.0f;  m.m[2][3] = -1.0f;        m.m[3][3] = 0.0f;
    return m;
 }
 

@@ -15,11 +15,11 @@ public:
    
    // Position along x, y, z
    // Rotation about x, y, z (u-pitch, v-roll, w-yaw)
-   vec3 position = vec3(0,0,0);
+   vec3 position = vec3(0,0,-5);
    vec3 rotation = vec3(0,0,0);
    
    // Vector storing the forward direction
-   vec3 direction = vec3(0,0,1);
+   vec3 direction;
 
    // The point matrix is just used to create the view matrix
    // but the view matrix is used by all objects to put themselvs in the view

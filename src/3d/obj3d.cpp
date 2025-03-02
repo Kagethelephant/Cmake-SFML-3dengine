@@ -2,19 +2,20 @@
 // Header
 //////////////////////////////////////////////////////////////////
 #include "obj3d.hpp"
+#include "3d/polygon.hpp"
 #include "utils/matrix.hpp"
 #include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <sstream> // Use this instead of strstream, strstream is depricated because it returns
+#include <vector>
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Constructor for object, sets some default variables and creates the projection matrix
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 object3d::object3d() {
-   
-   u = 0, v = 0, w = 0 , x = 0 , y = 0 , z = 0;
+
    update();
    m_aspectRatio = ((float)sf::VideoMode::getDesktopMode().width) / ((float)sf::VideoMode::getDesktopMode().height);
    m_matProj = project_matrix(90.0f,m_aspectRatio,0.1f,1000.0f);  
@@ -24,14 +25,28 @@ object3d::object3d() {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Update the transformation matrix so the objects can move based on updated x,y,z,u,v,w values
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void object3d::update(){ m_matTransform = transformation_matrix(x, y, z, u, v, w);}
+void object3d::update(){ m_matTransform = transformation_matrix(position.x, position.y, position.z, direction.x, direction.y, direction.z);}
 
 
+bool pointOutOfPlane(vec3 point, vec3 plane){
+   return ((point.dot(plane) + plane.w) < 0);
+}
+
+vec3 splitPoint(vec3 p1, vec3 p2, vec3 plane){
+   float t = (p1.dot(plane) + plane.w) / (plane.x*(p1.x-p2.x) + plane.y*(p1.y-p2.y) + plane.z*(p1.z-p2.z));
+
+   return((p1 + ((p2 - p1) * t)));
+}
+
+int wrap(int i, int limit){
+   if (i >= limit) i -= limit;
+   return i;
+}
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// This is the main function and probably needs to be broken up into more functions
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void object3d::draw(sf::RenderTexture& texture, sf::Vector2i res, camera camera, sf::Color color) {
-   
+
    // ************************** MOVE AND ROTATE **************************
    update();
 
@@ -41,7 +56,7 @@ void object3d::draw(sf::RenderTexture& texture, sf::Vector2i res, camera camera,
 
    std::vector<tri3d> buffer;
    for(tri3d i: mesh) {
-      
+
       // Transform the objects position and rotation by multiplying it by
       // this objects transformation matrix populated by "update()"
       tri3d tri = i * m_matTransform;
@@ -52,7 +67,7 @@ void object3d::draw(sf::RenderTexture& texture, sf::Vector2i res, camera camera,
       vec3 triNorm = tri.normal();
       vec3 camToTri = tri.v[0] - camera.position;
       // This makes sure we only draw triangles are facing us and are in our line-of-sight 
-      if((camToTri.dot(triNorm) < 0.1) && (camToTri.dot(camera.direction) > 0)) {
+      if((camToTri * triNorm < 0.1) && (camToTri * camera.direction > 0)) {
 
          tri *= camera.view;
          buffer.push_back(tri);
@@ -67,33 +82,142 @@ void object3d::draw(sf::RenderTexture& texture, sf::Vector2i res, camera camera,
       return z1 > z2;
    });
 
+
+   float n = 0.1f;
+   float r = n * tanf(88.0f * 0.5f / 180.0f * 3.14159f);
+   float t = r / m_aspectRatio;
+   float f = 1000.0f;
+
+   vec3 topRight = vec3(r,t,n,0).normal();
+   vec3 topLeft = vec3(-r,t,n,0).normal();
+   vec3 bottomRight = vec3(r,-t,n,0).normal();
+   vec3 bottomLeft = vec3(-r,-t,n,0).normal();
+
+   vec3 top = topLeft.cross(topRight).normal();
+   vec3 bottom = bottomRight.cross(bottomLeft).normal();
+   vec3 right = topRight.cross(bottomRight).normal();
+   vec3 left = bottomLeft.cross(topLeft).normal();
+   vec3 near = vec3(0,0,-1,n);
+   vec3 far = vec3(0,0,1,-f);
+
+
+   // vec3 bottom = vec3(0,1,0);
+   // vec3 newPoint = splitPoint(vec3(-20.0f,-20.0f,0.0f), vec3(5.0f,40.0f,0.0f), vec3(1.0f,0.0f,0.0f, 1.0f));
+   
+   std::cout << "Plane: (" << bottomRight.x << ", " << bottomRight.y << ", " << bottomRight.z << ", " << bottomRight.w <<")" << std::endl;
+
    //project and draw
    for(tri3d tri : buffer) {
 
-   // ************************** GET COLOR AND DRAW TRIANGLE **************************
+      // ************************** GET COLOR AND DRAW TRIANGLE **************************
       // Take the normal of the triangle and compare it to 
       // the direction of the light source to get the shade
-      if (!tri.clippedToPlain(vec3(-1,0,0), vec3(1,0,0))) color = blue;
       float shade = tri.normal().dot(light);
-      // Get the color based on the light angle relitive to the face normal
       int r = (color.r/2.0)*(shade+1);
       int g = (color.g/2.0)*(shade+1);
       int b = (color.b/2.0)*(shade+1);
+      // if(tri.clippedToPlain(top, 0)) color = blue;
+      // if(tri.clippedToPlain(bottom, 0)) color = red;
+      // if(tri.clippedToPlain(right, 0)) color = yellow;
+      // if(tri.clippedToPlain(left, 0)) color = green;
 
-   // ************************** PROJECT, SHIFT, AND SCALE POINTS **************************
-      for (int i = 0; i < 3; i++) {
-         // Use projection matrix to convert 3D points to 2D points on the screen
-         tri.v[i] *= m_matProj;
-         // This is centering the view on the screen by scaling the aspect ratio
-         tri.v[i].x += 1;
-         tri.v[i].y += 1;
-         // This scales the x and y to position in the center of the screen
-         tri.v[i].x *= 0.5f * res.x;
-         tri.v[i].y *= 0.5f * res.y;
-      }
+
+
+
+
+      std::vector<tri3d> splitBuffer;
+      std::vector<tri3d> toSplitBuffer;
+      toSplitBuffer.push_back(tri);
+      vec3 planes[6] = {
+         top,
+         bottom,
+         right,
+         left,
+         near,
+         far
+      };
       
-      // Draw the triangle after the projection is done
-      tri.draw(texture, res, rgb(r,g,b));
+      for (vec3 plane : planes) {
+         for (tri3d t : toSplitBuffer){
+
+
+            bool clipped[3] = {
+               not pointOutOfPlane(t.v[0], plane),
+               not pointOutOfPlane(t.v[1], plane),
+               not pointOutOfPlane(t.v[2], plane)
+            };
+
+            int clipCount = clipped[0]+clipped[1]+clipped[2];
+            vec3 p1,p2;
+            int next,last;
+
+            if (clipCount == 2) {
+               for(int i=0; i<3; i++){
+                  next = wrap(i+1,3);
+                  if (clipped[i] and clipped[next]){
+                     last = wrap(i+2,3);
+                     p1 = splitPoint(t.v[i], t.v[last], plane);
+                     p2 = splitPoint(t.v[next], t.v[last], plane);
+                     splitBuffer.push_back(tri3d(p1,p2,t.v[last]));
+                     break;
+                  }
+               }
+            }
+            else if (clipCount == 1) {
+               for(int i=0; i<3; i++){
+                  if (clipped[i]){
+                     next = wrap(i+1,3);
+                     last = wrap(i+2,3);
+                     p1 = splitPoint(t.v[i], t.v[last], plane);
+                     p2 = splitPoint(t.v[i], t.v[next], plane);
+                     splitBuffer.push_back(tri3d(p1,p2,t.v[next]));
+                     splitBuffer.push_back(tri3d(p1,t.v[next],t.v[last]));
+                     break;
+                  }
+               }
+            }
+            else if (clipCount == 0){
+               splitBuffer.push_back(t);
+            }
+         }
+         toSplitBuffer = splitBuffer;
+         splitBuffer = std::vector<tri3d>();
+      }
+
+      // if(tri.clippedToPlain(bottom, -1)) color = red;
+      
+
+
+
+
+      for (tri3d triangle : toSplitBuffer){
+         // ************************** PROJECT, SHIFT, AND SCALE POINTS **************************
+         // Use projection matrix to convert 3D points to 2D points on the screen
+         triangle.v[0] *= m_matProj;
+         triangle.v[1] *= m_matProj;
+         triangle.v[2] *= m_matProj;
+
+
+         // This is centering the view on the screen by scaling the aspect ratio
+         // Get the color based on the light angle relitive to the face normal
+         triangle.v[0].x += 1;
+         triangle.v[0].y += 1;
+         triangle.v[1].x += 1;
+         triangle.v[1].y += 1;
+         triangle.v[2].x += 1;
+         triangle.v[2].y += 1;
+
+         // This scales the x and y to position in the center of the screen
+         triangle.v[0].x *= 0.5f * res.x;
+         triangle.v[0].y *= 0.5f * res.y;
+         triangle.v[1].x *= 0.5f * res.x;
+         triangle.v[1].y *= 0.5f * res.y;
+         triangle.v[2].x *= 0.5f * res.x;
+         triangle.v[2].y *= 0.5f * res.y;
+
+         // Draw the triangle after the projection is done
+         triangle.draw(texture, res, rgb(r,g,b));
+      }
    }
 }
 

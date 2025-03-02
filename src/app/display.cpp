@@ -3,7 +3,6 @@
 //////////////////////////////////////////////////////////////////
 #include "display.hpp"
 #include <SFML/System/Vector2.hpp>
-#include <SFML/Window/WindowEnums.hpp>
 #include <cmath>
 
 
