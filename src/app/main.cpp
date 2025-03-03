@@ -5,16 +5,19 @@
 #include <SFML/Config.hpp>
 #include <SFML/Graphics.hpp>
 #include <SFML/Graphics/Sprite.hpp>
+#include <SFML/Graphics/Texture.hpp>
 #include <ostream>
 #include <string>
 #include <iostream>
 #include "display.hpp"
 #include "utils/data.hpp"
 #include "3d/obj3d.hpp"
+#include <3d/polygon.hpp>
 #include "utils/random.hpp"
 // #include <chrono>
 #include <cmath>
 #include <vector>
+#include <chrono>
 
 
 
@@ -30,8 +33,8 @@ int main() {
    sf::Vector2i resWindow;
 
    sf::RenderWindow window;
-   resWindow = windowSetup(window, 1080, true, "CORONA",60);
-   
+   resWindow = windowSetup(window, 1080, true, "CORONA",120);
+
    sf::RenderTexture rendWindow;
    rendWindow.create(resWindow.x,resWindow.y);
 
@@ -42,20 +45,20 @@ int main() {
    pixelBuff.create(resWindow.x,resWindow.y);
    // Create a pixel buffer
    std::vector<sf::Uint8> pixels (resWindow.x * resWindow.y * 4, 255);
-   
+   std::vector<sf::Uint8> bg (resWindow.x * resWindow.y * 4, 255);
+
+
    int index = 0;
    for (int y=0; y<resWindow.y; y++){
       for (int x=0; x<resWindow.x; x++){
          index = (y*resWindow.x + x) *4;
-         pixels[index] = 140;
-         pixels[index + 1] = 50;
-         pixels[index + 2] = 0;
-         pixels[index + 3] = 255;
+         bg[index] = black.x;
+         bg[index + 1] = black.y;
+         bg[index + 2] = black.z;
+         bg[index + 3] = black.w;
       }
    }
 
-   pixelBuff.update(pixels.data());
-   sf::Sprite sprite(pixelBuff);
 
    // ******************** CREATE 3D OBJECTS **********************
    // // TEST OBJECT
@@ -96,16 +99,18 @@ int main() {
    fontRegular.setSmooth(false);
 
    sf::Text textSmall;
-  textSmall.setFont(fontRegular);
-  textSmall.setCharacterSize(16);
-  // textSmall.setFillColor(white);
-  // textSmall.setPosition(5,5);
-
+   textSmall.setFont(fontRegular);
+   textSmall.setCharacterSize(16);
+   // textSmall.setFillColor(white);
+   // textSmall.setPosition(5,5);
 
    //////////////////////////////////////////////////////////////////
    // WINDOW EVENT HANDLER
    //////////////////////////////////////////////////////////////////
-
+   int fpsCounter = 0;
+   sf::Time Time;
+   float fps;
+   sf::Clock clock;
    std::cout << "*****LOOP START*****" << std::endl;
 
    while (window.isOpen()) {
@@ -160,18 +165,30 @@ int main() {
       // Update if a key is pressed
       cam.update(move_x,move_y,move_z,0,rot_v,0);
 
+      // Performed. Now perform GPU stuff...
+      fpsCounter ++;
+      if (fpsCounter >= 30){
 
+         Time = clock.getElapsedTime();
+         clock.restart();
+         fps = (int)(30/(Time.asSeconds()));
+         fpsCounter = 0;
+      }
+      // std::cout << "FPS: " << 1.0f/elapTime << std::endl;
       //////////////////////////////////////////////////////////////////
       // DRAW
       ////////////////////////////////////////////////////////////////// 
       // Move the rectangle to the correct position before drawing
-      rendWindow.clear(black);
+      // rendWindow.clear(sf::Color(black.x,black.y,black.z,black.w));
 
-      rendWindow.draw(sprite);
+      pixels = bg;
 
-      object.draw (rendWindow,resWindow,cam,red);
-      object2.draw (rendWindow,resWindow,cam,yellow);
-      object3.draw (rendWindow,resWindow,cam,green);
+      object.draw (pixels,resWindow,cam,red);
+      object2.draw (pixels,resWindow,cam,yellow);
+      // object3.draw (pixels,resWindow,cam,green);
+
+      pixelBuff.update(pixels.data());
+      rendWindow.draw(sf::Sprite(pixelBuff));
 
       textSmall.setString("X: "+std::to_string(cam.position.x));
       textSmall.setPosition(10,10);
@@ -182,7 +199,7 @@ int main() {
       textSmall.setString("Z: "+std::to_string(cam.position.z));
       textSmall.setPosition(10,50);
       rendWindow.draw(textSmall);
-      textSmall.setString("V: "+std::to_string(cam.rotation.y));
+      textSmall.setString("FPS: "+std::to_string(fps));
       textSmall.setPosition(10,70);
       rendWindow.draw(textSmall);
 

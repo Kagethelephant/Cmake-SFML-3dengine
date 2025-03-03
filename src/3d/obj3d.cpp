@@ -45,7 +45,7 @@ int wrap(int i, int limit){
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// This is the main function and probably needs to be broken up into more functions
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void object3d::draw(sf::RenderTexture& texture, sf::Vector2i res, camera camera, sf::Color color) {
+void object3d::draw(std::vector<sf::Uint8>& texture, sf::Vector2i res, camera camera, vec3 color) {
 
    // ************************** MOVE AND ROTATE **************************
    update();
@@ -104,7 +104,6 @@ void object3d::draw(sf::RenderTexture& texture, sf::Vector2i res, camera camera,
    // vec3 bottom = vec3(0,1,0);
    // vec3 newPoint = splitPoint(vec3(-20.0f,-20.0f,0.0f), vec3(5.0f,40.0f,0.0f), vec3(1.0f,0.0f,0.0f, 1.0f));
    
-   std::cout << "Plane: (" << bottomRight.x << ", " << bottomRight.y << ", " << bottomRight.z << ", " << bottomRight.w <<")" << std::endl;
 
    //project and draw
    for(tri3d tri : buffer) {
@@ -113,9 +112,9 @@ void object3d::draw(sf::RenderTexture& texture, sf::Vector2i res, camera camera,
       // Take the normal of the triangle and compare it to 
       // the direction of the light source to get the shade
       float shade = tri.normal().dot(light);
-      int r = (color.r/2.0)*(shade+1);
-      int g = (color.g/2.0)*(shade+1);
-      int b = (color.b/2.0)*(shade+1);
+      int r = (color.x/2.0)*(shade+1);
+      int g = (color.y/2.0)*(shade+1);
+      int b = (color.z/2.0)*(shade+1);
       // if(tri.clippedToPlain(top, 0)) color = blue;
       // if(tri.clippedToPlain(bottom, 0)) color = red;
       // if(tri.clippedToPlain(right, 0)) color = yellow;
@@ -216,7 +215,7 @@ void object3d::draw(sf::RenderTexture& texture, sf::Vector2i res, camera camera,
          triangle.v[2].y *= 0.5f * res.y;
 
          // Draw the triangle after the projection is done
-         triangle.draw(texture, res, rgb(r,g,b));
+         triangle.draw(texture, res, rgb(r,g,b,255));
       }
    }
 }

@@ -30,6 +30,8 @@ struct tri3d {
    void operator *= (const mat4x4& m) { this->v[0] *= m; this->v[1] *= m; this->v[2] *= m; }
 
    /// simple draw 2d triangles
-   void draw(sf::RenderTexture& texture, sf::Vector2i res, sf::Color col = blue);
+   void draw(std::vector<sf::Uint8>& texture, sf::Vector2i res, vec3 col = blue);
 };
 
+void scanlineTri(std::vector<sf::Uint8>& buffer, int width, vec3 color, int x0, int y0, int x1, int y1, int x2, int y2);
+void bresenhamLine(std::vector<sf::Uint8>& buffer, int width, vec3 color, int x0, int y0, int x1, int y1);

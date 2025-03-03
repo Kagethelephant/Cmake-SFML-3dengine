@@ -22,7 +22,7 @@ sf::Vector2i windowSetup(sf::RenderWindow& window, int height, bool fullscreen =
 
    // Set the frame rate and hide the cursor so we can draw our own
    window.setFramerateLimit(fps);
-   window.setVerticalSyncEnabled(true);
+   // window.setVerticalSyncEnabled(true);
    window.setMouseCursorVisible(false);
 
    // Set the size and position of the view

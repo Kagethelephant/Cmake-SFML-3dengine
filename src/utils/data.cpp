@@ -6,22 +6,22 @@
 #include <SFML/Graphics/Font.hpp>
 
 
-sf::Color red;
-sf::Color blue;
-sf::Color green;
-sf::Color yellow;
-sf::Color purple;
-sf::Color orange;
-sf::Color black;
-sf::Color white;
+vec3 red;
+vec3 blue;
+vec3 green;
+vec3 yellow;
+vec3 purple;
+vec3 orange;
+vec3 black;
+vec3 white;
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// This is pretty much the same as the SFML color function but i want it as rgb() so the lsp will show me the color
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-sf::Color rgb(unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
+vec3 rgb(unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
 
-   return sf::Color(r,g,b,a);
+   return vec3(r,g,b,a);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
