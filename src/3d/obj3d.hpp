@@ -41,7 +41,7 @@ public:
    //////////////////////////////////////////////////////////////////
    /// \brief Called externally to draw the triangles in the mesh 
    //////////////////////////////////////////////////////////////////
-   void draw(std::vector<sf::Uint8>& texture, sf::Vector2i res, camera camera,vec3 col);
+   void draw(std::vector<sf::Uint8>& texture, sf::Texture tex, sf::Vector2i res, camera camera,vec3 col);
 
    //////////////////////////////////////////////////////////////////
    /// \brief Load an OBJ file

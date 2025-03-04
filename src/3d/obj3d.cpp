@@ -45,7 +45,7 @@ int wrap(int i, int limit){
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// This is the main function and probably needs to be broken up into more functions
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void object3d::draw(std::vector<sf::Uint8>& texture, sf::Vector2i res, camera camera, vec3 color) {
+void object3d::draw(std::vector<sf::Uint8>& texture, sf::Texture tex, sf::Vector2i res, camera camera, vec3 color) {
 
    // ************************** MOVE AND ROTATE **************************
    update();
@@ -120,13 +120,8 @@ void object3d::draw(std::vector<sf::Uint8>& texture, sf::Vector2i res, camera ca
       // if(tri.clippedToPlain(right, 0)) color = yellow;
       // if(tri.clippedToPlain(left, 0)) color = green;
 
-
-
-
-
       std::vector<tri3d> splitBuffer;
       std::vector<tri3d> toSplitBuffer;
-      toSplitBuffer.push_back(tri);
       vec3 planes[6] = {
          top,
          bottom,
@@ -135,7 +130,8 @@ void object3d::draw(std::vector<sf::Uint8>& texture, sf::Vector2i res, camera ca
          near,
          far
       };
-      
+      toSplitBuffer.push_back(tri);
+
       for (vec3 plane : planes) {
          for (tri3d t : toSplitBuffer){
 
@@ -215,7 +211,7 @@ void object3d::draw(std::vector<sf::Uint8>& texture, sf::Vector2i res, camera ca
          triangle.v[2].y *= 0.5f * res.y;
 
          // Draw the triangle after the projection is done
-         triangle.draw(texture, res, rgb(r,g,b,255));
+         triangle.draw(texture, tex, res, rgb(r,g,b,255));
       }
    }
 }

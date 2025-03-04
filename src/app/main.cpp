@@ -61,21 +61,25 @@ int main() {
 
 
    // ******************** CREATE 3D OBJECTS **********************
-   // // TEST OBJECT
-   // float h = 0.9999;
-   // float w = 0.25;
-   // std::vector<tri3d> axis;
+   // TEST OBJECT
+   float h = 0.9999;
+   float w = 0.25;
+   std::vector<tri3d> axis;
 
-   // axis.push_back(tri3d(vec3(h,h,0),vec3(h,h-w,0),vec3(h-w,h,0)));
-   // axis.push_back(tri3d(vec3(h-w,h-w,0),vec3(h-w,h,0),vec3(h,h-w,0)));
-   // axis.push_back(tri3d(vec3(-h,-h,0),vec3(-h,-h+w,0),vec3(-h+w,-h,0)));
-   // axis.push_back(tri3d(vec3(-h+w,-h+w,0),vec3(-h+w,-h,0),vec3(-h,-h+w,0)));
+   axis.push_back(tri3d(vec3(h,h,0),vec3(h,h-w,0),vec3(h-w,h,0)));
+   axis.push_back(tri3d(vec3(h-w,h-w,0),vec3(h-w,h,0),vec3(h,h-w,0)));
+   axis.push_back(tri3d(vec3(-h,-h,0),vec3(-h,-h+w,0),vec3(-h+w,-h,0)));
+   axis.push_back(tri3d(vec3(-h+w,-h+w,0),vec3(-h+w,-h,0),vec3(-h,-h+w,0)));
 
-   // axis.push_back(tri3d(vec3(-h,h,0),vec3(-h+w,h,0),vec3(-h,h-w,0)));
-   // axis.push_back(tri3d(vec3(-h+w,h-w,0),vec3(-h,h-w,0),vec3(-h+w,h,0)));
-   // axis.push_back(tri3d(vec3(h,-h,0),vec3(h-w,-h,0),vec3(h,-h+w,0)));
-   // axis.push_back(tri3d(vec3(h-w,-h+w,0),vec3(h,-h+w,0),vec3(h-w,-h,0)));
+   axis.push_back(tri3d(vec3(-h,h,0),vec3(-h+w,h,0),vec3(-h,h-w,0)));
+   axis.push_back(tri3d(vec3(-h+w,h-w,0),vec3(-h,h-w,0),vec3(-h+w,h,0)));
+   axis.push_back(tri3d(vec3(h,-h,0),vec3(h-w,-h,0),vec3(h,-h+w,0)));
+   axis.push_back(tri3d(vec3(h-w,-h+w,0),vec3(h,-h+w,0),vec3(h-w,-h,0)));
 
+
+
+   // object3d object;
+   // object.mesh = axis;
 
 
    object3d object;
@@ -183,9 +187,9 @@ int main() {
 
       pixels = bg;
 
-      object.draw (pixels,resWindow,cam,red);
+      object.draw (pixels,rendWindow,resWindow,cam,red);
       object2.draw (pixels,resWindow,cam,yellow);
-      // object3.draw (pixels,resWindow,cam,green);
+      object3.draw (pixels,resWindow,cam,green);
 
       pixelBuff.update(pixels.data());
       rendWindow.draw(sf::Sprite(pixelBuff));
