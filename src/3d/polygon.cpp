@@ -11,13 +11,13 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Draw the triangle in 2D with 2D coordinates and clip on the screen
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void tri3d::draw(std::vector<sf::Uint8>& texture,sf::Vector2i res, vec3 col) {
+void tri3d::draw(std::vector<std::uint8_t>& texture, sf::RenderTexture& tex, sf::Vector2u res, vec3 col) {
 
    // for cliping count points outside of view,
    // 2 points in view means need to create another triangle
    // for tris that clip 2 or more edges itterate through all edges and clip it multiple times
 
-   // fillTri(texture,res.x,col,v[0].x,v[0].y,v[1].x,v[1].y,v[2].x,v[2].y);
+   fillTri(texture,res.x,col,v[0].x,v[0].y,v[1].x,v[1].y,v[2].x,v[2].y);
 
    // sf::VertexArray triangle(sf::Triangles, 3);
 
@@ -50,7 +50,7 @@ void tri3d::draw(std::vector<sf::Uint8>& texture,sf::Vector2i res, vec3 col) {
 }
 
 
-void fillTri(std::vector<sf::Uint8>& buffer, int width, vec3 color, int x0, int y0, int x1, int y1, int x2, int y2){
+void fillTri(std::vector<std::uint8_t>& buffer, int width, vec3 color, int x0, int y0, int x1, int y1, int x2, int y2){
 
    int xmax = std::max(std::max(x0,x1),x2);
    int xmin = std::min(std::min(x0,x1),x2);

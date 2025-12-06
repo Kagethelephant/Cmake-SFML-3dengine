@@ -17,7 +17,8 @@
 object3d::object3d() {
 
    update();
-   m_aspectRatio = ((float)sf::VideoMode::getDesktopMode().width) / ((float)sf::VideoMode::getDesktopMode().height);
+   sf::Vector2u size = sf::VideoMode::getDesktopMode().size;
+   m_aspectRatio = (float)(size.x / size.y);
    m_matProj = project_matrix(90.0f,m_aspectRatio,0.1f,1000.0f);  
 }
 
@@ -45,7 +46,7 @@ int wrap(int i, int limit){
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// This is the main function and probably needs to be broken up into more functions
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void object3d::draw(std::vector<sf::Uint8>& texture, sf::Texture tex, sf::Vector2i res, camera camera, vec3 color) {
+void object3d::draw(std::vector<std::uint8_t>& texture, sf::RenderTexture& tex, sf::Vector2u res, camera camera, vec3 color) {
 
    // ************************** MOVE AND ROTATE **************************
    update();
@@ -211,7 +212,7 @@ void object3d::draw(std::vector<sf::Uint8>& texture, sf::Texture tex, sf::Vector
          triangle.v[2].y *= 0.5f * res.y;
 
          // Draw the triangle after the projection is done
-         triangle.draw(texture, tex, res, rgb(r,g,b,255));
+         triangle.draw(texture, tex,res, rgb(r,g,b,255));
       }
    }
 }

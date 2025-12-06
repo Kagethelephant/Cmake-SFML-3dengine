@@ -9,5 +9,5 @@
 //////////////////////////////////////////////////////////////////
 /// \brief Sets up the view initially (simple 2D pixel graphics)
 //////////////////////////////////////////////////////////////////
-sf::Vector2i windowSetup(sf::RenderWindow&, int, bool, sf::String, int);
+sf::Vector2u windowSetup(sf::RenderWindow&, int, bool, sf::String, int);
 

@@ -9,15 +9,16 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// This is just to move the window setup stuff out of the main loop because all of this will generally be the same
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-sf::Vector2i windowSetup(sf::RenderWindow& window, int height, bool fullscreen = true, sf::String title = "Window", int fps = 60) {
+sf::Vector2u windowSetup(sf::RenderWindow& window, int height, bool fullscreen = true, sf::String title = "Window", int fps = 60) {
 
    // Get the display dimmensions and calculate the aspect ratio and screen resolution
-   float aspectRatio = ((float)sf::VideoMode::getDesktopMode().width) / ((float)sf::VideoMode::getDesktopMode().height);
-   sf::Vector2i res (std::fabs(height *aspectRatio), height);
+   sf::Vector2u size = sf::VideoMode::getDesktopMode().size;
+   float aspectRatio = ((float)size.x / (float)size.y);
+   sf::Vector2u res (std::fabs(height *aspectRatio), height);
 
    // Initialize the view with the calculated resolution 
    // If not fullscreen then we need to set the window size as well as the resolution
-   if (fullscreen) window.create(sf::VideoMode::getDesktopMode(), title, sf::Style::Fullscreen);
+   if (fullscreen) window.create(sf::VideoMode::getDesktopMode(), title, sf::Style::None);
    else window.create(sf::VideoMode::getDesktopMode(), title, sf::Style::Resize);
 
    // Set the frame rate and hide the cursor so we can draw our own
