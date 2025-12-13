@@ -1,2 +1,45 @@
-build/ 
-.vscode/
+# Common build directories
+/build/
+/out/
+/cmake-build-*/
+/real_work/
+/work/
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+CMakeUserPresets.json
+install_manifest.txt
+CTestTestfile.cmake
+_deps/
+
+# IDE specific files
+.DS_Store # MacOS Finder files
+.idea/ # CLion work directory
+.vscode/ # Visual Studio Code
+.vs/ # Visual Studio work directory
+*.user # QtCreator files
+*.suo # Visual Studio Solution User Options
+*.ncb # Visual Studio IntelliSense Database
+*.opensdf # Visual Studio SDF
+*.sdf # Visual Studio SDF
+*.vcproj.*.user # Visual Studio Project User Files
+
+# Object files and executables
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.lib
+*.a
+
+# Temporary files
+*.tmp
+*.log
+*.swp # Vim swap files
+*.bak # Backup files
+
+# clang-tidy output
+/clang-tidy-fixes.patch

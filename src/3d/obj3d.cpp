@@ -4,6 +4,7 @@
 #include "obj3d.hpp"
 #include "3d/polygon.hpp"
 #include "utils/matrix.hpp"
+#include <SFML/Graphics/Color.hpp>
 #include <algorithm>
 #include <iostream>
 #include <fstream>
@@ -18,7 +19,7 @@ object3d::object3d() {
 
    update();
    sf::Vector2u size = sf::VideoMode::getDesktopMode().size;
-   m_aspectRatio = (float)(size.x / size.y);
+   m_aspectRatio = ((float)size.x / (float)size.y);
    m_matProj = project_matrix(90.0f,m_aspectRatio,0.1f,1000.0f);  
 }
 
@@ -26,7 +27,6 @@ object3d::object3d() {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Update the transformation matrix so the objects can move based on updated x,y,z,u,v,w values
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void object3d::update(){ m_matTransform = transformation_matrix(position.x, position.y, position.z, direction.x, direction.y, direction.z);}
 
 
 bool pointOutOfPlane(vec3 point, vec3 plane){
@@ -35,7 +35,6 @@ bool pointOutOfPlane(vec3 point, vec3 plane){
 
 vec3 splitPoint(vec3 p1, vec3 p2, vec3 plane){
    float t = (p1.dot(plane) + plane.w) / (plane.x*(p1.x-p2.x) + plane.y*(p1.y-p2.y) + plane.z*(p1.z-p2.z));
-
    return((p1 + ((p2 - p1) * t)));
 }
 
@@ -46,10 +45,11 @@ int wrap(int i, int limit){
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// This is the main function and probably needs to be broken up into more functions
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void object3d::draw(std::vector<std::uint8_t>& texture, sf::RenderTexture& tex, sf::Vector2u res, camera camera, vec3 color) {
+void object3d::draw(std::vector<std::uint8_t>& texture, sf::RenderTexture& tex, sf::Vector2u res, camera camera, sf::Color color) {
 
    // ************************** MOVE AND ROTATE **************************
    update();
+   mat4x4 mat1 = transformation_matrix(9, 3, 4, 5, 6, 7);
 
    // Create a vector for the camera and light direction (not position)
    vec3 light(-1,1,-1);
@@ -113,13 +113,8 @@ void object3d::draw(std::vector<std::uint8_t>& texture, sf::RenderTexture& tex, 
       // Take the normal of the triangle and compare it to 
       // the direction of the light source to get the shade
       float shade = tri.normal().dot(light);
-      int r = (color.x/2.0)*(shade+1);
-      int g = (color.y/2.0)*(shade+1);
-      int b = (color.z/2.0)*(shade+1);
-      // if(tri.clippedToPlain(top, 0)) color = blue;
-      // if(tri.clippedToPlain(bottom, 0)) color = red;
-      // if(tri.clippedToPlain(right, 0)) color = yellow;
-      // if(tri.clippedToPlain(left, 0)) color = green;
+      sf::Color genColor((color.r/2.0)*(shade+1), (color.g/2.0)*(shade+1), (color.b/2.0)*(shade+1));
+
 
       std::vector<tri3d> splitBuffer;
       std::vector<tri3d> toSplitBuffer;
@@ -186,13 +181,13 @@ void object3d::draw(std::vector<std::uint8_t>& texture, sf::RenderTexture& tex, 
 
 
 
+      // ************************** PROJECT, SHIFT, AND SCALE POINTS **************************
+
       for (tri3d triangle : toSplitBuffer){
-         // ************************** PROJECT, SHIFT, AND SCALE POINTS **************************
          // Use projection matrix to convert 3D points to 2D points on the screen
          triangle.v[0] *= m_matProj;
          triangle.v[1] *= m_matProj;
          triangle.v[2] *= m_matProj;
-
 
          // This is centering the view on the screen by scaling the aspect ratio
          // Get the color based on the light angle relitive to the face normal
@@ -212,7 +207,7 @@ void object3d::draw(std::vector<std::uint8_t>& texture, sf::RenderTexture& tex, 
          triangle.v[2].y *= 0.5f * res.y;
 
          // Draw the triangle after the projection is done
-         triangle.draw(texture, tex,res, rgb(r,g,b,255));
+         triangle.draw(texture, tex,res, genColor);
       }
    }
 }

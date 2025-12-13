@@ -4,6 +4,7 @@
 // Headers
 //////////////////////////////////////////////////////////////////
 #include <SFML/Graphics.hpp>
+#include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/Texture.hpp>
 #include <vector>
 #include "utils/matrix.hpp"
@@ -31,8 +32,8 @@ struct tri3d {
    void operator *= (const mat4x4& m) { this->v[0] *= m; this->v[1] *= m; this->v[2] *= m; }
 
    /// simple draw 2d triangles
-   void draw(std::vector<std::uint8_t>& texture, sf::RenderTexture& tex, sf::Vector2u res, vec3 col = blue);
+   void draw(std::vector<std::uint8_t>& texture, sf::RenderTexture& tex, sf::Vector2u res, sf::Color col = blue);
 };
 
 void bresenhamLine(std::vector<std::uint8_t>& buffer, int width, vec3 color, int x0, int y0, int x1, int y1);
-void fillTri(std::vector<std::uint8_t>& buffer, int width, vec3 color, int x0, int y0, int x1, int y1, int x2, int y2);
+void fillTri(std::vector<std::uint8_t>& buffer, int width, sf::Color color, int x0, int y0, int x1, int y1, int x2, int y2);

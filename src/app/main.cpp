@@ -14,12 +14,11 @@
 #include "3d/obj3d.hpp"
 #include <3d/polygon.hpp>
 #include "utils/random.hpp"
-// #include <chrono>
-#include <cmath>
 #include <vector>
-#include <chrono>
 
-int main()
+
+
+int main(int argc, char* argv[])
 {
 
    defineGlobal();
@@ -32,7 +31,7 @@ int main()
    sf::Vector2u resWindow;
 
    sf::RenderWindow window;
-   resWindow = windowSetup(window, 1080, true, "CORONA", 120);
+   resWindow = windowSetup(window, 1080, false, "CORONA", 120);
 
    sf::RenderTexture rendWindow({resWindow.x, resWindow.y});
 
@@ -49,10 +48,10 @@ int main()
       for (int x = 0; x < resWindow.x; x++)
       {
          index = (y * resWindow.x + x) * 4;
-         bg[index] = black.x;
-         bg[index + 1] = black.y;
-         bg[index + 2] = black.z;
-         bg[index + 3] = black.w;
+         bg[index] = black.r;
+         bg[index + 1] = black.g;
+         bg[index + 2] = black.b;
+         bg[index + 3] = black.a;
       }
    }
 
@@ -111,68 +110,29 @@ int main()
 
       bool up = 0, down = 0, right = 0, left = 0, space = 0, keyA = 0, keyD = 0, user_input = 0, keyB = 0;
 
-      // Event handler
-      // sf::Event event;
       while (const std::optional event = window.pollEvent())
       {
 
-         // switch (event.type)
-         // {
-         // If the X window button is pressed exit
-         // case sf::Event::Closed:
          if (event ->is<sf::Event::Closed>()) 
          {
             window.close();
             break;
          }
-      // Keyboard input
-      // case sf::Event::KeyPressed:
+
          else if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>())
          {
-            if (keyPressed->scancode == sf::Keyboard::Scancode::Escape)
-            {
-               window.close();
-            }
-            else if (keyPressed->scancode == sf::Keyboard::Scancode::Up)
-            {
-               up = 1;
-               user_input = 1;
-            }
-            else if (keyPressed->scancode == sf::Keyboard::Scancode::Down)
-            {
-               down = 1;
-               user_input = 1;
-            }
-            else if (keyPressed->scancode == sf::Keyboard::Scancode::Right)
-            {
-               right = 1;
-               user_input = 1;
-            }
-            else if (keyPressed->scancode == sf::Keyboard::Scancode::Left)
-            {
-               left = 1;
-               user_input = 1;
-            }
-            else if (keyPressed->scancode == sf::Keyboard::Scancode::Space)
-            {
-               space = 1;
-               user_input = 1;
-            }
-            else if (keyPressed->scancode == sf::Keyboard::Scancode::B)
-            {
-               keyB = 1;
-               user_input = 1;
-            }
-            else if (keyPressed->scancode == sf::Keyboard::Scancode::A)
-            {
-               keyA = 1;
-               user_input = 1;
-            }
-            else if (keyPressed->scancode == sf::Keyboard::Scancode::D)
-            {
-               keyD = 1;
-               user_input = 1;
-            }
+
+            user_input = 1;
+
+            if (keyPressed->scancode == sf::Keyboard::Scancode::Escape){ window.close();}
+            else if (keyPressed->scancode == sf::Keyboard::Scancode::Up){ up = 1;}
+            else if (keyPressed->scancode == sf::Keyboard::Scancode::Down){ down = 1;}
+            else if (keyPressed->scancode == sf::Keyboard::Scancode::Right){ right = 1;}
+            else if (keyPressed->scancode == sf::Keyboard::Scancode::Left){ left = 1;}
+            else if (keyPressed->scancode == sf::Keyboard::Scancode::Space){ space = 1;}
+            else if (keyPressed->scancode == sf::Keyboard::Scancode::B){ keyB = 1;}
+            else if (keyPressed->scancode == sf::Keyboard::Scancode::A){ keyA = 1;}
+            else if (keyPressed->scancode == sf::Keyboard::Scancode::D){ keyD = 1;}
          }
       }
 
@@ -247,7 +207,7 @@ int main()
    // DEBUG OUTPUTS
    /////////////////////////////////////////////////////////////////
 
-   std::cout << "*******END******* " << std::endl;
+   std::cout << "*******PROGRAM TERMINATED******* " << std::endl;
 
    return 0;
 }

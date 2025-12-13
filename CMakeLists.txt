@@ -51,6 +51,7 @@ include(InstallRequiredSystemLibraries)
 set(CPACK_PACKAGE_NAME "T")
 set(CPACK_PACKAGE_VERSION "1.0.0")
 set(CPACK_RESOURCE_FILE_LICENCE "${CMAKE_SOURCE_DIR}/licence.txt")
-set(CPACK_GENERATOR "TGZ;STGZ") # TGZ: gzipped, STGZ: shell, DEB: Debian, RPM: Red Hat, NSIS: Windows NSIS, ZIP: zip
+# TGZ: gzipped, STGZ: shell, DEB: Debian, RPM: Red Hat, NSIS: Windows NSIS
+set(CPACK_GENERATOR "TGZ;STGZ;NSIS") 
 include(CPack)
 

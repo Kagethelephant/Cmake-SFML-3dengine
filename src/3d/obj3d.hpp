@@ -36,17 +36,18 @@ public:
    //////////////////////////////////////////////////////////////////
    /// \brief Update the rotation matrix of the object
    //////////////////////////////////////////////////////////////////
-   void update();
+   void update(){ m_matTransform = transformation_matrix(position.x, position.y, position.z, direction.x, direction.y, direction.z);}
 
    //////////////////////////////////////////////////////////////////
    /// \brief Called externally to draw the triangles in the mesh 
    //////////////////////////////////////////////////////////////////
-   void draw(std::vector<std::uint8_t>& texture, sf::RenderTexture& tex, sf::Vector2u res, camera camera,vec3 col);
+   void draw(std::vector<std::uint8_t>& texture, sf::RenderTexture& tex, sf::Vector2u res, camera camera, sf::Color col);
 
    //////////////////////////////////////////////////////////////////
    /// \brief Load an OBJ file
    //////////////////////////////////////////////////////////////////
    void load(std::string fileName);
+
 
 
 private:

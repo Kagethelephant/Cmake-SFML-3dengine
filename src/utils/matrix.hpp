@@ -131,10 +131,19 @@ struct vec3 {
 };
 
 
-//////////////////////////////////////////////////////////////////
-/// Matrix Functions
-//////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------
+// Matrix Functions
+//----------------------------------------------------------------
 
+/// @brief Creates a 4x4 matrix that can be used to transform a 
+/// vertex with the given parameters
+/// @param x: x translation
+/// @param y: y translation
+/// @param z: z translation
+/// @param u: u rotation around origin
+/// @param v: v rotation around origin
+/// @param w: w rotation around origin
+/// @return mat4x4
 mat4x4 transformation_matrix(float x, float y, float z, float u, float v, float w);
 
 mat4x4 project_matrix(float fFovDegrees, float fAspectRatio, float fNear, float fFar);

@@ -15,6 +15,7 @@ void camera::update(float x, float y, float z, float u, float v, float w) {
    vec3 up = vec3(0,1,0) * transformation_matrix(0, 0, 0, rotation.x, rotation.y, rotation.z);
    direction = vec3(0,0,1) * transformation_matrix(0, 0, 0, rotation.x, rotation.y, rotation.z);
 
+
    // Update the xyz and uvw values (the position is changing direction based on look direction)
    position += (direction * z) + (direction.cross(up) * x);
    position.y += y;
