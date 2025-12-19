@@ -1,15 +1,15 @@
-//////////////////////////////////////////////////////////////////
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // Headers
-//////////////////////////////////////////////////////////////////
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #include "display.hpp"
 #include <SFML/System/Vector2.hpp>
 #include <cmath>
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// This is just to move the window setup stuff out of the main loop because all of this will generally be the same
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-sf::Vector2u windowSetup(sf::RenderWindow& window, int height, bool fullscreen = true, sf::String title = "Window", int fps = 60) {
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// This is just to move the window setup stuff out of the main loop because all of this will generally be the same
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+sf::Vector2u windowSetup(sf::RenderWindow& window, int height, bool fullscreen, sf::String title, int fps) {
 
    // Get the display dimmensions and calculate the aspect ratio and screen resolution
    sf::Vector2u size = sf::VideoMode::getDesktopMode().size;

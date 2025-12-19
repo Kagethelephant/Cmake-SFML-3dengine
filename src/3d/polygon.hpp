@@ -1,8 +1,8 @@
 #pragma once
 
-//////////////////////////////////////////////////////////////////
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // Headers
-//////////////////////////////////////////////////////////////////
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #include <SFML/Graphics.hpp>
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/Texture.hpp>
@@ -11,9 +11,7 @@
 #include "utils/data.hpp"
 
 
-//////////////////////////////////////////////////////////////////
 /// \brief Triangle for rendering 3d objects
-//////////////////////////////////////////////////////////////////
 struct tri3d {
 
    vec3 v[3];

@@ -1,12 +1,13 @@
-
-//////////////////////////////////////////////////////////////////
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // Headers
-//////////////////////////////////////////////////////////////////
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #include "data.hpp"
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/Font.hpp>
 
-// ******** GLOBAL VARIABLE EXAMPLE ********
+
+// GLOBAL VARIABLE EXAMPLE
+//---------------------------------------------------------------------------------------------
 sf::Color red;
 sf::Color blue;
 sf::Color green;
@@ -17,9 +18,7 @@ sf::Color black;
 sf::Color white;
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Define global variables (need to be initialized with extern in the header file first)
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief: Define global variables
 void defineGlobal() {
 
    red = sf::Color(201, 62, 52); //rgb(201, 62, 52)

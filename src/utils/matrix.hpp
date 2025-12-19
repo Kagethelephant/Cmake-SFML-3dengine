@@ -1,19 +1,18 @@
 #pragma once
 
-//////////////////////////////////////////////////////////////////
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 /// HEADERS
-//////////////////////////////////////////////////////////////////
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #include <cmath>
 
 
 
-//////////////////////////////////////////////////////////////////
-/// \brief Simple 4x4 matrix, good for 3D rendering
-//////////////////////////////////////////////////////////////////
+/// @brief: Simple 4x4 matrix with multiplication overload
 struct mat4x4 {
 
    float m[4][4] = {0.0f};
-
+   
+   // Overload for multiplying two matrices
    mat4x4 operator * (const mat4x4 &m2){
       mat4x4 matrix;
       for (int c = 0; c < 4; c++)
@@ -24,10 +23,9 @@ struct mat4x4 {
 };
 
 
-
-//////////////////////////////////////////////////////////////////
-/// \brief 3d vector with an optional constructor
-//////////////////////////////////////////////////////////////////
+/// @brief: 3d vector with operator overloads
+/// @param x: x component of vector 
+/// @param y: y component of vector 
 struct vec2 {
 
    float x,y;
@@ -36,17 +34,20 @@ struct vec2 {
    vec2() : x(0), y(0) {}
    vec2(float _x, float _y) : x(_x), y(_y) {}
 
-   // Non overload functions
+   // Member Functions
+   //---------------------------------------------------------------------------------------------
+
    // Gives the magnitude of the vector
    float mag() { return std::sqrt(std::pow(x,2) + std::pow(y,2)); }
-   // This does not give a normal, this normalizes the vector so its magnitude is 1
+   // This does not give a normal, this returns the normalized vector so the magnitude is 1
    vec2 normal() { float m = mag(); return vec2(x/m, y/m); }
-   // This does not give a normal, this normalizes the vector so its magnitude is 1
+   // This does not give a normal, this normalizes this vector so the magnitude is 1
    void normalize() { float m = mag(); x /= m; y /= m; }
    // This will give the likeness of 2 vectors, this only makes sense with normalized direction vectors
    float dot(const vec2& v) { return ((this->x * v.x) + (this->y * v.y)); }
 
    // Overload functions
+   //---------------------------------------------------------------------------------------------
    // Scalars
    vec2 operator + (const vec2& v) {return vec2(this->x + v.x, this->y + v.y); }
    vec2 operator - (const vec2& v) {return vec2(this->x - v.x, this->y - v.y); }
@@ -62,9 +63,11 @@ struct vec2 {
 };
 
 
-//////////////////////////////////////////////////////////////////
-/// \brief 3d vector with an optional constructor
-//////////////////////////////////////////////////////////////////
+/// @brief 3d vector with an optional constructor
+/// @param x: x component of vector 
+/// @param y: y component of vector 
+/// @param z: z component of vector 
+/// @param w: Extra component to 
 struct vec3 {
 
    float x,y,z,w;
@@ -74,19 +77,23 @@ struct vec3 {
    vec3(float _x, float _y, float _z) : x(_x), y(_y), z(_z), w(1) {}
    vec3(float _x, float _y, float _z, float _w) : x(_x), y(_y), z(_z), w(_w) {}
 
-   // Non overload functions
+   // Member functions
+   //---------------------------------------------------------------------------------------------
+
    // This gives the magnitude of a given vector
    float mag() { return std::sqrt(std::pow(x,2) + std::pow(y,2) + std::pow(z,2)); }
-   // This does not give a normal, this normalizes a vector so the magnitude is 1
+   // This does not give a normal, this returns the normalized vector so the magnitude is 1
    vec3 normal() { float m = mag(); return vec3(x/m, y/ m, z/m, w); }
-   // This does not give a normal, this normalizes a vector so the magnitude is 1
+   // This does not give a normal, this normalizes this vector so the magnitude is 1
    void normalize() { float m = mag(); x /= m; y /= m; z /= m; }
    // This gives the likeness of the 2 vectors, this only makes sense on normalized direction vectors
    float dot(const vec3& v) { return ((this->x * v.x) + (this->y * v.y) + (this->z * v.z)); }
    // This gives the the normal line between the 2 given interscecting vectors (at least i think they need to interscect)
    vec3 cross(const vec3& v) { return vec3(this->y * v.z - this->z * v.y, this->z * v.x - this->x * v.z, this->x * v.y - this->y * v.x, this->w); }
 
-   // Overload functions
+   // Operator overloads
+   //---------------------------------------------------------------------------------------------
+
    // Scalars
    vec3 operator + (const vec3& v) {return vec3(this->x + v.x, this->y + v.y, this->z + v.z, this->w); }
    vec3 operator - (const vec3& v) {return vec3(this->x - v.x, this->y - v.y, this->z - v.z, this->w); }
@@ -108,8 +115,7 @@ struct vec3 {
       v.y = this->x * m.m[0][1] + this->y * m.m[1][1] + this->z * m.m[2][1] + this->w * m.m[3][1];
       v.z = this->x * m.m[0][2] + this->y * m.m[1][2] + this->z * m.m[2][2] + this->w * m.m[3][2];
       v.w = this->x * m.m[0][3] + this->y * m.m[1][3] + this->z * m.m[2][3] + this->w * m.m[3][3];
-      // Create a psuedo 4th variable to multiply by the 4x4 matrix and treat it as if it where part of the vector
-      // float w = (this->x * m.m[0][3] + this->y * m.m[1][3] + this->z * m.m[2][3] + m.m[3][3]);
+
       if ( v.w != 0.0f) {v.x /= v.w; v.y /= v.w; v.z /= v.w;}
       return v;
    }
@@ -121,8 +127,7 @@ struct vec3 {
       v.y = this->x * m.m[0][1] + this->y * m.m[1][1] + this->z * m.m[2][1] + this->w * m.m[3][1];
       v.z = this->x * m.m[0][2] + this->y * m.m[1][2] + this->z * m.m[2][2] + this->w * m.m[3][2];
       v.w = this->x * m.m[0][3] + this->y * m.m[1][3] + this->z * m.m[2][3] + this->w * m.m[3][3];
-      // // Create a psuedo 4th variable to multiply by the 4x4 matrix and treat it as if it where part of the vector
-      // float w = (this->x * m.m[0][3] + this->y * m.m[1][3] + this->z * m.m[2][3] + m.m[3][3]);
+
       if ( v.w != 0.0f) {v.x /= v.w; v.y /= v.w; v.z /= v.w;}
       this-> x = v.x;
       this-> y = v.y;
@@ -130,13 +135,11 @@ struct vec3 {
    }
 };
 
-
-//----------------------------------------------------------------
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // Matrix Functions
-//----------------------------------------------------------------
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-/// @brief Creates a 4x4 matrix that can be used to transform a 
-/// vertex with the given parameters
+/// @brief: Creates a 4x4 matrix that can be used to translate and rotate a vertex
 /// @param x: x translation
 /// @param y: y translation
 /// @param z: z translation
@@ -144,15 +147,32 @@ struct vec3 {
 /// @param v: v rotation around origin
 /// @param w: w rotation around origin
 /// @return mat4x4
+///
 mat4x4 transformation_matrix(float x, float y, float z, float u, float v, float w);
 
-mat4x4 project_matrix(float fFovDegrees, float fAspectRatio, float fNear, float fFar);
+/// @brief: Creates the 3d projection matrix that transforms a 3D vertex to screen space
+/// @param fov: Field of view in degrees
+/// @param a: Aspect ratio of the display
+/// @param n: Position in pixels scale of the near plane
+/// @param f: Position in pixel scale of the far plane
+/// @return mat4x4
+///
+mat4x4 project_matrix(float fov, float a, float n, float f);
 
-mat4x4 point_matrix(vec3 &pos, vec3 &target, vec3 &up); // These last 2 i dont really understand
+/// @brief: Creates a matrix that will rotate a 3D vertex around its origin so the z axis
+/// points towards the provided 3D vertex
+/// @param pos: vec3 of the origin position of the object (by reference)
+/// @param target: vec3 position of the point for the object to point at (by reference)
+/// @param up: vec3 of the direction of the y axis (by reference)
+/// @return mat4x4
+///
+mat4x4 point_matrix(vec3 &pos, vec3 &target, vec3 &up);
 
-mat4x4 view_matrix(mat4x4 &m); // Only for Rotation/Translation Matrices
-
-
-
-
-
+/// @brief: Creates a matrix that will move a vertex in 3D space to a position that reflects its
+/// position reletive to the camera view. Essentially moving the world around a camera instead 
+/// of moving the camera. The camera view is represented by a matrix created with the "point_matrix"
+/// the direction and position given to the "point_matrix" represents the camera
+/// @param m: point_matrix result representing the camera (by reference)
+/// @return mat4x4
+///
+mat4x4 view_matrix(mat4x4 &m);

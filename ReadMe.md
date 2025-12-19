@@ -1,35 +1,7 @@
 # **Cmake Game Workflow Trial Run**
 
-## Notes for enviroment
-
-### Markdown
-
-markdown is used for this readme file denoted by .md
-https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax
-Here is a link to a github page that shows the syntax on markdown formatting and you can do some pretty neat stuff with it
-
-
-
-
-### Git
-
-**This section will be for writing down some notes as i learn git through the terminal**
-
-- `git log --all --decorate --oneline --graph` shows a git graph with pretty colors to show your branch history 
-- `git push --set-upstream origin "branch name"` will initialize the upstream for that branch
-- `git rebase -i "commit hash"` will combine the commits from the current to the provided commit
-
-Slightly commical but i changed the default editor in git to nano just because i didnt want to figure out how to exit Vim, you can exit nano by Ctrl+X
-
-
-
 
  ### Cmake Notes
-
-**Just some basic terminal navigation stuff**
-
-- `mkdir "dir"` makes a new directory
-- `cd ..` Goes up a directory 
 
 **Build and Run in Windows**
 Make sure you have Cmake Tools as your configuration provider in vscode or there will be some include problems (Ctrl+Shift+P to change provider). 

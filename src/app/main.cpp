@@ -1,7 +1,7 @@
 
-//////////////////////////////////////////////////////////////////
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // Headers
-//////////////////////////////////////////////////////////////////
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #include <SFML/Config.hpp>
 #include <SFML/Graphics.hpp>
 #include <SFML/Graphics/Sprite.hpp>
@@ -22,11 +22,11 @@ int main(int argc, char* argv[])
 {
 
    defineGlobal();
-   randObj rander(13412234);
+   randObj rander(13412234, false);
 
-   //////////////////////////////////////////////////////////////////
+   //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
    // Setup for SFML window and resolution
-   //////////////////////////////////////////////////////////////////
+   //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
    sf::Vector2f mousePos;
    sf::Vector2u resWindow;
 
@@ -55,7 +55,9 @@ int main(int argc, char* argv[])
       }
    }
 
-   // ******************** CREATE 3D OBJECTS **********************
+
+   // CREATE 3D OBJECTS
+   //---------------------------------------------------------------------------------------------
    // TEST OBJECT
    float h = 0.9999;
    float w = 0.25;
@@ -86,9 +88,9 @@ int main(int argc, char* argv[])
    object3.load("../resources/objects/cow.obj");
    object3.position = vec3(-12, 0, 0);
 
-   //////////////////////////////////////////////////////////////////
+   //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
    // DRAW STATIC
-   //////////////////////////////////////////////////////////////////
+   //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
    sf::Font fontRegular("../resources/font/small_pixel.ttf");
    fontRegular.setSmooth(false);
 
@@ -96,9 +98,9 @@ int main(int argc, char* argv[])
    // textSmall.setFillColor(white);
    // textSmall.setPosition(5,5);
 
-   //////////////////////////////////////////////////////////////////
+   //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
    // WINDOW EVENT HANDLER
-   //////////////////////////////////////////////////////////////////
+   //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
    int fpsCounter = 0;
    sf::Time Time;
    float fps;
@@ -136,9 +138,9 @@ int main(int argc, char* argv[])
          }
       }
 
-      //////////////////////////////////////////////////////////////////
+      //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
       // UPDATE
-      //////////////////////////////////////////////////////////////////
+      //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
       // Create a vector with the pixel coord's in the actual window not the display
       mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
 
@@ -159,16 +161,15 @@ int main(int argc, char* argv[])
       fpsCounter++;
       if (fpsCounter >= 30)
       {
-
          Time = clock.getElapsedTime();
          clock.restart();
          fps = (int)(30 / (Time.asSeconds()));
          fpsCounter = 0;
       }
       // std::cout << "FPS: " << 1.0f/elapTime << std::endl;
-      //////////////////////////////////////////////////////////////////
+      //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
       // DRAW
-      //////////////////////////////////////////////////////////////////
+      //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
       // Move the rectangle to the correct position before drawing
       // rendWindow.clear(sf::Color(black.x,black.y,black.z,black.w));
 
@@ -194,18 +195,18 @@ int main(int argc, char* argv[])
       textSmall.setPosition(sf::Vector2f(10, 70));
       rendWindow.draw(textSmall);
 
-      //////////////////////////////////////////////////////////////////
+      //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
       // DISPLAY TO SCREEN
-      //////////////////////////////////////////////////////////////////
+      //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
       // Display canvas layers to screen
       rendWindow.display();
       window.draw(sf::Sprite(rendWindow.getTexture()));
       window.display();
    }
 
-   //////////////////////////////////////////////////////////////////
+   //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
    // DEBUG OUTPUTS
-   /////////////////////////////////////////////////////////////////
+   //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
    std::cout << "*******PROGRAM TERMINATED******* " << std::endl;
 

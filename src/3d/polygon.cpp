@@ -1,6 +1,6 @@
-//////////////////////////////////////////////////////////////////
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // Headers
-//////////////////////////////////////////////////////////////////
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #include "polygon.hpp"
 #include "utils/data.hpp"
 #include <SFML/Graphics/Color.hpp>
@@ -9,9 +9,9 @@
 #include <vector>
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Draw the triangle in 2D with 2D coordinates and clip on the screen
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// Draw the triangle in 2D with 2D coordinates and clip on the screen
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 void tri3d::draw(std::vector<std::uint8_t>& texture, sf::RenderTexture& tex, sf::Vector2u res, sf::Color col) {
 
    // for cliping count points outside of view,

@@ -1,6 +1,6 @@
-//////////////////////////////////////////////////////////////////
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // Header
-//////////////////////////////////////////////////////////////////
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #include "obj3d.hpp"
 #include "3d/polygon.hpp"
 #include "utils/matrix.hpp"
@@ -12,9 +12,9 @@
 #include <vector>
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Constructor for object, sets some default variables and creates the projection matrix
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// Constructor for object, sets some default variables and creates the projection matrix
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 object3d::object3d() {
 
    update();
@@ -24,9 +24,9 @@ object3d::object3d() {
 }
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Update the transformation matrix so the objects can move based on updated x,y,z,u,v,w values
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// Update the transformation matrix so the objects can move based on updated x,y,z,u,v,w values
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 bool pointOutOfPlane(vec3 point, vec3 plane){
@@ -42,14 +42,15 @@ int wrap(int i, int limit){
    if (i >= limit) i -= limit;
    return i;
 }
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// This is the main function and probably needs to be broken up into more functions
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// This is the main function and probably needs to be broken up into more functions
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 void object3d::draw(std::vector<std::uint8_t>& texture, sf::RenderTexture& tex, sf::Vector2u res, camera camera, sf::Color color) {
 
-   // ************************** MOVE AND ROTATE **************************
+   // MOVE AND ROTATE
+   //---------------------------------------------------------------------------------------------
    update();
-   mat4x4 mat1 = transformation_matrix(9, 3, 4, 5, 6, 7);
+   mat4x4 mat1 = transformation_matrix(3, 4, 6, 6, 4, 3);
 
    // Create a vector for the camera and light direction (not position)
    vec3 light(-1,1,-1);
@@ -62,7 +63,8 @@ void object3d::draw(std::vector<std::uint8_t>& texture, sf::RenderTexture& tex, 
       // this objects transformation matrix populated by "update()"
       tri3d tri = i * m_matTransform;
 
-      // ************************** CHECK VISABILITY, MOVE TO CAMERA **************************
+      // CHECK VISABILITY, MOVE TO CAMERA 
+      //---------------------------------------------------------------------------------------------
       // Get the normal vector to the triangle and the vector pointing
       // from the camera to the triangle to determine if we should draw it
       vec3 triNorm = tri.normal();
@@ -75,7 +77,8 @@ void object3d::draw(std::vector<std::uint8_t>& texture, sf::RenderTexture& tex, 
       }
    }
 
-   // ************************** SORT TRIANGLE BY Z **************************
+   // SORT TRIANGLE BY Z
+   //---------------------------------------------------------------------------------------------
    // Sort all of the triangles in the buffer by their mmidpoint z value to draw the farther triangles first
    std::sort(buffer.begin(),buffer.end(), [](tri3d &t1, tri3d &t2) {
       float z1 = (t1.v[0].z + t1.v[1].z + t1.v[2].z)/3.0f;
@@ -109,7 +112,8 @@ void object3d::draw(std::vector<std::uint8_t>& texture, sf::RenderTexture& tex, 
    //project and draw
    for(tri3d tri : buffer) {
 
-      // ************************** GET COLOR AND DRAW TRIANGLE **************************
+      // GET COLOR AND DRAW TRIANGLE
+      //---------------------------------------------------------------------------------------------
       // Take the normal of the triangle and compare it to 
       // the direction of the light source to get the shade
       float shade = tri.normal().dot(light);
@@ -181,7 +185,8 @@ void object3d::draw(std::vector<std::uint8_t>& texture, sf::RenderTexture& tex, 
 
 
 
-      // ************************** PROJECT, SHIFT, AND SCALE POINTS **************************
+      // PROJECT, SHIFT, AND SCALE POINTS
+      //---------------------------------------------------------------------------------------------
 
       for (tri3d triangle : toSplitBuffer){
          // Use projection matrix to convert 3D points to 2D points on the screen
@@ -213,9 +218,9 @@ void object3d::draw(std::vector<std::uint8_t>& texture, sf::RenderTexture& tex, 
 }
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Load an OBJ file into the mesh vector
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// Load an OBJ file into the mesh vector
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 void object3d::load(std::string fileName) {
 
    // Try to open the files
