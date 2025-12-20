@@ -1,32 +1,36 @@
 # **Cmake Game Workflow Trial Run**
 
+* [1. Cmake Notes](#section-1)
+    * [1.1. Build and Run in Windows](#section-11)
+* [2. SFML](#section-2)
 
- ### Cmake Notes
+## 1. Cmake Notes
 
-**Build and Run in Windows**
-Make sure you have Cmake Tools as your configuration provider in vscode or there will be some include problems (Ctrl+Shift+P to change provider). 
+**Why CMake?**
+Really all CMake does is make Makefiles for you. Makefiles are just instructions used by Make to automate compiling, linking, and building binaries from source code. This might seem superfluous since you can just write Makefiles, but with CMakeLists.txt files are often only a few lines of code while Makefiles are hundreds to thousands of lines of code. You can test this by building this project and looking at the Makefile in the build directory.
 
-to get GCC to work you have to download it from https://winlibs.com/ or the SFML website. I would recomend the latter if using SFML just so you know that they are compatable. you can then add the bin to the system path and search for kits with (ctrl+shift+P)
-
-**How to build in the terminal withouth the vscode plugin**
-1. `cmake -G "MinGW Makefiles" ..` builds the cmake files in the current directory if the CMakeLists.txt is one level above (`cmake ..` for linux)
-2. `mingw32-make` to make the exe (`make` for linux)
-3. If this builds succesfully you can run the exe in the current directory using `./filename.exe`
-
-**Cmake file stuff**
-`target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/include)` This will add an iinclude directory seperate from the CMAKE_SOURCE_DIR
+Using CMake allows people like me to share silly little projects like this with people like you, and give you the ability to alter the source code and build the binaries on your own without having to write hundreds of lines of Make instructions.
 
 
+### 1.1. Build and Run in Windows
+This goes without saying but you will need to install CMake whether you are on Linux or Windows.
+
+If you are using VScode I would highly recommend using the CMake plugin. If you are using the CMake plugin make sure you have CMake set as your configuration provider or there will be some linker diagnostics errors (Ctrl+Shift+P - Change configuration provider). 
+
+Since this game is cross-compatible with Linux you will need to use GCC to compile it. You need to install GCC (needs to be matching GCC version from SFML download page) on windows as the default C++ compiler is MSVC. You need to add to add the location of the GCC binaries to your system path, and configure CMake to use GCC rather than MSVC.
+
+**How to build in the terminal without the VScode CMake plugin**
+1. `cmake -G "MinGW Makefiles" ..` builds the make files in the current directory (using GCC) if the CMakeLists.txt is one level above.
+2. `mingw32-make` runs the make files and spits out the binary into the current directory.
+3. If this builds successfully you can run the exe in the current directory using `./filename.exe` where the filename is your project name
 
 
-### SFML
 
-Make sure the SFML version matches the compiler. If you are using GCC i would recommend downloading the compiler from the SFML website.
-Really all that you have to do for SFML is download the correct version, plop it wherever and add the path to the system path. On linux you should just be able to install it and it will automatically be added to the path. The hardest part about gettin SFML to work is in the CMakeLists.txt file.
+## 2. SFML
+SFML is included as a shared/dynamic library in this project. This means in Linux, SMFL should be installed (adding the libraries to system bin), or in windows that you need to download the SFML library and add the bin directory to your system path.
 
-If you look close at the pixels you can see that the pixels are a little blury. There is some problems with pixel perfect rendering in SFML by default and you need to get a pre-compiled version of SFML, change the necessary settings and build SFML using Cmake. I dont remember what you need to change but it should be somewhere on the interwebs.
 
-There are only 2 lines that are required to set up SFML in the cmake file
-- `find_package(SFML REQUIRED graphics window audio network system)` this will find the SFML libraries if the libraries are somewhere in the system paths
-- `target_link_libraries(${PROJECT_NAME} sfml-graphics sfml-window sfml-audio sfml-network sfml-system)` links the found libraries (in order)
+There are only 2 lines that are required to set up SFML in the CMakeLists.txt:
+- `find_package(SFML 3 REQUIRED COMPONENTS Graphics Window System)` this will find the SFML CMake package
+- `target_link_libraries(${PROJECT_NAME} PRIVATE SFML::Graphics SFML::Window SFML::System)` links the found libraries (in order)
 - `set(SFML_STATIC_LIBRARIES TRUE)` this is not required if linking dynamically. If you turn this on and drop the necessary SFML files (SFML include and the static libraries) than you will link statically and the build will be relitively portable.

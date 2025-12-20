@@ -105,10 +105,6 @@ void object3d::draw(std::vector<std::uint8_t>& texture, sf::RenderTexture& tex, 
    vec3 far = vec3(0,0,1,-f);
 
 
-   // vec3 bottom = vec3(0,1,0);
-   // vec3 newPoint = splitPoint(vec3(-20.0f,-20.0f,0.0f), vec3(5.0f,40.0f,0.0f), vec3(1.0f,0.0f,0.0f, 1.0f));
-   
-
    //project and draw
    for(tri3d tri : buffer) {
 

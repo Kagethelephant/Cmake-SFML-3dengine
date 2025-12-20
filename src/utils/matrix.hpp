@@ -15,17 +15,17 @@ struct mat4x4 {
    // Overload for multiplying two matrices
    mat4x4 operator * (const mat4x4 &m2){
       mat4x4 matrix;
-      for (int c = 0; c < 4; c++)
-         for (int r = 0; r < 4; r++)
-            matrix.m[r][c] = this->m[r][0] * m2.m[0][c] + this->m[r][1] * m2.m[1][c] + this->m[r][2] * m2.m[2][c] + this->m[r][3] * m2.m[3][c];
+      for (int i = 0; i < 4; i++)
+         for (int j = 0; j < 4; j++)
+            matrix.m[j][i] = this->m[j][0] * m2.m[0][i] + this->m[j][1] * m2.m[1][i] + this->m[j][2] * m2.m[2][i] + this->m[j][3] * m2.m[3][i];
       return matrix;
    }
 };
 
 
 /// @brief: 3d vector with operator overloads
-/// @param x: x component of vector 
-/// @param y: y component of vector 
+/// @param x: x component of vector (Default: 0)
+/// @param y: y component of vector (Default: 0)
 struct vec2 {
 
    float x,y;
@@ -36,14 +36,13 @@ struct vec2 {
 
    // Member Functions
    //---------------------------------------------------------------------------------------------
-
-   // Gives the magnitude of the vector
+   /// @brief: returns the magnitude of the vector
    float mag() { return std::sqrt(std::pow(x,2) + std::pow(y,2)); }
-   // This does not give a normal, this returns the normalized vector so the magnitude is 1
+   /// @brief: Returns the normalized vector so the magnitude is 1
    vec2 normal() { float m = mag(); return vec2(x/m, y/m); }
-   // This does not give a normal, this normalizes this vector so the magnitude is 1
+   /// @brief: Normalizes the vector so the magnitude is 2
    void normalize() { float m = mag(); x /= m; y /= m; }
-   // This will give the likeness of 2 vectors, this only makes sense with normalized direction vectors
+   /// @brief: Dot producto of 2 vectors. This is escencially the likeness of 2 normalized vectors
    float dot(const vec2& v) { return ((this->x * v.x) + (this->y * v.y)); }
 
    // Overload functions
@@ -64,10 +63,10 @@ struct vec2 {
 
 
 /// @brief 3d vector with an optional constructor
-/// @param x: x component of vector 
-/// @param y: y component of vector 
-/// @param z: z component of vector 
-/// @param w: Extra component to 
+/// @param x: x component of vector (Default: 0)
+/// @param y: y component of vector (Default: 0)
+/// @param z: z component of vector (Default: 0) 
+/// @param w: Extra component used for multiplication with 4x4 matrices (Default = 1)
 struct vec3 {
 
    float x,y,z,w;
@@ -79,22 +78,20 @@ struct vec3 {
 
    // Member functions
    //---------------------------------------------------------------------------------------------
-
-   // This gives the magnitude of a given vector
+   /// @brief: returns the magnitude of the vector
    float mag() { return std::sqrt(std::pow(x,2) + std::pow(y,2) + std::pow(z,2)); }
-   // This does not give a normal, this returns the normalized vector so the magnitude is 1
+   /// @brief: Returns the normalized vector so the magnitude is 1
    vec3 normal() { float m = mag(); return vec3(x/m, y/ m, z/m, w); }
-   // This does not give a normal, this normalizes this vector so the magnitude is 1
+   /// @brief: Normalizes the vector so the magnitude is 2
    void normalize() { float m = mag(); x /= m; y /= m; z /= m; }
-   // This gives the likeness of the 2 vectors, this only makes sense on normalized direction vectors
+   /// @brief: Dot producto of 2 vectors. This is escencially the likeness of 2 normalized vectors
    float dot(const vec3& v) { return ((this->x * v.x) + (this->y * v.y) + (this->z * v.z)); }
-   // This gives the the normal line between the 2 given interscecting vectors (at least i think they need to interscect)
+   // Cross product of 2 vectors that will return the normal vector of the plane created from the 2 vectors
    vec3 cross(const vec3& v) { return vec3(this->y * v.z - this->z * v.y, this->z * v.x - this->x * v.z, this->x * v.y - this->y * v.x, this->w); }
 
    // Operator overloads
    //---------------------------------------------------------------------------------------------
-
-   // Scalars
+   // 
    vec3 operator + (const vec3& v) {return vec3(this->x + v.x, this->y + v.y, this->z + v.z, this->w); }
    vec3 operator - (const vec3& v) {return vec3(this->x - v.x, this->y - v.y, this->z - v.z, this->w); }
    vec3 operator * (const float& f) {return vec3(this->x * f, this->y * f, this->z * f, this->w); }
@@ -107,7 +104,6 @@ struct vec3 {
    // Dot product overload
    float operator * (const vec3& v) {return (this->x * v.x) + (this->y * v.y) + (this->z * v.z); }
 
-
    // Overload for multiplying a vector against a matrix
    vec3 operator * (const mat4x4& m) {
       vec3 v;
@@ -115,7 +111,6 @@ struct vec3 {
       v.y = this->x * m.m[0][1] + this->y * m.m[1][1] + this->z * m.m[2][1] + this->w * m.m[3][1];
       v.z = this->x * m.m[0][2] + this->y * m.m[1][2] + this->z * m.m[2][2] + this->w * m.m[3][2];
       v.w = this->x * m.m[0][3] + this->y * m.m[1][3] + this->z * m.m[2][3] + this->w * m.m[3][3];
-
       if ( v.w != 0.0f) {v.x /= v.w; v.y /= v.w; v.z /= v.w;}
       return v;
    }
@@ -127,7 +122,6 @@ struct vec3 {
       v.y = this->x * m.m[0][1] + this->y * m.m[1][1] + this->z * m.m[2][1] + this->w * m.m[3][1];
       v.z = this->x * m.m[0][2] + this->y * m.m[1][2] + this->z * m.m[2][2] + this->w * m.m[3][2];
       v.w = this->x * m.m[0][3] + this->y * m.m[1][3] + this->z * m.m[2][3] + this->w * m.m[3][3];
-
       if ( v.w != 0.0f) {v.x /= v.w; v.y /= v.w; v.z /= v.w;}
       this-> x = v.x;
       this-> y = v.y;
