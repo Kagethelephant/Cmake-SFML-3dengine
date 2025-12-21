@@ -1,7 +1,3 @@
-
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// Headers
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #include <SFML/Config.hpp>
 #include <SFML/Graphics.hpp>
 #include <SFML/Graphics/Sprite.hpp>
@@ -9,20 +5,20 @@
 #include <ostream>
 #include <string>
 #include <iostream>
-#include "display.hpp"
-#include "utils/data.hpp"
-#include "3d/obj3d.hpp"
-#include <3d/polygon.hpp>
-#include "utils/random.hpp"
 #include <vector>
+#include "polygon.hpp"
+#include "display.hpp"
+#include "data.hpp"
+#include "obj3d.hpp"
+#include "utils.hpp"
 
 
 
 int main(int argc, char* argv[])
 {
 
-   defineGlobal();
-   randObj rander(13412234, false);
+   // defineGlobal();
+   randObj rander(false, 13412234);
 
    //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
    // Setup for SFML window and resolution
@@ -31,7 +27,7 @@ int main(int argc, char* argv[])
    sf::Vector2u resWindow;
 
    sf::RenderWindow window;
-   resWindow = windowSetup(window, 1080, false, "CORONA", 120);
+   resWindow = windowSetup(window, 1080, false, "CORONA", 60);
 
    sf::RenderTexture rendWindow({resWindow.x, resWindow.y});
 

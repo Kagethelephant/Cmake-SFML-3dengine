@@ -1,11 +1,11 @@
 #pragma once
 
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-/// HEADERS
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #include <cmath>
 
 
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// Vector / Matrix objects with overloads
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 /// @brief: Simple 4x4 matrix with multiplication overload
 struct mat4x4 {
@@ -30,7 +30,7 @@ struct vec2 {
 
    float x,y;
 
-   // Constructors
+   // Constructors (Member initializer list)
    vec2() : x(0), y(0) {}
    vec2(float _x, float _y) : x(_x), y(_y) {}
 
@@ -47,16 +47,16 @@ struct vec2 {
 
    // Overload functions
    //---------------------------------------------------------------------------------------------
-   // Scalars
-   vec2 operator + (const vec2& v) {return vec2(this->x + v.x, this->y + v.y); }
-   vec2 operator - (const vec2& v) {return vec2(this->x - v.x, this->y - v.y); }
-   vec2 operator * (const float& f) {return vec2(this->x * f, this->y * f); }
-   vec2 operator / (const float& f) {return vec2(this->x / f, this->y / f); }
-   // Scalar modifiers
-   void operator += (const vec2& v) { this->x += v.x; this->y += v.y; }
-   void operator -= (const vec2& v) { this->x -= v.x; this->y -= v.y; }
-   void operator *= (const float& f) { this->x *= f; this->y *= f; }
-   void operator /= (const float& f) { this->x /= f; this->y /= f; }
+   // Standard Operators
+   vec2 operator + (const vec2& v) {return vec2(this->x + v.x, this->y + v.y); } // Add 2 vectors
+   vec2 operator - (const vec2& v) {return vec2(this->x - v.x, this->y - v.y); } // Subtract 2 vectors
+   vec2 operator * (const float& f) {return vec2(this->x * f, this->y * f); } // Scale vector by float
+   vec2 operator / (const float& f) {return vec2(this->x / f, this->y / f); } // Scale vector by float
+   // Compound Operators
+   void operator += (const vec2& v) { this->x += v.x; this->y += v.y; } // Add 2 vectors
+   void operator -= (const vec2& v) { this->x -= v.x; this->y -= v.y; } // Subtract 2 vectors
+   void operator *= (const float& f) { this->x *= f; this->y *= f; } // Scale vector by float
+   void operator /= (const float& f) { this->x /= f; this->y /= f; } // Scale vector by float
    // Dot product overload
    float operator * (const vec2& v) {return (this->x * v.x + this->y * v.y); }
 };
@@ -71,7 +71,7 @@ struct vec3 {
 
    float x,y,z,w;
 
-   // Constructors
+   // Constructors (member initializer list)
    vec3() : x(0), y(0), z(0), w(1) {}
    vec3(float _x, float _y, float _z) : x(_x), y(_y), z(_z), w(1) {}
    vec3(float _x, float _y, float _z, float _w) : x(_x), y(_y), z(_z), w(_w) {}
@@ -86,21 +86,21 @@ struct vec3 {
    void normalize() { float m = mag(); x /= m; y /= m; z /= m; }
    /// @brief: Dot producto of 2 vectors. This is escencially the likeness of 2 normalized vectors
    float dot(const vec3& v) { return ((this->x * v.x) + (this->y * v.y) + (this->z * v.z)); }
-   // Cross product of 2 vectors that will return the normal vector of the plane created from the 2 vectors
+   // @brief: Cross product of 2 vectors that will return the normal vector of the plane created from the 2 vectors
    vec3 cross(const vec3& v) { return vec3(this->y * v.z - this->z * v.y, this->z * v.x - this->x * v.z, this->x * v.y - this->y * v.x, this->w); }
 
    // Operator overloads
    //---------------------------------------------------------------------------------------------
-   // 
-   vec3 operator + (const vec3& v) {return vec3(this->x + v.x, this->y + v.y, this->z + v.z, this->w); }
-   vec3 operator - (const vec3& v) {return vec3(this->x - v.x, this->y - v.y, this->z - v.z, this->w); }
-   vec3 operator * (const float& f) {return vec3(this->x * f, this->y * f, this->z * f, this->w); }
-   vec3 operator / (const float& f) {return vec3(this->x / f, this->y / f, this->z / f, this->w); }
-   // Scalar modifiers
-   void operator += (const vec3& v) { this->x += v.x; this->y += v.y; this->z += v.z; }
-   void operator -= (const vec3& v) { this->x -= v.x; this->y -= v.y; this->z -= v.z; }
-   void operator *= (const float& f) { this->x *= f; this->y *= f; this->z *= f; }
-   void operator /= (const float& f) { this->x /= f; this->y /= f; this->z /= f; }
+   // Standard Operators 
+   vec3 operator + (const vec3& v) {return vec3(this->x + v.x, this->y + v.y, this->z + v.z, this->w); } // Add 2 vectors
+   vec3 operator - (const vec3& v) {return vec3(this->x - v.x, this->y - v.y, this->z - v.z, this->w); } // Subtract 2 vectors
+   vec3 operator * (const float& f) {return vec3(this->x * f, this->y * f, this->z * f, this->w); } // Scale vector by float
+   vec3 operator / (const float& f) {return vec3(this->x / f, this->y / f, this->z / f, this->w); } // Scale vector by float
+   // Compound Operators
+   void operator += (const vec3& v) { this->x += v.x; this->y += v.y; this->z += v.z; } // Add 2 vectors
+   void operator -= (const vec3& v) { this->x -= v.x; this->y -= v.y; this->z -= v.z; } // Subtract 2 vectors
+   void operator *= (const float& f) { this->x *= f; this->y *= f; this->z *= f; } // Scale vector by float
+   void operator /= (const float& f) { this->x /= f; this->y /= f; this->z /= f; } // Scale vector by float
    // Dot product overload
    float operator * (const vec3& v) {return (this->x * v.x) + (this->y * v.y) + (this->z * v.z); }
 
@@ -128,6 +128,7 @@ struct vec3 {
       this-> z = v.z;
    }
 };
+
 
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // Matrix Functions

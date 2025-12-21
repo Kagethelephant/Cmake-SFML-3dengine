@@ -1,14 +1,9 @@
 #pragma once
 
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// Headers
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #include <SFML/Graphics.hpp>
-#include <SFML/Graphics/Color.hpp>
-#include <SFML/Graphics/Texture.hpp>
 #include <vector>
-#include "utils/matrix.hpp"
-#include "utils/data.hpp"
+#include "matrix.hpp"
+#include "data.hpp"
 
 
 /// \brief Triangle for rendering 3d objects

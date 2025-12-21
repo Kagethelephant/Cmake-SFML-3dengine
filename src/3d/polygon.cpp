@@ -1,13 +1,9 @@
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// Headers
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #include "polygon.hpp"
-#include "utils/data.hpp"
-#include <SFML/Graphics/Color.hpp>
-#include <SFML/Graphics/PrimitiveType.hpp>
-#include <SFML/Graphics/Vertex.hpp>
-#include <vector>
 
+#include <SFML/Graphics.hpp>
+#include <vector>
+#include "matrix.hpp"
+#include "data.hpp"
 
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // Draw the triangle in 2D with 2D coordinates and clip on the screen
@@ -79,7 +75,6 @@ void fillTri(std::vector<std::uint8_t>& buffer, int width, sf::Color color, int 
             buffer [index] = color.r; 
             buffer [index + 1] = color.g; 
             buffer [index + 2] = color.b; 
-            // buffer [index + 3] = color.w; 
          }
       }
    }

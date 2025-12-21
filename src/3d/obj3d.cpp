@@ -1,20 +1,44 @@
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// Header
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #include "obj3d.hpp"
-#include "3d/polygon.hpp"
-#include "utils/matrix.hpp"
+
 #include <SFML/Graphics/Color.hpp>
 #include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <sstream> // Use this instead of strstream, strstream is depricated because it returns
 #include <vector>
+#include "polygon.hpp"
+#include "matrix.hpp"
+#include "utils.hpp"
 
 
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// Constructor for object, sets some default variables and creates the projection matrix
+// CAMERA IMPLIMENTATION
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+void camera::update(float x, float y, float z, float u, float v, float w) {
+   
+   // Rotate using the rotation matricies and normalize it
+   // Start with the difault direction vector which is just 1 in the z direction
+   vec3 up = vec3(0,1,0) * transformation_matrix(0, 0, 0, rotation.x, rotation.y, rotation.z);
+   direction = vec3(0,0,1) * transformation_matrix(0, 0, 0, rotation.x, rotation.y, rotation.z);
+
+
+   // Update the xyz and uvw values (the position is changing direction based on look direction)
+   position += (direction * z) + (direction.cross(up) * x);
+   position.y += y;
+   rotation += vec3(u,v,w);
+
+   // Calculate the point at matrix and view matrix (black box)
+   point = point_matrix(position, direction, up);
+   view = view_matrix(point);
+}
+
+
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// 3D OBJECT IMPLIMENTATION
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+// CONSTRUCTOR
+//---------------------------------------------------------------------------------------------
 object3d::object3d() {
 
    update();
@@ -24,27 +48,22 @@ object3d::object3d() {
 }
 
 
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// Update the transformation matrix so the objects can move based on updated x,y,z,u,v,w values
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-
-bool pointOutOfPlane(vec3 point, vec3 plane){
+// UTILITY FUNCTIONS
+//---------------------------------------------------------------------------------------------
+bool object3d::pointOutOfPlane(vec3 point, vec3 plane){
    return ((point.dot(plane) + plane.w) < 0);
 }
 
-vec3 splitPoint(vec3 p1, vec3 p2, vec3 plane){
+vec3 object3d::splitPoint(vec3 p1, vec3 p2, vec3 plane){
    float t = (p1.dot(plane) + plane.w) / (plane.x*(p1.x-p2.x) + plane.y*(p1.y-p2.y) + plane.z*(p1.z-p2.z));
    return((p1 + ((p2 - p1) * t)));
 }
 
-int wrap(int i, int limit){
-   if (i >= limit) i -= limit;
-   return i;
-}
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// This is the main function and probably needs to be broken up into more functions
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+
+// DRAW FUNCTION
+//---------------------------------------------------------------------------------------------
+
 void object3d::draw(std::vector<std::uint8_t>& texture, sf::RenderTexture& tex, sf::Vector2u res, camera camera, sf::Color color) {
 
    // MOVE AND ROTATE
@@ -174,11 +193,7 @@ void object3d::draw(std::vector<std::uint8_t>& texture, sf::RenderTexture& tex, 
          toSplitBuffer = splitBuffer;
          splitBuffer = std::vector<tri3d>();
       }
-
-      // if(tri.clippedToPlain(bottom, -1)) color = red;
       
-
-
 
 
       // PROJECT, SHIFT, AND SCALE POINTS
@@ -214,9 +229,8 @@ void object3d::draw(std::vector<std::uint8_t>& texture, sf::RenderTexture& tex, 
 }
 
 
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// Load an OBJ file into the mesh vector
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// LOAD OBJECT
+//---------------------------------------------------------------------------------------------
 void object3d::load(std::string fileName) {
 
    // Try to open the files
@@ -251,8 +265,3 @@ void object3d::load(std::string fileName) {
       }
    }
 }
-
-
-
-
-

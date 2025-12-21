@@ -1,16 +1,20 @@
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// Headers
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #include "matrix.hpp"
 
+#include <cmath>
+
+
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// Matrix Functions
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 mat4x4 transformation_matrix(float x, float y, float z, float u, float v, float w) {
-
+   // I got to these values by multiplying the transformation matrix and all of the 
+   // rotation matrices and simplifying down the expressions
    mat4x4 m;
-   m.m[0][0] = (cosf(v)*cosf(w)); m.m[1][0] = ((sinf(u)*-sinf(v))*cosf(w)) + (cosf(u)*-sinf(w)); 
-   m.m[0][1] = (cosf(v)*sinf(w)); m.m[1][1] = ((sinf(u)*-sinf(v))*sinf(w)) + (cosf(u)*cosf(w));  
-   m.m[0][2] = sinf(v);           m.m[1][2] = (sinf(u)*cos(v));                                  
-   m.m[0][3] = 0.0f;              m.m[1][3] = 0.0f;                                              
+   m.m[0][0] = (cosf(v)*cosf(w));  m.m[1][0] = ((sinf(u)*-sinf(v))*cosf(w)) + (cosf(u)*-sinf(w)); 
+   m.m[0][1] = (cosf(v)*sinf(w));  m.m[1][1] = ((sinf(u)*-sinf(v))*sinf(w)) + (cosf(u)*cosf(w));  
+   m.m[0][2] = sinf(v);            m.m[1][2] = (sinf(u)*cos(v));                                  
+   m.m[0][3] = 0.0f;               m.m[1][3] = 0.0f;                                              
 
    m.m[2][0] = ((cosf(u)*-sinf(v))*cosf(w)) + (-sinf(u)*-sinf(w)); m.m[3][0] = x;
    m.m[2][1] = ((cosf(u)*-sinf(v))*sinf(w)) + (-sinf(u)*cosf(w));  m.m[3][1] = y;
@@ -23,15 +27,15 @@ mat4x4 transformation_matrix(float x, float y, float z, float u, float v, float 
 
 mat4x4 project_matrix(float fov, float a, float n, float f) {
    // m[1][1] is not normally negative but since we are drawing as y = 0 is at the top of the screen
-   // we need to invert the y values since y = 0 should be towards the bottom of the screen for most models
+   // we need to invert the y values since y = 0 should be towards the bottom of the screen for most OBJ meshes
    float r = n * tanf(fov * 0.5f / 180.0f * 3.14159f);
    float t = r / a;
 
    mat4x4 m;
    m.m[0][0] = -n / r; m.m[1][0] = 0.0f;  m.m[2][0] = 0.0f;         m.m[3][0] = 0.0f;
-   m.m[0][1] = 0.0f;  m.m[1][1] = n / t; m.m[2][1] = 0.0f;         m.m[3][1] = 0.0f;
-   m.m[0][2] = 0.0f;  m.m[1][2] = 0.0f;  m.m[2][2] = (f+n)/(n-f);  m.m[3][2] = (2*f*n)/(n-f);
-   m.m[0][3] = 0.0f;  m.m[1][3] = 0.0f;  m.m[2][3] = -1.0f;        m.m[3][3] = 0.0f;
+   m.m[0][1] = 0.0f;   m.m[1][1] = n / t; m.m[2][1] = 0.0f;         m.m[3][1] = 0.0f;
+   m.m[0][2] = 0.0f;   m.m[1][2] = 0.0f;  m.m[2][2] = (f+n)/(n-f);  m.m[3][2] = (2*f*n)/(n-f);
+   m.m[0][3] = 0.0f;   m.m[1][3] = 0.0f;  m.m[2][3] = -1.0f;        m.m[3][3] = 0.0f;
    return m;
 }
 
@@ -54,7 +58,7 @@ mat4x4 point_matrix(vec3 &pos, vec3 &target, vec3 &up) {
 
 
 mat4x4 view_matrix(mat4x4 &m) {
-
+   //This is basically creating the inverse of the input matrix
    mat4x4 m2;
    m2.m[0][0] = m.m[0][0]; m2.m[0][1] = m.m[1][0]; m2.m[0][2] = m.m[2][0]; m2.m[0][3] = 0.0f;
    m2.m[1][0] = m.m[0][1]; m2.m[1][1] = m.m[1][1]; m2.m[1][2] = m.m[2][1]; m2.m[1][3] = 0.0f;

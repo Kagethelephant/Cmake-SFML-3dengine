@@ -4,6 +4,9 @@
     * [1.1. Build and Run in Windows](#11-build-and-run-in-windows)
     * [1.1. Build and Run in Windows](#12-build-and-run-in-linux)
 * [2. SFML](#2-sfml)
+* [3. Including Resources and Libraries](#3-including-resources-and-libraries)
+
+
 
 ## 1. Cmake Notes
 
@@ -19,7 +22,7 @@ This goes without saying but you will need to install CMake whether you are on L
 
 If you are using VScode I would highly recommend using the CMake plugin. If you are using the CMake plugin make sure you have CMake set as your configuration provider or there will be some linker diagnostics errors (Ctrl+Shift+P - Change configuration provider). 
 
-Since this game is cross-compatible with Linux you will need to use GCC to compile it. You need to install GCC (needs to be matching GCC version from SFML download page) on windows as the default C++ compiler is MSVC. You need to add to add the location of the GCC binaries to your system path, and configure CMake to use GCC rather than MSVC. (Ctrl+Shift+P - Select a Kit)
+Since this program is cross-compatible with Linux you will need to use GCC to compile it. You need to install GCC (needs to be matching GCC version from SFML download page) on windows as the default C++ compiler is MSVC. You need to add to add the location of the GCC binaries to your system path, and configure CMake to use GCC rather than MSVC. (Ctrl+Shift+P - Select a Kit)
 
 If you are using VScode and the CMake plugin you should now be able to just use `F5` to build and run the game (don't quote me on this, I have not used VScode in a while)
 
@@ -38,11 +41,30 @@ In Linux you will just have to install GCC, CMake, Make, and SFML to build and r
 3. If this builds successfully you can run the binary in the current directory using `./filename` where the filename is your project name
 
 
+
 ## 2. SFML
 SFML is included as a shared/dynamic library in this project. This means in Linux, SMFL should be installed (adding the libraries to system bin), or in windows that you need to download the SFML library and add the bin directory to your system path.
-
 
 There are only 2 lines that are required to set up SFML in the CMakeLists.txt:
 - `find_package(SFML 3 REQUIRED COMPONENTS Graphics Window System)` this will find the SFML CMake package
 - `target_link_libraries(${PROJECT_NAME} PRIVATE SFML::Graphics SFML::Window SFML::System)` links the found libraries (in order)
-- `set(SFML_STATIC_LIBRARIES TRUE)` this is not required if linking dynamically. If you turn this on and drop the necessary SFML files (SFML include and the static libraries) than you will link statically and the build will be relitively portable.
+
+
+
+## 3. Including Resources and Libraries
+From my understanding there are 3 ways to include libraries/resources in C++:
+
+1. **Static libraries:** Compiled binaries linked into the program at compile time. Because of this they are more stable because they are built into the binaries and are not as prone to external issues (updated shared libraries that are not backwards compatible)
+2. **Shared/Dynamic Libraries:** Compiled binaries linked at run time. The program will find these in a specified folder in the source directories or the system PATH / bin directories. The benefit of shared libraries is the ability to update the libraries independently and reducing executable size and reducing required RAM.
+3. **CMake submodule:** I'm not sure if this is the correct term, but this method involves creating a git submodule or even just a static clone of a CMake project and building that project in parallel with your master project to include the resources from that CMake project. This method allows you to customize the source code and it is also good for cross compatibility since a lot of CMake projects will compile according to the operating system.
+
+
+### 3.1. Static Libraries
+
+### 3.2. Shared Libraries
+
+### 3.3. Submodules
+
+When you clone the repo you should use `git clone --recurse-submodules <repo>` to clone GLFW as well.
+If you forgot to use recursive method, you can use `git submodule init` to bring them in after
+To update the submodules you can use `git submodule update`

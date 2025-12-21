@@ -1,12 +1,9 @@
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// Headers
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #include "data.hpp"
-#include <SFML/Graphics/Color.hpp>
-#include <SFML/Graphics/Font.hpp>
+
+#include <SFML/Graphics.hpp>
 
 
-// GLOBAL VARIABLE EXAMPLE
+// DEFINE GLOBAL COLORS
 //---------------------------------------------------------------------------------------------
 sf::Color red;
 sf::Color blue;

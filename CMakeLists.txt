@@ -16,18 +16,20 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(SOURCE_FILES
    src/app/main.cpp
    src/app/display.cpp
-   src/utils/random.cpp
+   src/utils/utils.cpp
    src/utils/data.cpp
    src/3d/obj3d.cpp
    src/utils/matrix.cpp
-   src/3d/camera.cpp
    src/3d/polygon.cpp)
 
 # Creates executable from source files
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
 # Include other header files
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src) 
+target_include_directories(${PROJECT_NAME} PRIVATE 
+   ${CMAKE_SOURCE_DIR}/src/3d
+   ${CMAKE_SOURCE_DIR}/src/app
+   ${CMAKE_SOURCE_DIR}/src/utils) 
 
 # Find SFML
 find_package(SFML 3 REQUIRED COMPONENTS Graphics Window System)
