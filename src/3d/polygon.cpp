@@ -1,82 +1,95 @@
 #include "polygon.hpp"
 
 #include <SFML/Graphics.hpp>
+#include <algorithm>
 #include <vector>
 #include "matrix.hpp"
-#include "data.hpp"
 
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// Draw the triangle in 2D with 2D coordinates and clip on the screen
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void tri3d::draw(std::vector<std::uint8_t>& texture, sf::RenderTexture& tex, sf::Vector2u res, sf::Color col) {
+// Draw triangle
+void tri3d::draw(std::vector<std::uint8_t>& buffer, sf::Vector2u res, sf::Color color, sf::Color lineColor) {
+   // Scanline tiangle filling method. This is the most common way to fill triangles with a color
+   // It is more efficient to do this with graphics acceleration because cross products are expensive
+   // for the CPU to calculate. If you comment this out you will see the FPS go up substantially.
 
-   // for cliping count points outside of view,
-   // 2 points in view means need to create another triangle
-   // for tris that clip 2 or more edges itterate through all edges and clip it multiple times
+   // Get the coordinates of the rectangle that will cover the triangle
+   int xmax = std::max(std::max(v[0].x,v[1].x),v[2].x);
+   int xmin = std::min(std::min(v[0].x,v[1].x),v[2].x);
+   int ymax = std::max(std::max(v[0].y,v[1].y),v[2].y);
+   int ymin = std::min(std::min(v[0].y,v[1].y),v[2].y);
 
-   fillTri(texture,res.x,col,v[0].x,v[0].y,v[1].x,v[1].y,v[2].x,v[2].y);
-
-   sf::VertexArray triangle(sf::PrimitiveType::Triangles, 3);
-
-   triangle[0].color = sf::Color(col.r,col.g,col.b,col.a);
-   triangle[1].color = sf::Color(col.r,col.g,col.b,col.a); 
-   triangle[2].color = sf::Color(col.r,col.g,col.b,col.a); 
-
-   triangle[0].position = sf::Vector2f(v[0].x, v[0].y);
-   triangle[1].position = sf::Vector2f(v[1].x, v[1].y);
-   triangle[2].position = sf::Vector2f(v[2].x, v[2].y);
-
-   tex.draw(triangle);
-
-   // Draw the lines
-   sf::Color col2 = black;
-
-   sf::Vertex line1[2], line2[2], line3[2];
-
-   line1[0].color = col2; line1[1].color = col2;
-   line2[0].color = col2; line2[1].color = col2;
-   line3[0].color = col2; line3[1].color = col2;
-
-   line1[0].position = sf::Vector2f(v[0].x, v[0].y); line1[1].position = sf::Vector2f(v[1].x, v[1].y);
-   line2[0].position = sf::Vector2f(v[1].x, v[1].y); line2[1].position = sf::Vector2f(v[2].x, v[2].y);
-   line3[0].position = sf::Vector2f(v[2].x, v[2].y); line3[1].position = sf::Vector2f(v[0].x, v[0].y);
-
-   tex.draw(line1,2,sf::PrimitiveType::Lines);
-   tex.draw(line2,2,sf::PrimitiveType::Lines);
-   tex.draw(line3,2,sf::PrimitiveType::Lines);
-}
-
-
-void fillTri(std::vector<std::uint8_t>& buffer, int width, sf::Color color, int x0, int y0, int x1, int y1, int x2, int y2){
-
-   int xmax = std::max(std::max(x0,x1),x2);
-   int xmin = std::min(std::min(x0,x1),x2);
-   int ymax = std::max(std::max(y0,y1),y2);
-   int ymin = std::min(std::min(y0,y1),y2);
-
-   int vx0 = x1-x0;
-   int vy0 = y1-y0;
-   int vx1 = x2-x1;
-   int vy1 = y2-y1;
-   int vx2 = x0-x2;
-   int vy2 = y0-y2;
-
-   int dec1, dec2, dec3;
-
+   // Itterate through each pixel in that rectangle
    for (int y=ymin; y<=ymax; y++){
       for (int x=xmin; x<=xmax; x++){
-         int cross0 = ((x-x0)*vy0 - (y-y0)*vx0);
-         int cross1 = ((x-x1)*vy1 - (y-y1)*vx1);
-         int cross2 = ((x-x2)*vy2 - (y-y2)*vx2);
-
+         // Use the cross product to determine if the point is on the outside 
+         // or inside of each of the edges 
+         int cross0 = ((x-v[0].x)*(v[1].y-v[0].y) - (y-v[0].y)*(v[1].x-v[0].x));
+         int cross1 = ((x-v[1].x)*(v[2].y-v[1].y) - (y-v[1].y)*(v[2].x-v[1].x));
+         int cross2 = ((x-v[2].x)*(v[0].y-v[2].y) - (y-v[2].y)*(v[0].x-v[2].x));
+         // check if the point is on the inside of all of the edges. If so, add the pixel to the buffer
          if (cross0 <= 0 and cross1 <= 0 and cross2 <= 0){
-
-            int index = (width * y + x) * 4;
+            int index = (res.x * y + x) * 4;
             buffer [index] = color.r; 
             buffer [index + 1] = color.g; 
             buffer [index + 2] = color.b; 
          }
       }
    }
+   // If there is a lineColor provided draw the outline using bresenham function
+   if(!(lineColor == sf::Color::Transparent)){
+      m_bresenhamLine(v[0], v[1], buffer, res, lineColor);
+      m_bresenhamLine(v[1], v[2], buffer, res, lineColor);
+      m_bresenhamLine(v[2], v[0], buffer, res, lineColor);
+   }
 }
+
+// Bresenham's line algorithm for all octants
+void tri3d::m_bresenhamLine(vec3 p0, vec3 p1, std::vector<std::uint8_t>& buffer, sf::Vector2u res, sf::Color color) {
+   // Cast the vector coordinates as integers, this function cannot handle floats
+   int x0 = (int)p0.x; 
+   int x1 = (int)p1.x; 
+   int y0 = (int)p0.y; 
+   int y1 = (int)p1.y; 
+   // Get delta x and the delta y
+   int dx = std::abs(x1 - x0);
+   int dy = std::abs(y1 - y0);
+   // Get the direction to iterate (sign x and sign y)
+   int sx = (x0 < x1) ? 1 : -1;
+   int sy = (y0 < y1) ? 1 : -1;
+
+   // Used to determine the ratio of where the line lies between the center of the two potential next pixels
+   // ie. if sx and sy are positive and dx = 12 and dy = 2, the initial err would be 10. This means that
+   // when the line passes the center of the first square to right, it will be 2/12 from the center of the 
+   // bottom square to the center of the top square. The bottom square will be chosen
+   int err = dx - dy; 
+
+   while (true) {
+      // Plot point
+      int index = (res.x * y0 + x0) * 4;
+      buffer [index] = color.r; 
+      buffer [index + 1] = color.g; 
+      buffer [index + 2] = color.b; 
+
+      // Last point was plotted
+      if (x0 == x1 && y0 == y1) break;
+      // Multiply the error by 2 because we want to know if the line
+      // intercets over halfway between the two squares in question
+      int e2 = 2 * err;
+
+      // Check if the line is now closer to the next y cell, if so move a level
+      // and adjust the error to account for the position change
+      if (e2 > -dy) {
+         err -= dy;
+         // Move x once in the direction determined by sx
+         x0 += sx;
+      }
+      // Check if the line is now closer to the next x cell, if so move a level
+      // and adjust the error to account for the position change
+      if (e2 < dx){
+         err += dx;
+         // Move y once in the direction determined by sy
+         y0 += sy;
+      }
+   }
+}
+
 

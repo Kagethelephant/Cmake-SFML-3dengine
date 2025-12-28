@@ -15,10 +15,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Combine all the source files under SOURCE_FILES variable
 set(SOURCE_FILES
    src/app/main.cpp
-   src/app/display.cpp
+   src/app/window.cpp
    src/utils/utils.cpp
    src/utils/data.cpp
    src/3d/obj3d.cpp
+   src/3d/camera.cpp
    src/utils/matrix.cpp
    src/3d/polygon.cpp)
 

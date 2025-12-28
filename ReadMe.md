@@ -68,3 +68,22 @@ From my understanding there are 3 ways to include libraries/resources in C++:
 When you clone the repo you should use `git clone --recurse-submodules <repo>` to clone GLFW as well.
 If you forgot to use recursive method, you can use `git submodule init` to bring them in after
 To update the submodules you can use `git submodule update`
+
+## Classes and Structs
+
+Classes and structs are essentially the same thing but by default class members are private and inherit private members. By default struct members are public and inherit public members. This is really the only difference. By convention classes are used for more complex objects and structs are used for data and data types. The only structs used in this project are in the matrix.hpp file, they are being used for the vector and matrix objects.
+
+## Type Qualifiers and Storage-Class Specifiers
+
+### Type Qualifiers
+- **const:** Used to make a variable read only after initial assignment (this is the most common)
+    - **constexpr:** Same as const but tells the compiler it can be evaluated at compile time (used in data.hpp)
+- **volatile:** Tells the compiler that the variable can change in a way not defined by the program and must be read from memory each time. This negates some efficiencies from the compiler
+- **mutable:** Makes a member variable of a const class mutable ( you are able to change the variable even though the class is const)
+- **restrict** Tells the compiler that a pointer is the only way of accessing this variable. This allows for some compiler optimizations.
+
+### Storage-Class Specifiers
+- **static:** variable will maintain during the lifetime of the program and will be visible to the file or block
+- **extern:** variable will maintain during the lifetime of the program and can be visible across files (used in data.hpp)
+
+
