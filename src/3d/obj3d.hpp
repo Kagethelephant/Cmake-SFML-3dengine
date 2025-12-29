@@ -15,7 +15,6 @@ class object3d {
 
 public:
    
-
    /// Object origin position
    vec3 position = vec3(0,0,0);
    /// Object direction in degrees
@@ -43,7 +42,3 @@ private:
 
 
 };
-
-
-
-

@@ -15,7 +15,6 @@ class randObj {
 public:
 
    int seed;
-   bool persistant = false;
 
    randObj(bool _persistant = false, int _seed = -1);
    
@@ -30,6 +29,8 @@ public:
    int iRand(int min, int max);
 
 private:
+
+   bool persistant = false;
 
    std::random_device m_rd;
    std::minstd_rand m_gen;

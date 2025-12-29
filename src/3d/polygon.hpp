@@ -18,7 +18,6 @@ public:
    tri3d(vec3 _x, vec3 _y, vec3 _z) : v{_x,_y,_z}{};
    tri3d(vec3 _x, vec3 _y, vec3 _z, object3d* _parent) : v{_x,_y,_z}, parent(_parent){};
 
-
    // @brief: Generates a vector normal to the triangles face starting from the triangles 0 point
    vec3 normal() {return ((this-> v[0] - this-> v[1]).cross(this-> v[0] - this-> v[2])).normal(); }
 

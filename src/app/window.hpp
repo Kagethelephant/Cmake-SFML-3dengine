@@ -7,32 +7,20 @@
 
 
 class windowMaster{
+
    public:
 
    sf::RenderWindow window;
-   std::uint8_t fps = 60;
-   std::string title = "window";
-   bool fullscreen;
-
-   sf::Vector2u resolution;
-   sf::Vector2u displayRes;
-   sf::View view;
    
-   sf::Font font;
-   sf::Text text = sf::Text(font);
-   sf::RectangleShape rectangle;
-
-   int fpsCounter = 0;
+   // Resolution of the window
+   sf::Vector2u resolution;
+   // The framerate the window is currently running at
    float framerate;
-   sf::Time Time;
-   sf::Clock clock;
-
-   sf::RenderTexture layers[10];
 
    // Constructors
-   windowMaster(unsigned int height, bool fullscreen);
+   windowMaster(unsigned int height, bool fullscreen = false);
 
-   void handleEvents();
+
 
    sf::Vector2f getMousePixel() { return window.mapPixelToCoords(sf::Mouse::getPosition(window));};
 
@@ -42,6 +30,24 @@ class windowMaster{
 
    void render();
 
+
+
    private:
 
+   sf::Font font;
+   sf::Text text = sf::Text(font);
+   sf::RectangleShape rectangle;
+
+   std::uint8_t fps = 60;
+   std::string title = "window";
+   bool fullscreen;
+
+
+   sf::Vector2u displayRes;
+   sf::View view;
+
+   int fpsCounter = 0;
+   sf::Clock clock;
+
+   sf::RenderTexture layers[10];
 };

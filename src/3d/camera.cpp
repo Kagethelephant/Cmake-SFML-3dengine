@@ -2,19 +2,21 @@
 
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/ConvexShape.hpp>
+#include <SFML/Graphics/Texture.hpp>
+#include <SFML/System/Vector2.hpp>
 #include <algorithm>
-#include <string>
+#include <cstdint>
 #include <vector>
 #include <math.h>
-#include <iostream>
 #include "polygon.hpp"
+#include "data.hpp"
 #include "matrix.hpp"
 #include "utils.hpp"
 #include "obj3d.hpp"
 
 
 
-camera::camera() {
+camera::camera(sf::Vector2u res) {
 
    sf::Vector2u size = sf::VideoMode::getDesktopMode().size;
    m_aspectRatio = ((float)size.x / (float)size.y);
@@ -36,6 +38,26 @@ camera::camera() {
    m_planes[3] = bottomLeft.cross(topLeft).normal(); // Left plane
    m_planes[4] = vec3(0,0,-1,n); // Near plane
    m_planes[5] = vec3(0,0,1,-f); // Far plane
+   
+   resolution = res;
+   
+   pixelBuff = sf::Texture(resolution);
+   // Create a pixel buffer
+   bg = std::vector<std::uint8_t>(resolution.x * resolution.y * 4, 255);
+
+   int index = 0;
+   for (int y = 0; y < resolution.y; y++)
+   {
+      for (int x = 0; x < resolution.x; x++)
+      {
+         index = (y * resolution.x + x) * 4;
+         bg[index] = black.r;
+         bg[index + 1] = black.g;
+         bg[index + 2] = black.b;
+         bg[index + 3] = black.a;
+      }
+   }
+   pixels = bg;
 }
 
 
@@ -112,10 +134,11 @@ void camera::loadObject(object3d& object){
 
 // DRAW FUNCTION
 //---------------------------------------------------------------------------------------------
-void camera::draw(std::vector<std::uint8_t>& texture, sf::Vector2u res) {
+void camera::draw(int layer) {
    
    //project and draw
       
+   pixels = bg;
    // std::cout << std::to_string(col.r) + ", " + std::to_string(col.g) + ", " + std::to_string(col.b) << std::endl;
    for(tri3d tri : m_triangleBuffer) {
 
@@ -189,14 +212,13 @@ void camera::draw(std::vector<std::uint8_t>& texture, sf::Vector2u res) {
             triangle.v[i].x += 1;
             triangle.v[i].y += 1;
             // This scales the x and y to position in the center of the screen
-            triangle.v[i].x *= 0.5f * res.x;
-            triangle.v[i].y *= 0.5f * res.y;
+            triangle.v[i].x *= 0.5f * resolution.x;
+            triangle.v[i].y *= 0.5f * resolution.y;
          }
          // Draw the triangle after the projection is done
-         triangle.draw(texture,res, shadeColor, lineCol);
+         triangle.draw(pixels,resolution, shadeColor, lineCol);
       }
    }
+   pixelBuff.update(pixels.data());
    m_triangleBuffer = std::vector<tri3d>();
 }
-
-

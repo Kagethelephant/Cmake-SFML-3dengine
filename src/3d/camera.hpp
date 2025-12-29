@@ -1,6 +1,8 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Graphics/Texture.hpp>
+#include <SFML/System/Vector2.hpp>
 #include "matrix.hpp"
 #include "polygon.hpp"
 #include "obj3d.hpp"
@@ -38,9 +40,13 @@ public:
    sf::Color col;
    sf::Color lineCol;
    object3d parent;
+  
+   sf::Texture pixelBuff;
+   sf::Vector2u resolution;
+   std::vector<std::uint8_t> pixels;
+   std::vector<std::uint8_t> bg;
 
-
-   camera();
+   camera(sf::Vector2u res);
 
    // This updates all of the matrices based on the new position and rotation
    // This gets called by the move and rotate functions
@@ -55,7 +61,7 @@ public:
    /// @param camera: camera object that will be used to view the object to be drawn
    /// @param col: Color to draw the object (this will be the brightest color, 
    /// individual triangles will be shaded according to their orientation to the light)
-   void draw(std::vector<std::uint8_t>& texture, sf::Vector2u res);
+   void draw(int layer = 0);
 
 private:
 
