@@ -17,20 +17,18 @@
 
 int main(int argc, char* argv[])
 {
-   // Defines all of the colors (global so we dont have to rewrite all of the colors)
-   defineGlobal();
    // Global random number generator (global so everything shares the same seed)
    randObj rander(false, 13412234);
    
-   // Create the windowMaster that handles all of the background SFML window stuff and simplifies drawing
+   // Create windowMaster that handles all of the background SFML window stuff and simplifies drawing
    windowMaster game(1080,false);
    // Camera handles all of the 3d rendering
    camera cam(game.resolution);
-   
-   // Create 3d objects. Need to be alocated on the stach so we have a defined locations for their triangles to point back to
-   object3d* object = new object3d("../resources/objects/cow.obj", white, black, vec3(-12, 0, 0));
-   object3d* object2 = new object3d("../resources/objects/cow.obj", red, white, vec3(12, 0, 0));
-   object3d* object3 = new object3d("../resources/objects/cow.obj", green, yellow, vec3(0, 0, 0));
+  
+   // Create the 3D objects to be rendered
+   object3d object("../resources/objects/cow.obj", vec3(-12, 0, 0), white, black);
+   object3d object2("../resources/objects/cow.obj", vec3(12, 0, 0), red, white);
+   object3d object3("../resources/objects/cow.obj", vec3(0, 0, 0), green, yellow);
 
    std::cout << "*****LOOP START*****" << std::endl;
 
@@ -49,16 +47,16 @@ int main(int argc, char* argv[])
       keyD = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D);
 
       // Update position of camera based on input
-      cam.update((left-right)*.1, (space-keyB)*.1, (up-down)*.1, 0, (keyA-keyD)*.1, 0);
+      cam.move((left-right)*.1, (space-keyB)*.1, (up-down)*.1, 0, (keyA-keyD)*.1, 0);
 
-      // Reload all of the objects into the camera incase they moved
-      cam.loadObject(*object);
-      cam.loadObject(*object2);
-      cam.loadObject(*object3);
-      // Draw the objects to the camera texture
-      cam.draw();
-      // Draw the camera texture to the window
-      game.draw(sf::Sprite(cam.pixelBuff));
+      // Object meshes are cleared from camera every frame so we need to load them each frame
+      cam.loadObject(object);
+      cam.loadObject(object2);
+      cam.loadObject(object3);
+      // Update the 2D projection
+      cam.update();
+      // Draw the camera 2D projection to the window
+      game.draw(cam);
 
       // Draw some text to the window
       game.drawText("X: " + std::to_string(cam.position.x), 10, 10);
@@ -69,10 +67,6 @@ int main(int argc, char* argv[])
       // Display everything that was drawn to the screen
       game.render();
    }
-   // Free memory we allocated on the heap
-   delete object; 
-   delete object2; 
-   delete object3; 
 
    std::cout << "*******PROGRAM TERMINATED******* " << std::endl;
 

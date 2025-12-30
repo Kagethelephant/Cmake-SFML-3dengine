@@ -5,7 +5,10 @@
 #include <vector>
 #include "matrix.hpp"
 
-// Draw triangle
+
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// FILL TRIANGLE
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 void tri3d::draw(std::vector<std::uint8_t>& buffer, sf::Vector2u res, sf::Color color, sf::Color lineColor) {
    // Scanline tiangle filling method. This is the most common way to fill triangles with a color
    // It is more efficient to do this with graphics acceleration because cross products are expensive
@@ -42,7 +45,10 @@ void tri3d::draw(std::vector<std::uint8_t>& buffer, sf::Vector2u res, sf::Color 
    }
 }
 
-// Bresenham's line algorithm for all octants
+
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// OUTLINE TRIANGLE
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 void tri3d::m_bresenhamLine(vec3 p0, vec3 p1, std::vector<std::uint8_t>& buffer, sf::Vector2u res, sf::Color color) {
    // Cast the vector coordinates as integers, this function cannot handle floats
    int x0 = (int)p0.x; 

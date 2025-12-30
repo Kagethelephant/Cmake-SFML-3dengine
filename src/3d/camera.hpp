@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Graphics/Drawable.hpp>
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/System/Vector2.hpp>
 #include "matrix.hpp"
@@ -8,50 +9,37 @@
 #include "obj3d.hpp"
 
 
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-/// \brief 3d camera
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-class camera {
+/// @brief: Takes mesh data from 3D objects, projects the 3D polygons to a 2D view in the 
+/// form of a pixel buffer to be drawn by and SFML window. This object is sf::drawable so it can be drawn
+/// like other SFML objects. This will draw the projected 3D view generated with `update()`
+/// @param res: Resolution of the desired output view 
+class camera : public sf::Drawable {
 
 public:
    
-   // Position along x, y, z
-   // Rotation about x, y, z (u-pitch, v-roll, w-yaw)
+   /// @brief: Position of the camera in 3D space
    vec3 position = vec3(0,0,-5);
+   /// @brief: Direction that the camera is pointing in degrees about the rotational axis (updates direction)
    vec3 rotation = vec3(0,0,0);
-   
-   // Vector storing the forward direction
-   vec3 direction;
+   /// @brief: Direction the camera is pointing in the form of a vector
+   vec3 pointDirection;
 
-   // The point matrix is just used to create the view matrix
-   // but the view matrix is used by all objects to put themselvs in the view
-   mat4x4 point; 
-   mat4x4 view; 
-   
-   std::vector<tri3d> m_triangleBuffer;
-   // Matrices for rotating and projecting vertices
-   mat4x4 m_matProj;
-
-   vec3 m_planes[6];
-
-   // Aspect ratio of the window
-   float m_aspectRatio;     
-
-   sf::Color col;
-   sf::Color lineCol;
-   object3d parent;
-  
-   sf::Texture pixelBuff;
-   sf::Vector2u resolution;
-   std::vector<std::uint8_t> pixels;
-   std::vector<std::uint8_t> bg;
 
    camera(sf::Vector2u res);
 
-   // This updates all of the matrices based on the new position and rotation
-   // This gets called by the move and rotate functions
-   void update(float x, float y, float z, float u, float v, float w);
+   /// @brief: Moves or rotates camera by given values (relative) movement is 
+   /// based on the direction of the camera ( z moves forward/back, x moves sideways)
+   /// @param x: Move sideways (normal to up and pointDirection of camera)
+   /// @param y: Move in the up direction ( normal to the forward and right of the camera)
+   /// @param x: Move in the direction of camera pointDirection
+   /// @param u: Rotate around the right direction of the camera
+   /// @param v: Rotate around the up direction of the camera
+   /// @param w: Rotate around the pointDirection of the camera
+   void move(float x, float y, float z, float u, float v, float w);
 
+   /// @brief: Load the mesh of polygons from the 3D object and sort it with any other 
+   /// in the triangle buffer by z value (camera z not world z)
+   /// @param object: 3D object to load polygon mesh from
    void loadObject(object3d& object);
 
    /// @brief: Called externally to draw the triangles in the mesh 
@@ -61,9 +49,40 @@ public:
    /// @param camera: camera object that will be used to view the object to be drawn
    /// @param col: Color to draw the object (this will be the brightest color, 
    /// individual triangles will be shaded according to their orientation to the light)
-   void draw(int layer = 0);
+   void update();
+
+   /// @brief: Envoked by calling `sf::RenderTexture.draw(camera)` this draws the same as any
+   void draw(sf::RenderTarget& target, sf::RenderStates states) const ;
+
 
 private:
+
+   /// @brief: Aspect ratio of the window
+   float m_aspectRatio;     
+   /// @brief: Resolution of the window 
+   sf::Vector2u m_resolution;
+
+
+   /// @brief: Makes an object rotate to point direction
+   mat4x4 m_matPointAt; 
+   /// @brief: Moves objects to position as if the origin was pointed a different direction
+   mat4x4 m_matView; 
+   /// @brief: Projects 3D points onto a 2D view
+   mat4x4 m_matProject;
+
+   /// @brief: virtual planes that represent the edge of the view frustum in 3d space
+   vec3 m_planes[6];
+  
+   /// @brief: Stores triangles in 3D space from loaded objects to be drawn
+   std::vector<tri3d> m_triangleBuffer;
+
+   /// @brief: Texture to draw the pixelBuffer to so it can be drawn to an SFML window
+   sf::Texture m_pixelTexture;
+   /// @brief: Buffer to store the pixel data (place to draw triangles)
+   std::vector<std::uint8_t> m_pixelBuffer;
+   /// @brief: Buffer to clear the pixelBuffer with a background color
+   std::vector<std::uint8_t> m_clearBuffer;
+   
 
    /// @brief: Checks if a point is on one side of a plane
    /// @param point: Point in 3d space
@@ -75,5 +94,5 @@ private:
    /// @param p1: Point in 3d space
    /// @param p2: 2nd point in 3d space to create a theoretical line with the 1st point
    /// @param plane: Plain in 3d space that intersects the theoretical line
-   vec3 splitPoint(vec3 p1, vec3 p2, vec3 plane);
+   vec3 planeIntercect(vec3 p1, vec3 p2, vec3 plane);
 };

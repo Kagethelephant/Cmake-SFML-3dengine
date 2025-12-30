@@ -4,8 +4,14 @@
 #include <vector>
 #include "matrix.hpp"
 
+// Forward declaration for parent pointer
 class object3d;
-/// \brief Triangle for rendering 3d objects
+
+/// @brief: Container for 3 3D vectors with functions for drawing to a 2D pixel array
+/// @param _v0: Vector 0 (vec3)
+/// @param _v1: Vector 1 (vec3)
+/// @param _v2: Vector 2 (vec3)
+/// @param parent: Pointer to a parent objec3d object
 struct tri3d {
 
 public:
@@ -13,19 +19,27 @@ public:
    vec3 v[3];
    object3d* parent;
 
-   // Constructors
    tri3d() : v{vec3(),vec3(),vec3()}{};
-   tri3d(vec3 _x, vec3 _y, vec3 _z) : v{_x,_y,_z}{};
-   tri3d(vec3 _x, vec3 _y, vec3 _z, object3d* _parent) : v{_x,_y,_z}, parent(_parent){};
+   tri3d(vec3 v0, vec3 v1, vec3 v2) : v{v0,v1,v2}{};
+   tri3d(vec3 v0, vec3 v1, vec3 v2, object3d* parent) : v{v0,v1,v2}, parent(parent){};
+
+   // Deep copy (copy constructor). Shallow copy will not copy the parent pointer
+   tri3d(const tri3d& other) : v{other.v[0], other.v[1],other.v[2]}, parent(other.parent){};
 
    // @brief: Generates a vector normal to the triangles face starting from the triangles 0 point
-   vec3 normal() {return ((this-> v[0] - this-> v[1]).cross(this-> v[0] - this-> v[2])).normal(); }
+   vec3 normal() {return ((this->v[0] - this->v[1]).cross(this->v[0] - this->v[2])).normal(); }
+   // @brief: Gets centerpoint x value (takes average of 3 vertices x value)
+   float centerx() {return (this->v[0].x+this->v[1].x+this->v[2].x)/3.0f; }
+   // @brief: Gets centerpoint y value (takes average of 3 vertices y value)
+   float centery() {return (this->v[0].y+this->v[1].y+this->v[2].y)/3.0f; }
+   // @brief: Gets centerpoint z value (takes average of 3 vertices z value)
+   float centerz() {return (this->v[0].z+this->v[1].z+this->v[2].z)/3.0f; }
 
    // Operator overloads for multiplying a whole triagle by a matrix (just multiplies the underlying vectors)
    tri3d operator * (const mat4x4& m) { return tri3d(this->v[0] * m, this->v[1] * m, this->v[2] * m); }
    void operator *= (const mat4x4& m) { this->v[0] *= m; this->v[1] *= m; this->v[2] *= m; }
 
-   /// @brief: Scanline triangle fill algorithm. This normally should not run on the CPU because it is slow
+   /// @brief: Scanline triangle fill algorithm. This normally should not run on the CPU because it's slow
    /// but this is a simple way to demonstrate how rasterization works
    /// @param buffer: Pixel array for 32 bit trucolor + alpha (8 bits for r,g,b and alpha)
    /// @param res: The resolution of the window

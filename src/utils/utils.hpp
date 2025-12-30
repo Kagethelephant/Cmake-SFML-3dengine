@@ -13,7 +13,7 @@
 class randObj {
 
 public:
-
+   /// @brief: Random seed
    int seed;
 
    randObj(bool _persistant = false, int _seed = -1);
@@ -29,13 +29,14 @@ public:
    int iRand(int min, int max);
 
 private:
-
+   
+   /// @brief: Determines if the same sequence of numbers will be generated
    bool persistant = false;
-
+   /// @brief: Source for machine entropy
    std::random_device m_rd;
+   /// @brief: Random number engine
    std::minstd_rand m_gen;
 };
-
 
 
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX

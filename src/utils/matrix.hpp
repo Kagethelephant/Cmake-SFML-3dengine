@@ -134,16 +134,16 @@ struct vec3 {
 // Matrix Functions
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-/// @brief: Creates a 4x4 matrix that can be used to translate and rotate a vertex
+/// @brief: Creates a 4x4 matrix that can be used to translate and rotate (in radians) a vertex 
 /// @param x: x translation
 /// @param y: y translation
 /// @param z: z translation
-/// @param u: u rotation around origin
-/// @param v: v rotation around origin
-/// @param w: w rotation around origin
+/// @param u: u rotation around origin in radians
+/// @param v: v rotation around origin in radians
+/// @param w: w rotation around origin in radians
 /// @return mat4x4
 ///
-mat4x4 transformation_matrix(float x, float y, float z, float u, float v, float w);
+mat4x4 matrix_transform(float x, float y, float z, float u, float v, float w);
 
 /// @brief: Creates the 3d projection matrix that transforms a 3D vertex to screen space
 /// @param fov: Field of view in degrees
@@ -152,7 +152,7 @@ mat4x4 transformation_matrix(float x, float y, float z, float u, float v, float 
 /// @param f: Position in pixel scale of the far plane
 /// @return mat4x4
 ///
-mat4x4 project_matrix(float fov, float a, float n, float f);
+mat4x4 matrix_project(float fov, float a, float n, float f);
 
 /// @brief: Creates a matrix that will rotate a 3D vertex around its origin so the z axis
 /// points towards the provided 3D vertex
@@ -161,7 +161,7 @@ mat4x4 project_matrix(float fov, float a, float n, float f);
 /// @param up: vec3 of the direction of the y axis (by reference)
 /// @return mat4x4
 ///
-mat4x4 point_matrix(vec3 &pos, vec3 &target, vec3 &up);
+mat4x4 matrix_pointAt(vec3 &pos, vec3 &target, vec3 &up);
 
 /// @brief: Creates a matrix that will move a vertex in 3D space to a position that reflects its
 /// position reletive to the camera view. Essentially moving the world around a camera instead 
@@ -170,4 +170,4 @@ mat4x4 point_matrix(vec3 &pos, vec3 &target, vec3 &up);
 /// @param m: point_matrix result representing the camera (by reference)
 /// @return mat4x4
 ///
-mat4x4 view_matrix(mat4x4 &m);
+mat4x4 matrix_view(mat4x4 &m);

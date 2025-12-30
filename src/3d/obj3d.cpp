@@ -14,20 +14,21 @@
 
 // CONSTRUCTOR
 //---------------------------------------------------------------------------------------------
-object3d::object3d(std::string filename, sf::Color col, sf::Color lineCol, vec3 pos) {
+object3d::object3d(std::string filename, vec3 _position, sf::Color _color, sf::Color _lineColor) {
 
    if (!(filename == "")) {load(filename);}
-   color = col;
-   lineColor = lineCol;
-   position = pos;
+   color = _color;
+   lineColor = _lineColor;
+   position = _position;
+   update(position.x, position.y, position.z, rotation.x, rotation.y, rotation.z);
 }
 
 // LOAD OBJECT
 //---------------------------------------------------------------------------------------------
-void object3d::load(std::string fileName) {
+void object3d::load(std::string filename) {
 
    // Try to open the file
-   std::ifstream obj(fileName);
+   std::ifstream obj(filename);
    // Create an array to hold the chars of each line
    // cycle through all the lines in the file until we are at the end
    std::vector<vec3> verts;
@@ -52,5 +53,15 @@ void object3d::load(std::string fileName) {
          stream >> junk >> f[0] >> f[1] >> f[2];
          mesh.push_back(tri3d(verts[f[0] - 1], verts[f[1] - 1], verts[f[2] - 1], this));
       }
+   }
+}
+
+// UBDATE POSITION
+//---------------------------------------------------------------------------------------------
+void object3d::update(float x, float y, float z, float u, float v, float w){ 
+
+   // Must use reference here because we want to alter the original triangle in the mesh
+   for (tri3d& t : mesh) {
+      t *= matrix_transform(x, y, z, u, v, w);
    }
 }

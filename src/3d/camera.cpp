@@ -2,6 +2,7 @@
 
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/ConvexShape.hpp>
+#include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <algorithm>
@@ -15,16 +16,20 @@
 #include "obj3d.hpp"
 
 
-
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// CONSTRUCTOR
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 camera::camera(sf::Vector2u res) {
 
-   sf::Vector2u size = sf::VideoMode::getDesktopMode().size;
-   m_aspectRatio = ((float)size.x / (float)size.y);
-   m_matProj = project_matrix(90.0f,m_aspectRatio,0.1f,1000.0f);  
+   m_resolution = res;
+   float aspectRatio = (float)m_resolution.x/(float)m_resolution.y;
+   // Create the projection matrix that will be used to project 3D points to a 2D view
+   m_matProject = matrix_project(90.0f,aspectRatio,0.1f,1000.0f);  
 
+   // Calculate the planes that make up the frustum (box that represents the field of view)
    float n = 0.1f;
    float r = n * tanf(88.0f * 0.5f / 180.0f * 3.14159f);
-   float t = r / m_aspectRatio;
+   float t = r / aspectRatio;
    float f = 1000.0f;
 
    vec3 topRight = vec3(r,t,n,0).normal();
@@ -39,111 +44,66 @@ camera::camera(sf::Vector2u res) {
    m_planes[4] = vec3(0,0,-1,n); // Near plane
    m_planes[5] = vec3(0,0,1,-f); // Far plane
    
-   resolution = res;
-   
-   pixelBuff = sf::Texture(resolution);
-   // Create a pixel buffer
-   bg = std::vector<std::uint8_t>(resolution.x * resolution.y * 4, 255);
+   // Texture to draw our 3D stuff to an sfml window 
+   m_pixelTexture = sf::Texture(m_resolution);
 
+   // Create a background buffer the size of the window to clear the pixel buffer with a color
+   m_clearBuffer = std::vector<std::uint8_t>(m_resolution.x * m_resolution.y * 4, 255);
    int index = 0;
-   for (int y = 0; y < resolution.y; y++)
+   for (int y = 0; y < m_resolution.y; y++)
    {
-      for (int x = 0; x < resolution.x; x++)
+      for (int x = 0; x < m_resolution.x; x++)
       {
-         index = (y * resolution.x + x) * 4;
-         bg[index] = black.r;
-         bg[index + 1] = black.g;
-         bg[index + 2] = black.b;
-         bg[index + 3] = black.a;
+         index = (y * m_resolution.x + x) * 4;
+         m_clearBuffer[index] = black.r;
+         m_clearBuffer[index + 1] = black.g;
+         m_clearBuffer[index + 2] = black.b;
+         m_clearBuffer[index + 3] = black.a;
       }
    }
-   pixels = bg;
+   m_pixelBuffer = m_clearBuffer;
 }
 
 
-// UTILITY FUNCTIONS
-//---------------------------------------------------------------------------------------------
-bool camera::pointOutOfPlane(vec3 point, vec3 plane){
-   return ((point.dot(plane) + plane.w) > 0);
-}
-
-vec3 camera::splitPoint(vec3 p1, vec3 p2, vec3 plane){
-   float t = (p1.dot(plane) + plane.w) / (plane.x*(p1.x-p2.x) + plane.y*(p1.y-p2.y) + plane.z*(p1.z-p2.z));
-   return((p1 + ((p2 - p1) * t)));
-}
-
-void camera::update(float x, float y, float z, float u, float v, float w) {
-   
-   // Get the camera up and forward directions. We are only using the rotations in the transformation 
-   // because we only care about the orientation for these 2 direction vectors
-   // Y direction
-   vec3 up = vec3(0,1,0) * transformation_matrix(0, 0, 0, rotation.x, rotation.y, rotation.z);
-   // Z direction (direction camera is facing)
-   direction = (vec3(0,0,1) * transformation_matrix(0, 0, 0, rotation.x, rotation.y, rotation.z)).normal();
-
-   // The position will change relitive to the camera angle not the world orientation.
-   // Z direction is the same as the camera direction so multiply it by the z delta and add it to the position 
-   position += (direction * z);
-   // X direction (left and right) is the normal of the forward and up direction so multiply 
-   // the cross product of those 2 vectors by the x delta and add it to the position vector
-   position += (direction.cross(up) * x);
-   // Y is the axis we rotate around so we can add our y delta straight to the position
-   position.y += y;
-   // Add the rotation deltas to the rotation
-   rotation += vec3(u,v,w);
-
-   // Generate the new "point at" matrix and "view" matrix based on the new orientation of the camera
-   point = point_matrix(position, direction, up);
-   view = view_matrix(point);
-}
-
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// LOAD NEW OBJECT AND SORT TRIANGLES
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 void camera::loadObject(object3d& object){
    
-   object.update();
-   int count = 0;
    for(tri3d i: object.mesh) {
-      // Create triangle moved into correct position in world (based on the object position)
-      tri3d tri = i * object.m_matTransform;
-      // Transfer the parent object because this doesnt copy over for some reason
-      tri.parent = i.parent;
-
-      // CHECK VISABILITY, MOVE TO CAMERA 
-      //---------------------------------------------------------------------------------------------
-      // Get the normal vector to the triangle
+      // Call deep copy constructor to copy parent object3d pointer. Pointer would be ignored in default copy constructor
+      tri3d tri = i;
+      // Direction vector pointing from triangle to camera
       vec3 camToTri = (tri.v[0] - position).normal();
-      // First expression checks that the face is facing the oposite direction of the vector pointing from the camera to the triangle
-      // Second expression checks that the camera is facing the same direction of the vector pointing from the camera to the triangle
-      // This makes sure the triangle is facing us and in the view
-      if((camToTri * tri.normal() < 0.0f) && (camToTri * direction > 0.0f)) {
+      // Use dot product to check if (left) triangle is facing the camera and (right) if it is in field of view, otherwise ignore
+      if((camToTri * tri.normal() < 0.0f) && (camToTri * pointDirection > 0.0f)) {
          // Multiply the triangle by the view matrix to correct its position based on the camera angle
-         tri *= view;
+         tri *= m_matView;
          m_triangleBuffer.push_back(tri);
       }
    }
-   // SORT TRIANGLE BY Z
-   //---------------------------------------------------------------------------------------------
-   // Sort all of the triangles in the buffer by their mmidpoint z value to draw the farther triangles first
-   std::sort(m_triangleBuffer.begin(),m_triangleBuffer.end(), [](tri3d &t1, tri3d &t2) {
-      float z1 = (t1.v[0].z + t1.v[1].z + t1.v[2].z)/3.0f;
-      float z2 = (t2.v[0].z + t2.v[1].z + t2.v[2].z)/3.0f;
-      return z1 > z2;
-   });
+   // Sort triangles by center Z value. This will draw farther triangles first
+   std::sort(m_triangleBuffer.begin(),m_triangleBuffer.end(), [](tri3d &t1, tri3d &t2) { return t1.centerz() > t2.centerz();});
 }
 
 
-
-// DRAW FUNCTION
-//---------------------------------------------------------------------------------------------
-void camera::draw(int layer) {
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// TRIANGLE CLIPPING AND PROJECTION
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+void camera::update() {
    
-   //project and draw
-      
-   pixels = bg;
-   // std::cout << std::to_string(col.r) + ", " + std::to_string(col.g) + ", " + std::to_string(col.b) << std::endl;
-   for(tri3d tri : m_triangleBuffer) {
+   // Clear the pixel buffer with the background color before drawing each triangle
+   m_pixelBuffer = m_clearBuffer;
+   // Create the direction of the light used to shade our triangles
+   vec3 light = vec3(-1,1,-1).normal();
 
+   for(tri3d tri : m_triangleBuffer) {
+      
+      // Create buffer to hold triangles that need to go through the split function and 
+      // a buffer of triangles that have already been through the split function
       std::vector<tri3d> splitBuffer;
       std::vector<tri3d> toSplitBuffer;
+      // Initialize 'to split buffer' with the curent triangle. (after being split by all planes this can turn into many triangles)
       toSplitBuffer.push_back(tri);
 
       // Cycle through each plane and each triangle so we can clip them against each plane
@@ -152,7 +112,6 @@ void camera::draw(int layer) {
 
             // For consiseness check what points are out of the current plane ahead of time
             bool clipped[3] = {pointOutOfPlane(t.v[0], plane), pointOutOfPlane(t.v[1], plane), pointOutOfPlane(t.v[2], plane)};
-
             // If all of the points are not clipped by this plane then pass along the triangle to the next step
             if (clipped[0]+clipped[1]+clipped[2] == 0){splitBuffer.push_back(t); continue;}
 
@@ -166,8 +125,8 @@ void camera::draw(int layer) {
                   // If there are 2 points and they are the current and next point
                   if (clipped[next]){
                      // Find new points where the edges of the triangles intercect the plane
-                     vec3 p1 = splitPoint(t.v[i], t.v[last], plane);
-                     vec3 p2 = splitPoint(t.v[next], t.v[last], plane);
+                     vec3 p1 = planeIntercect(t.v[i], t.v[last], plane);
+                     vec3 p2 = planeIntercect(t.v[next], t.v[last], plane);
                      // Make a new triangle with the 2 new points and the one unclipped point
                      splitBuffer.push_back(tri3d(p1,p2,t.v[last]));
                      break;
@@ -175,8 +134,8 @@ void camera::draw(int layer) {
                   // If there is only one point and it is the current point
                   else {
                      // Find new points where the edges of the triangles intercect the plane
-                     vec3 p1 = splitPoint(t.v[i], t.v[last], plane);
-                     vec3 p2 = splitPoint(t.v[i], t.v[next], plane);
+                     vec3 p1 = planeIntercect(t.v[i], t.v[last], plane);
+                     vec3 p2 = planeIntercect(t.v[i], t.v[next], plane);
                      // Create 2 new triangles with the 2 new points and the 2 unclipped points
                      splitBuffer.push_back(tri3d(p1,p2,t.v[next]));
                      splitBuffer.push_back(tri3d(p1,t.v[next],t.v[last]));
@@ -190,35 +149,78 @@ void camera::draw(int layer) {
          splitBuffer = std::vector<tri3d>();
       }
 
-      col = tri.parent->color;
-      lineCol = tri.parent->lineColor;
-      // Create a vector for the light direction
-      vec3 light = vec3(-1,1,-1).normal();
-      // Calculate how directly the light would hit the triangle face with the dot product of the 
-      // triangle normal and light direction. Use this shade value to alter the provided color
+      // GET SHADE OF TRIANGLE
+      //---------------------------------------------------------------------------------------------
+      // Determine shade of color based on the angle of the triangle face compared to light direction
       float shade = tri.normal().dot(light);
-      sf::Color shadeColor((col.r/2.0)*(shade+1), (col.g/2.0)*(shade+1), (col.b/2.0)*(shade+1));
+      sf::Color shadeColor((tri.parent->color.r/2.0)*(shade+1), (tri.parent->color.g/2.0)*(shade+1), (tri.parent->color.b/2.0)*(shade+1));
 
-      // PROJECT, SHIFT, AND SCALE POINTS
+      // PROJECT 3D TRIANGLES TO SCREEN SPACE
       //---------------------------------------------------------------------------------------------
       for (tri3d triangle : toSplitBuffer){
-         // Use projection matrix to convert 3D points to 2D points on the screen
-         triangle.v[0] *= m_matProj;
-         triangle.v[1] *= m_matProj;
-         triangle.v[2] *= m_matProj;
+         // Use projection matrix to convert 3D points to 2D points in the camera view
+         triangle.v[0] *= m_matProject;
+         triangle.v[1] *= m_matProject;
+         triangle.v[2] *= m_matProject;
 
          for (int i=0; i<3; i++){
-            // This is centering the view on the screen by scaling the aspect ratio
+            // Projection results are between -1 and 1. So shift to the positive and scale to fit screen
             triangle.v[i].x += 1;
             triangle.v[i].y += 1;
-            // This scales the x and y to position in the center of the screen
-            triangle.v[i].x *= 0.5f * resolution.x;
-            triangle.v[i].y *= 0.5f * resolution.y;
+            triangle.v[i].x *= 0.5f * m_resolution.x;
+            triangle.v[i].y *= 0.5f * m_resolution.y;
          }
-         // Draw the triangle after the projection is done
-         triangle.draw(pixels,resolution, shadeColor, lineCol);
+         triangle.draw(m_pixelBuffer, m_resolution, shadeColor, tri.parent->lineColor);
       }
    }
-   pixelBuff.update(pixels.data());
+   // Add pixel buffer data to the SFML texture so it can be drawn to the SFML window
+   m_pixelTexture.update(m_pixelBuffer.data());
+   // Clear the buffer of triangles for the next itteration
    m_triangleBuffer = std::vector<tri3d>();
+}
+
+
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// UTILITY FUNCTIONS
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+bool camera::pointOutOfPlane(vec3 point, vec3 plane){
+   return ((point.dot(plane) + plane.w) > 0);
+}
+
+vec3 camera::planeIntercect(vec3 p0, vec3 p1, vec3 plane){
+   // t is where the plane inersects the line. scale of 0-1, 0 being p0 and 1 being p1
+   float t = (p0.dot(plane) + plane.w) / (plane.x*(p0.x-p1.x) + plane.y*(p0.y-p1.y) + plane.z*(p0.z-p1.z));
+   return((p0 + ((p1 - p0) * t)));
+}
+
+
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// MOVE AND ROTATE CAMERA
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+void camera::move(float x, float y, float z, float u, float v, float w) {
+   
+   // Get up / Y  and forward / Z component of the camera after rotating
+   vec3 up = vec3(0,1,0) * matrix_transform(0, 0, 0, rotation.x, rotation.y, rotation.z);
+   pointDirection = (vec3(0,0,1) * matrix_transform(0, 0, 0, rotation.x, rotation.y, rotation.z)).normal();
+
+   // Adjust position of camera. Movement is based on camera direction. z means in and out x means side to side
+   // xyz parameters are not world xyz. Position is world xyz so we need to translate
+   position += (pointDirection * z);
+   position += (pointDirection.cross(up) * x);
+   position.y += y;
+   rotation += vec3(u,v,w);
+
+   // Generate the new "point at" matrix and "view" matrix based on the new orientation of the camera
+   m_matPointAt = matrix_pointAt(position, pointDirection, up);
+   m_matView = matrix_view(m_matPointAt);
+}
+
+
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// SF::DRAWABLE IMPLIMENTATION
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+void camera::draw(sf::RenderTarget& target, sf::RenderStates states) const {
+   // Allow for an SFML render texture/window to draw the pixel buffer containing the 3D projections
+   sf::Sprite tempSpr(m_pixelTexture);
+   target.draw(tempSpr, states);
 }
