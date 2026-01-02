@@ -5,6 +5,7 @@
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/System/Vector2.hpp>
+#include <iostream>
 #include <algorithm>
 #include <cstdint>
 #include <vector>
@@ -49,16 +50,17 @@ camera::camera(sf::Vector2u res) {
 
    // Create a background buffer the size of the window to clear the pixel buffer with a color
    m_clearBuffer = std::vector<std::uint8_t>(m_resolution.x * m_resolution.y * 4, 255);
+   m_zBuffer = std::vector<float>(m_resolution.x * m_resolution.y, f);
    int index = 0;
    for (int y = 0; y < m_resolution.y; y++)
    {
       for (int x = 0; x < m_resolution.x; x++)
       {
-         index = (y * m_resolution.x + x) * 4;
-         m_clearBuffer[index] = black.r;
-         m_clearBuffer[index + 1] = black.g;
-         m_clearBuffer[index + 2] = black.b;
-         m_clearBuffer[index + 3] = black.a;
+         index = (y * m_resolution.x + x);
+         m_clearBuffer[index*4] = black.r;
+         m_clearBuffer[index*4 + 1] = black.g;
+         m_clearBuffer[index*4 + 2] = black.b;
+         m_clearBuffer[index*4 + 3] = black.a;
       }
    }
    m_pixelBuffer = m_clearBuffer;
@@ -94,6 +96,7 @@ void camera::update() {
    
    // Clear the pixel buffer with the background color before drawing each triangle
    m_pixelBuffer = m_clearBuffer;
+   m_zBuffer = std::vector<float>(m_resolution.x * m_resolution.y, 1000.0);
    // Create the direction of the light used to shade our triangles
    vec3 light = vec3(-1,1,-1).normal();
 
@@ -154,14 +157,16 @@ void camera::update() {
       // Determine shade of color based on the angle of the triangle face compared to light direction
       float shade = tri.normal().dot(light);
       sf::Color shadeColor((tri.parent->color.r/2.0)*(shade+1), (tri.parent->color.g/2.0)*(shade+1), (tri.parent->color.b/2.0)*(shade+1));
-
+      
       // PROJECT 3D TRIANGLES TO SCREEN SPACE
       //---------------------------------------------------------------------------------------------
       for (tri3d triangle : toSplitBuffer){
          // Use projection matrix to convert 3D points to 2D points in the camera view
+         tri3d oldTri = triangle;
          triangle.v[0] *= m_matProject;
          triangle.v[1] *= m_matProject;
          triangle.v[2] *= m_matProject;
+
 
          for (int i=0; i<3; i++){
             // Projection results are between -1 and 1. So shift to the positive and scale to fit screen
@@ -170,7 +175,7 @@ void camera::update() {
             triangle.v[i].x *= 0.5f * m_resolution.x;
             triangle.v[i].y *= 0.5f * m_resolution.y;
          }
-         triangle.draw(m_pixelBuffer, m_resolution, shadeColor, tri.parent->lineColor);
+         triangle.draw(oldTri, m_pixelBuffer, m_zBuffer, m_resolution, shadeColor, tri.parent->lineColor);
       }
    }
    // Add pixel buffer data to the SFML texture so it can be drawn to the SFML window

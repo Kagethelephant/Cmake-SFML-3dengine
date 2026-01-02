@@ -82,6 +82,8 @@ private:
    std::vector<std::uint8_t> m_pixelBuffer;
    /// @brief: Buffer to clear the pixelBuffer with a background color
    std::vector<std::uint8_t> m_clearBuffer;
+   /// @brief: Buffer to store the lowest z position to decide whether we should draw over it
+   std::vector<float> m_zBuffer;
    
 
    /// @brief: Checks if a point is on one side of a plane

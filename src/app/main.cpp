@@ -26,9 +26,10 @@ int main(int argc, char* argv[])
    camera cam(game.resolution);
   
    // Create the 3D objects to be rendered
-   object3d object("../resources/objects/cow.obj", vec3(-12, 0, 0), white, black);
-   object3d object2("../resources/objects/cow.obj", vec3(12, 0, 0), red, white);
-   object3d object3("../resources/objects/cow.obj", vec3(0, 0, 0), green, yellow);
+   object3d object("../resources/objects/cow.obj", vec3(-12, 0, 0), vec3(1, 1, 1), white, black);
+   object3d object2("../resources/objects/cow.obj", vec3(12, 0, 0), vec3(1, 1, 1), red, white);
+   object3d object3("../resources/objects/cow.obj", vec3(0, 0, 0), vec3(1, 1, 1), green, yellow);
+   object3d teapot("../resources/objects/teapot.obj", vec3(-10, 0, -10), vec3(.1, .1, .1), white, black, true);
 
    std::cout << "*****LOOP START*****" << std::endl;
 
@@ -53,6 +54,7 @@ int main(int argc, char* argv[])
       cam.loadObject(object);
       cam.loadObject(object2);
       cam.loadObject(object3);
+      cam.loadObject(teapot);
       // Update the 2D projection
       cam.update();
       // Draw the camera 2D projection to the window

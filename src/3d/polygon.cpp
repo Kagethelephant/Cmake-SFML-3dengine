@@ -2,6 +2,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <algorithm>
+#include <iostream>
 #include <vector>
 #include "matrix.hpp"
 
@@ -9,10 +10,15 @@
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // FILL TRIANGLE
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void tri3d::draw(std::vector<std::uint8_t>& buffer, sf::Vector2u res, sf::Color color, sf::Color lineColor) {
+void tri3d::draw(tri3d oldTri, std::vector<std::uint8_t>& buffer, std::vector<float>& zbuffer, sf::Vector2u res, sf::Color color, sf::Color lineColor) {
    // Scanline tiangle filling method. This is the most common way to fill triangles with a color
    // It is more efficient to do this with graphics acceleration because cross products are expensive
    // for the CPU to calculate. If you comment this out you will see the FPS go up substantially.
+
+   // Original z values for barycentric coord z buffer calculation
+   float z0 = oldTri.v[0].z;
+   float z1 = oldTri.v[1].z;
+   float z2 = oldTri.v[2].z;
 
    // Get the coordinates of the rectangle that will cover the triangle
    int xmax = std::max(std::max(v[0].x,v[1].x),v[2].x);
@@ -20,20 +26,49 @@ void tri3d::draw(std::vector<std::uint8_t>& buffer, sf::Vector2u res, sf::Color 
    int ymax = std::max(std::max(v[0].y,v[1].y),v[2].y);
    int ymin = std::min(std::min(v[0].y,v[1].y),v[2].y);
 
+   vec2 v0, v1, vp;
+   float d00, d01, d11, dp0, dp1, denom, alpha, beta, gamma, baryz;
+
+   v0 = vec2(v[1].x-v[0].x, v[1].y-v[0].y);
+   v1 = vec2(v[2].x-v[0].x, v[2].y-v[0].y);
+
+   d00 = v0.dot(v0);
+   d01 = v0.dot(v1);
+   d11 = v1.dot(v1);
+
+   denom = d00 * d11 - d01 * d01;
+   
    // Itterate through each pixel in that rectangle
    for (int y=ymin; y<=ymax; y++){
       for (int x=xmin; x<=xmax; x++){
          // Use the cross product to determine if the point is on the outside 
          // or inside of each of the edges 
-         int cross0 = ((x-v[0].x)*(v[1].y-v[0].y) - (y-v[0].y)*(v[1].x-v[0].x));
-         int cross1 = ((x-v[1].x)*(v[2].y-v[1].y) - (y-v[1].y)*(v[2].x-v[1].x));
-         int cross2 = ((x-v[2].x)*(v[0].y-v[2].y) - (y-v[2].y)*(v[0].x-v[2].x));
+         vp = vec2(x-v[0].x, y-v[0].y);
+
+         dp0 = vp.dot(v0);
+         dp1 = vp.dot(v1);
+
+         beta = (d11 * dp0 - d01 * dp1)/ denom;
+         gamma = (d00 * dp1 - d01 * dp0)/ denom;
+         alpha = 1.0f - beta - gamma;
+
+         // float cross0 = ((x-v[0].x)*(v[1].y-v[0].y) - (y-v[0].y)*(v[1].x-v[0].x));
+         // float cross1 = ((x-v[1].x)*(v[2].y-v[1].y) - (y-v[1].y)*(v[2].x-v[1].x));
+         // float cross2 = ((x-v[2].x)*(v[0].y-v[2].y) - (y-v[2].y)*(v[0].x-v[2].x));
          // check if the point is on the inside of all of the edges. If so, add the pixel to the buffer
-         if (cross0 <= 0 and cross1 <= 0 and cross2 <= 0){
-            int index = (res.x * y + x) * 4;
-            buffer [index] = color.r; 
-            buffer [index + 1] = color.g; 
-            buffer [index + 2] = color.b; 
+         if (alpha >= 0 and beta >= 0 and gamma >= 0){
+
+            // barycentric coord calc
+            baryz = alpha * oldTri.v[0].z + beta * oldTri.v[1].z + gamma * oldTri.v[2].z; 
+            // std::cout << baryz << std::endl;
+            
+            int index = (res.x * y + x);
+            if (baryz <= zbuffer[index]){
+               buffer[index*4] = color.r; 
+               buffer[index*4 + 1] = color.g; 
+               buffer[index*4 + 2] = color.b; 
+               zbuffer[index] = baryz; 
+            }
          }
       }
    }

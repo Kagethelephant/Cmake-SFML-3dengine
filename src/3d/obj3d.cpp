@@ -14,13 +14,15 @@
 
 // CONSTRUCTOR
 //---------------------------------------------------------------------------------------------
-object3d::object3d(std::string filename, vec3 _position, sf::Color _color, sf::Color _lineColor) {
+object3d::object3d(std::string filename, vec3 _position, vec3 _scale, sf::Color _color, sf::Color _lineColor, bool _ccwWinding) {
 
+   ccwWinding = _ccwWinding;
    if (!(filename == "")) {load(filename);}
    color = _color;
    lineColor = _lineColor;
    position = _position;
-   update(position.x, position.y, position.z, rotation.x, rotation.y, rotation.z);
+   scale = _scale;
+   update(position, rotation, scale);
 }
 
 // LOAD OBJECT
@@ -49,19 +51,27 @@ void object3d::load(std::string filename) {
       }
       if(line[0] == 'f') {
          // If it is a triangle then get the corosponding vertices and load it into the mesh
-         int f[3];
-         stream >> junk >> f[0] >> f[1] >> f[2];
-         mesh.push_back(tri3d(verts[f[0] - 1], verts[f[1] - 1], verts[f[2] - 1], this));
+         if(ccwWinding){
+            int f[3];
+            stream >> junk >> f[0] >> f[2] >> f[1];
+            mesh.push_back(tri3d(verts[f[0] - 1], verts[f[1] - 1], verts[f[2] - 1], this));
+         }
+         else {
+            int f[3];
+            stream >> junk >> f[0] >> f[1] >> f[2];
+            mesh.push_back(tri3d(verts[f[0] - 1], verts[f[1] - 1], verts[f[2] - 1], this));
+         }
       }
    }
 }
 
 // UBDATE POSITION
 //---------------------------------------------------------------------------------------------
-void object3d::update(float x, float y, float z, float u, float v, float w){ 
+void object3d::update(vec3 position, vec3 rotation, vec3 scale){ 
 
    // Must use reference here because we want to alter the original triangle in the mesh
    for (tri3d& t : mesh) {
-      t *= matrix_transform(x, y, z, u, v, w);
+      t *= matrix_scale(scale.x, scale.y, scale.z);
+      t *= matrix_transform(position.x, position.y, position.z, rotation.x, rotation.y, rotation.z);
    }
 }

@@ -3,6 +3,15 @@
 #include <cmath>
 
 
+mat4x4 matrix_scale(float sx, float sy, float sz){
+   mat4x4 m;
+   m.m[0][0] = sx;   m.m[1][0] = 0.0f; m.m[2][0] = 0.0f; m.m[3][0] = 0.0f;
+   m.m[0][1] = 0.0f; m.m[1][1] = sy;   m.m[2][1] = 0.0f; m.m[3][1] = 0.0f;
+   m.m[0][2] = 0.0f; m.m[1][2] = 0.0f; m.m[2][2] = sz;   m.m[3][2] = 0.0f;
+   m.m[0][3] = 0.0f; m.m[1][3] = 0.0f; m.m[2][3] = 0.0f; m.m[3][3] = 1.0f;
+   return m;
+}
+
 mat4x4 matrix_transform(float x, float y, float z, float u, float v, float w) {
    // I got to these values by multiplying the transformation matrix and all of the 
    // rotation matrices and simplifying down the expressions

@@ -7,7 +7,9 @@
 // Forward declaration for parent pointer
 class object3d;
 
-/// @brief: Container for 3 3D vectors with functions for drawing to a 2D pixel array
+/// @brief: Container for 3 3D vectors with functions for drawing to a 2D pixel array.
+/// drawing is done with scanline filling and bresenham line function. This is intended for 
+/// educational purposes so it is inefficient and lacks advanced features like z-buffers
 /// @param _v0: Vector 0 (vec3)
 /// @param _v1: Vector 1 (vec3)
 /// @param _v2: Vector 2 (vec3)
@@ -45,7 +47,7 @@ public:
    /// @param res: The resolution of the window
    /// @param color: Color to draw the triangle
    /// @param lineColor: Color to draw the outline 1 pixel wide (default: Transperent)
-   void draw(std::vector<std::uint8_t>& buffer, sf::Vector2u res, sf::Color color, sf::Color lineColor = sf::Color::Transparent);
+   void draw(tri3d oldTri, std::vector<std::uint8_t>& buffer, std::vector<float>& zbuffer, sf::Vector2u res, sf::Color color, sf::Color lineColor = sf::Color::Transparent);
 
 private:
 

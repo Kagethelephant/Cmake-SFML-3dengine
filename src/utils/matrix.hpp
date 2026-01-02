@@ -44,6 +44,8 @@ struct vec2 {
    void normalize() { float m = mag(); x /= m; y /= m; }
    /// @brief: Dot producto of 2 vectors. This is escencially the likeness of 2 normalized vectors
    float dot(const vec2& v) { return ((this->x * v.x) + (this->y * v.y)); }
+   // @brief: There is not necessarily a 2D cross product but you can use this to determine if a vector points to the left or right of another vector
+   float cross(const vec2& v) { return ((this->x * v.y) - (this->y * v.x)); }
 
    // Overload functions
    //---------------------------------------------------------------------------------------------
@@ -133,6 +135,15 @@ struct vec3 {
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // Matrix Functions
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+/// @brief: Creates a matrix that will move a vertex in 3D space to a position that reflects its
+/// position reletive to the camera view. Essentially moving the world around a camera instead 
+/// of moving the camera. The camera view is represented by a matrix created with the "point_matrix"
+/// the direction and position given to the "point_matrix" represents the camera
+/// @param m: point_matrix result representing the camera (by reference)
+/// @return mat4x4
+///
+mat4x4 matrix_scale(float sx, float sy, float sz);
 
 /// @brief: Creates a 4x4 matrix that can be used to translate and rotate (in radians) a vertex 
 /// @param x: x translation
