@@ -1,5 +1,6 @@
 #include <SFML/Graphics/RenderTexture.hpp>
 #include <SFML/System/Vector2.hpp>
+#include <cmath>
 #include <window.hpp>
 
 #include <SFML/Graphics.hpp>
@@ -39,7 +40,7 @@ windowMaster::windowMaster(unsigned int height, bool fullscreen){
    m_font.setSmooth(false);
   
    // Setup the defualt text
-   m_text.setCharacterSize(16);
+   m_text.setCharacterSize(8);
    m_text.setFillColor(sf::Color::White);
 
    // CREATE ALL LAYERS (TEXTURES)
@@ -63,8 +64,8 @@ void windowMaster::render(){
 
    // Count the frames per second
    m_fpsCounter++;
-   if (m_fpsCounter >= 30){
-      framerate = (int)(30 / (m_clock.getElapsedTime().asSeconds()));
+   if (m_fpsCounter >= 5){
+      framerate = std::trunc((5 / (m_clock.getElapsedTime().asSeconds())));
       m_clock.restart();
       m_fpsCounter = 0;
    }

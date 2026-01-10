@@ -28,7 +28,6 @@ int randObj::iRand(int min, int max) {
       seed = m_rd();
       m_gen.seed(seed);
    }
-
    return distr(m_gen);
 }
 
@@ -41,7 +40,6 @@ float randObj::fRand(float min, float max) {
       seed = m_rd();
       m_gen.seed(seed);
    }
-
    return distr(m_gen);
 }
 

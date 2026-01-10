@@ -1,6 +1,7 @@
 #include "matrix.hpp"
 
 #include <cmath>
+#include <iostream>
 
 
 mat4x4 matrix_scale(float sx, float sy, float sz){
@@ -32,14 +33,30 @@ mat4x4 matrix_transform(float x, float y, float z, float u, float v, float w) {
 mat4x4 matrix_project(float fov, float a, float n, float f) {
    // m[1][1] is not normally negative but since we are drawing as y = 0 is at the top of the screen
    // we need to invert the y values since y = 0 should be towards the bottom of the screen for most OBJ meshes
-   float r = n * tanf(fov * 0.5f / 180.0f * 3.14159f);
-   float t = r / a;
+   // float r = n * tanf(fov * 0.5f / 180.0f * 3.14159f);
+   // float t = r / a;
+
+   // mat4x4 m;
+   // m.m[0][0] = -n / r; m.m[1][0] = 0.0f;  m.m[2][0] = 0.0f;         m.m[3][0] = 0.0f;
+   // m.m[0][1] = 0.0f;   m.m[1][1] = n / t; m.m[2][1] = 0.0f;         m.m[3][1] = 0.0f;
+   // m.m[0][2] = 0.0f;   m.m[1][2] = 0.0f;  m.m[2][2] = (f+n)/(n-f);  m.m[3][2] = (2*f*n)/(n-f);
+   // m.m[0][3] = 0.0f;   m.m[1][3] = 0.0f;  m.m[2][3] = -1.0f;        m.m[3][3] = 0.0f;
+
+
+   float fovRadians = fov * (M_PI / 180.0f); // Convert degrees to radians
+   float tanHalfFOV = tanf(fovRadians / 2.0f);
+
+   float t = tanHalfFOV * n;
+   float b = -t;
+   float r = - t * a;
+   float l = -r;
 
    mat4x4 m;
-   m.m[0][0] = -n / r; m.m[1][0] = 0.0f;  m.m[2][0] = 0.0f;         m.m[3][0] = 0.0f;
-   m.m[0][1] = 0.0f;   m.m[1][1] = n / t; m.m[2][1] = 0.0f;         m.m[3][1] = 0.0f;
-   m.m[0][2] = 0.0f;   m.m[1][2] = 0.0f;  m.m[2][2] = (f+n)/(n-f);  m.m[3][2] = (2*f*n)/(n-f);
-   m.m[0][3] = 0.0f;   m.m[1][3] = 0.0f;  m.m[2][3] = -1.0f;        m.m[3][3] = 0.0f;
+   m.m[0][0] = (2.0f*n)/(r-l);  m.m[0][1] = 0.0f;             m.m[0][2] = 0.0f;                m.m[0][3] = 0.0f;
+   m.m[1][0] = 0.0f;            m.m[1][1] = (2.0f*n)/(t-b);   m.m[1][2] = 0.0f;                m.m[1][3] = 0.0f;
+   m.m[2][0] = (r+l)/(r-l);     m.m[2][1] = (t+b)/(t-b);      m.m[2][2] = -(f+n)/(f-n);        m.m[2][3] = -1.0f;
+   m.m[3][0] = 0.0f;            m.m[3][1] = 0.0f;             m.m[3][2] = -(2.0f*f*n)/(f-n);   m.m[3][3] = 0.0f;
+
    return m;
 }
 

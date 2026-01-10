@@ -18,7 +18,7 @@ public:
    /// @brief: Resolution of the window
    sf::Vector2u resolution;
    /// @brief: Current framerate of the program
-   float framerate;
+   int framerate;
 
 
    windowMaster(unsigned int height, bool fullscreen = false);

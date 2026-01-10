@@ -1,9 +1,11 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Graphics/ConvexShape.hpp>
 #include <SFML/Graphics/Drawable.hpp>
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/System/Vector2.hpp>
+#include "data.hpp"
 #include "matrix.hpp"
 #include "polygon.hpp"
 #include "obj3d.hpp"
@@ -13,6 +15,8 @@
 /// form of a pixel buffer to be drawn by and SFML window. This object is sf::drawable so it can be drawn
 /// like other SFML objects. This will draw the projected 3D view generated with `update()`
 /// @param res: Resolution of the desired output view 
+/// @param fov: Field of view for camera in degrees
+/// @param bgColor: Color to clear the pixel buffer with each frame
 class camera : public sf::Drawable {
 
 public:
@@ -24,8 +28,7 @@ public:
    /// @brief: Direction the camera is pointing in the form of a vector
    vec3 pointDirection;
 
-
-   camera(sf::Vector2u res);
+   camera(sf::Vector2u res, float fov = 90, sf::Color bgColor = black);
 
    /// @brief: Moves or rotates camera by given values (relative) movement is 
    /// based on the direction of the camera ( z moves forward/back, x moves sideways)
@@ -85,6 +88,11 @@ private:
    /// @brief: Buffer to store the lowest z position to decide whether we should draw over it
    std::vector<float> m_zBuffer;
    
+   std::vector<tri3d> clipTriangles(std::vector<tri3d> triangles);
+
+
+   /// @brief: Clears the pixel buffer with the background color
+   bool clearPixelBuffer();
 
    /// @brief: Checks if a point is on one side of a plane
    /// @param point: Point in 3d space

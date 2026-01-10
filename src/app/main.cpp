@@ -21,15 +21,15 @@ int main(int argc, char* argv[])
    randObj rander(false, 13412234);
    
    // Create windowMaster that handles all of the background SFML window stuff and simplifies drawing
-   windowMaster game(1080,false);
+   windowMaster game(400,false);
    // Camera handles all of the 3d rendering
-   camera cam(game.resolution);
+   camera cam(game.resolution, 70);
   
    // Create the 3D objects to be rendered
-   object3d object("../resources/objects/cow.obj", vec3(-12, 0, 0), vec3(1, 1, 1), white, black);
-   object3d object2("../resources/objects/cow.obj", vec3(12, 0, 0), vec3(1, 1, 1), red, white);
-   object3d object3("../resources/objects/cow.obj", vec3(0, 0, 0), vec3(1, 1, 1), green, yellow);
-   object3d teapot("../resources/objects/teapot.obj", vec3(-10, 0, -10), vec3(.1, .1, .1), white, black, true);
+   object3d object("../resources/objects/cow.obj", vec3(-12, 0, 0), vec3(1, 1, 1), white);
+   object3d object2("../resources/objects/cow.obj", vec3(12, 0, 0), vec3(1, 1, 1), red);
+   object3d object3("../resources/objects/cow.obj", vec3(0, 0, 0), vec3(1, 1, 1), green);
+   object3d teapot("../resources/objects/teapot.obj", vec3(-10, 0, -10), vec3(.01, .01, .01), blue, sf::Color::Transparent, true);
 
    std::cout << "*****LOOP START*****" << std::endl;
 
@@ -62,9 +62,9 @@ int main(int argc, char* argv[])
 
       // Draw some text to the window
       game.drawText("X: " + std::to_string(cam.position.x), 10, 10);
-      game.drawText("Y: " + std::to_string(cam.position.y), 10, 30);
-      game.drawText("Z: " + std::to_string(cam.position.z), 10, 50);
-      game.drawText("FPS: " + std::to_string(game.framerate), 10, 70);
+      game.drawText("Y: " + std::to_string(cam.position.y), 10, 20);
+      game.drawText("Z: " + std::to_string(cam.position.z), 10, 30);
+      game.drawText("FPS: " + std::to_string(game.framerate), 10, 40);
 
       // Display everything that was drawn to the screen
       game.render();
