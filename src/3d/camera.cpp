@@ -32,17 +32,17 @@ camera::camera(sf::Vector2u res, float fov, sf::Color bgColor) {
    float t = halfFovRadians * n;
    float r = t * aspectRatio;
 
-   vec3 topRight = vec3(r,t,n,0).normal();
-   vec3 topLeft = vec3(-r,t,n,0).normal();
-   vec3 bottomRight = vec3(r,-t,n,0).normal();
-   vec3 bottomLeft = vec3(-r,-t,n,0).normal();
+   vec4 topRight = vec4(r,t,n,0).normal();
+   vec4 topLeft = vec4(-r,t,n,0).normal();
+   vec4 bottomRight = vec4(r,-t,n,0).normal();
+   vec4 bottomLeft = vec4(-r,-t,n,0).normal();
 
    m_planes[0] = topLeft.cross(topRight).normal(); // Top plane
    m_planes[1] = bottomRight.cross(bottomLeft).normal(); // Bottom plane
    m_planes[2] = topRight.cross(bottomRight).normal(); // Right plane
    m_planes[3] = bottomLeft.cross(topLeft).normal(); // Left plane
-   m_planes[4] = vec3(0,0,-1,n); // Near plane
-   m_planes[5] = vec3(0,0,1,-f); // Far plane
+   m_planes[4] = vec4(0,0,-1,n); // Near plane
+   m_planes[5] = vec4(0,0,1,-f); // Far plane
    
    // Create the projection matrix that will be used to project 3D points to a 2D view
    m_matProject = matrix_project(fov,aspectRatio,n,f);  
@@ -86,8 +86,6 @@ void camera::loadObject(object3d& object){
          m_triangleBuffer.push_back(tri);
       }
    }
-   // Sort triangles by center Z value. This will draw farther triangles first
-   std::sort(m_triangleBuffer.begin(),m_triangleBuffer.end(), [](tri3d &t1, tri3d &t2) { return t1.centerz() > t2.centerz();});
 }
 
 
@@ -101,14 +99,13 @@ std::vector<tri3d> camera::clipTriangles(std::vector<tri3d> triangles) {
    m_zBuffer = std::vector<float>(m_resolution.x * m_resolution.y, 1000.0);
    // Create the direction of the light used to shade our triangles
    vec3 light = vec3(-1,1,-1).normal();
-
       
    // Create buffer to hold triangles that need to go through the split function and 
    // a buffer of triangles that have already been through the split function
    std::vector<tri3d> splitBuffer;
    // Cycle through each plane and each triangle so we can clip them against each plane
-   for (vec3 plane : m_planes) {
-      for(tri3d t : triangles) {
+   for (vec4& plane : m_planes) {
+      for(tri3d& t : triangles) {
          // For consiseness check what points are out of the current plane ahead of time
          bool clipped[3] = {pointOutOfPlane(t.v[0], plane), pointOutOfPlane(t.v[1], plane), pointOutOfPlane(t.v[2], plane)};
          // If all of the points are not clipped by this plane then pass along the triangle to the next step
@@ -182,12 +179,11 @@ void camera::update() {
 
       for (int i=0; i<3; i++){
          // Projection results are between -1 and 1. So shift to the positive and scale to fit screen
-         triangle.v[i].x += 1;
-         triangle.v[i].y += 1;
-         triangle.v[i].x *= 0.5f * m_resolution.x;
-         triangle.v[i].y *= 0.5f * m_resolution.y;
+         triangle.v[i][0] += 1;
+         triangle.v[i][1] += 1;
+         triangle.v[i][0] *= 0.5f * m_resolution.x;
+         triangle.v[i][1] *= 0.5f * m_resolution.y;
       }
-
       triangle.draw(oldTri, m_pixelBuffer, m_zBuffer, m_resolution, shadeColor, triangle.parent->lineColor);
    }
    // Add pixel buffer data to the SFML texture so it can be drawn to the SFML window
@@ -201,13 +197,13 @@ void camera::update() {
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // UTILITY FUNCTIONS
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-bool camera::pointOutOfPlane(vec3 point, vec3 plane){
-   return ((point.dot(plane) + plane.w) > 0);
+bool camera::pointOutOfPlane(vec3 point, vec4 plane){
+   return ((point.dot(plane.xyz()) + plane[3]) > 0);
 }
 
-vec3 camera::planeIntercect(vec3 p0, vec3 p1, vec3 plane){
+vec3 camera::planeIntercect(vec3 p0, vec3 p1, vec4 plane){
    // t is where the plane inersects the line. scale of 0-1, 0 being p0 and 1 being p1
-   float t = (p0.dot(plane) + plane.w) / (plane.x*(p0.x-p1.x) + plane.y*(p0.y-p1.y) + plane.z*(p0.z-p1.z));
+   float t = (p0.dot(plane.xyz()) + plane[3]) / (plane[0]*(p0[0]-p1[0]) + plane[1]*(p0[1]-p1[1]) + plane[2]*(p0[2]-p1[2]));
    return((p0 + ((p1 - p0) * t)));
 }
 
@@ -218,14 +214,14 @@ vec3 camera::planeIntercect(vec3 p0, vec3 p1, vec3 plane){
 void camera::move(float x, float y, float z, float u, float v, float w) {
    
    // Get up / Y  and forward / Z component of the camera after rotating
-   vec3 up = vec3(0,1,0) * matrix_transform(0, 0, 0, rotation.x, rotation.y, rotation.z);
-   pointDirection = (vec3(0,0,1) * matrix_transform(0, 0, 0, rotation.x, rotation.y, rotation.z)).normal();
+   vec3 up = vec3(0,1,0) * matrix_transform(0, 0, 0, rotation[0], rotation[1], rotation[2]);
+   pointDirection = (vec3(0,0,1) * matrix_transform(0, 0, 0, rotation[0], rotation[1], rotation[2])).normal();
 
    // Adjust position of camera. Movement is based on camera direction. z means in and out x means side to side
    // xyz parameters are not world xyz. Position is world xyz so we need to translate
    position += (pointDirection * z);
    position += (pointDirection.cross(up) * x);
-   position.y += y;
+   position[1] += y;
    rotation += vec3(u,v,w);
 
    // Generate the new "point at" matrix and "view" matrix based on the new orientation of the camera

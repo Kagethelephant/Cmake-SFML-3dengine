@@ -46,7 +46,7 @@ void object3d::load(std::string filename) {
       if(line[0] == 'v') {
          // If it is a vertice then pull the xyz values from the string and put it in the vert array
          vec3 v;
-         stream >> junk >> v.x >> v.y >> v.z;
+         stream >> junk >> v[0] >> v[1] >> v[2];
          verts.push_back(v);
       }
       if(line[0] == 'f') {
@@ -71,7 +71,7 @@ void object3d::update(vec3 position, vec3 rotation, vec3 scale){
 
    // Must use reference here because we want to alter the original triangle in the mesh
    for (tri3d& t : mesh) {
-      t *= matrix_scale(scale.x, scale.y, scale.z);
-      t *= matrix_transform(position.x, position.y, position.z, rotation.x, rotation.y, rotation.z);
+      t *= matrix_scale(scale[0], scale[1], scale[2]);
+      t *= matrix_transform(position[0], position[1], position[2], rotation[0], rotation[1], rotation[2]);
    }
 }

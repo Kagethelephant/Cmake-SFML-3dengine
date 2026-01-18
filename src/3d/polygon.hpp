@@ -2,6 +2,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <vector>
+#include "data.hpp"
 #include "matrix.hpp"
 
 // Forward declaration for parent pointer
@@ -31,11 +32,11 @@ public:
    // @brief: Generates a vector normal to the triangles face starting from the triangles 0 point
    vec3 normal() {return ((this->v[0] - this->v[1]).cross(this->v[0] - this->v[2])).normal(); }
    // @brief: Gets centerpoint x value (takes average of 3 vertices x value)
-   float centerx() {return (this->v[0].x+this->v[1].x+this->v[2].x)/3.0f; }
+   float centerx() {return (this->v[0][0]+this->v[1][0]+this->v[2][0])/3.0f; }
    // @brief: Gets centerpoint y value (takes average of 3 vertices y value)
-   float centery() {return (this->v[0].y+this->v[1].y+this->v[2].y)/3.0f; }
+   float centery() {return (this->v[0][1]+this->v[1][1]+this->v[2][1])/3.0f; }
    // @brief: Gets centerpoint z value (takes average of 3 vertices z value)
-   float centerz() {return (this->v[0].z+this->v[1].z+this->v[2].z)/3.0f; }
+   float centerz() {return (this->v[0][2]+this->v[1][2]+this->v[2][2])/3.0f; }
 
    // Operator overloads for multiplying a whole triagle by a matrix (just multiplies the underlying vectors)
    tri3d operator * (const mat4x4& m) { return tri3d(this->v[0] * m, this->v[1] * m, this->v[2] * m); }
@@ -47,7 +48,7 @@ public:
    /// @param res: The resolution of the window
    /// @param color: Color to draw the triangle
    /// @param lineColor: Color to draw the outline 1 pixel wide (default: Transperent)
-   void draw(tri3d oldTri, std::vector<std::uint8_t>& buffer, std::vector<float>& zbuffer, sf::Vector2u res, sf::Color color, sf::Color lineColor = sf::Color::Transparent);
+   void draw(tri3d oldTri, std::vector<std::uint8_t>& buffer, std::vector<float>& zbuffer, sf::Vector2u res, sf::Color color, sf::Color lineColor = sf::Color(ColorToHex(Color::Transperant)));
 
 private:
 

@@ -3,6 +3,7 @@
 #include <SFML/Graphics.hpp>
 #include <algorithm>
 #include <vector>
+#include "data.hpp"
 #include "matrix.hpp"
 
 
@@ -15,23 +16,23 @@ void tri3d::draw(tri3d oldTri, std::vector<std::uint8_t>& buffer, std::vector<fl
    // for the CPU to calculate. If you comment this out you will see the FPS go up substantially.
 
    // Get the coordinates of the rectangle that will cover the triangle
-   int xmax = std::max(std::max(v[0].x,v[1].x),v[2].x);
-   int xmin = std::min(std::min(v[0].x,v[1].x),v[2].x);
-   int ymax = std::max(std::max(v[0].y,v[1].y),v[2].y);
-   int ymin = std::min(std::min(v[0].y,v[1].y),v[2].y);
+   int xmax = std::max(std::max(v[0][0],v[1][0]),v[2][0]);
+   int xmin = std::min(std::min(v[0][0],v[1][0]),v[2][0]);
+   int ymax = std::max(std::max(v[0][1],v[1][1]),v[2][1]);
+   int ymin = std::min(std::min(v[0][1],v[1][1]),v[2][1]);
 
    // Get the z coordinates of the triangle before projection
-   float z0 = oldTri.v[0].z;
-   float z1 = oldTri.v[1].z;
-   float z2 = oldTri.v[2].z;
+   float z0 = oldTri.v[0][2];
+   float z1 = oldTri.v[1][2];
+   float z2 = oldTri.v[2][2];
 
    // berycentric coordinate variables
    vec2 v0, v1, vp;
    float d00, d01, d11, dp0, dp1, denom, alpha, beta, gamma, baryz;
 
    // Create vectors used in barycentric coordinate calculation
-   v0 = vec2(v[1].x-v[0].x, v[1].y-v[0].y);
-   v1 = vec2(v[2].x-v[0].x, v[2].y-v[0].y);
+   v0 = vec2(v[1][0]-v[0][0], v[1][1]-v[0][1]);
+   v1 = vec2(v[2][0]-v[0][0], v[2][1]-v[0][1]);
    d00 = v0.dot(v0);
    d01 = v0.dot(v1);
    d11 = v1.dot(v1);
@@ -43,7 +44,7 @@ void tri3d::draw(tri3d oldTri, std::vector<std::uint8_t>& buffer, std::vector<fl
       for (int x=xmin; x<=xmax; x++){
 
          // Calculate vector from 0 vertice to the pixel
-         vp = vec2(x-v[0].x, y-v[0].y);
+         vp = vec2(x-v[0][0], y-v[0][1]);
 
          dp0 = vp.dot(v0);
          dp1 = vp.dot(v1);
@@ -71,7 +72,7 @@ void tri3d::draw(tri3d oldTri, std::vector<std::uint8_t>& buffer, std::vector<fl
       }
    }
    // If there is a lineColor provided draw the outline using bresenham function
-   if(!(lineColor == sf::Color::Transparent)){
+   if(!(lineColor == sf::Color(ColorToHex(Color::Transperant)))){
       m_bresenhamLine(v[0], v[1], buffer, res, lineColor);
       m_bresenhamLine(v[1], v[2], buffer, res, lineColor);
       m_bresenhamLine(v[2], v[0], buffer, res, lineColor);
@@ -84,10 +85,10 @@ void tri3d::draw(tri3d oldTri, std::vector<std::uint8_t>& buffer, std::vector<fl
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 void tri3d::m_bresenhamLine(vec3 p0, vec3 p1, std::vector<std::uint8_t>& buffer, sf::Vector2u res, sf::Color color) {
    // Cast the vector coordinates as integers, this function cannot handle floats
-   int x0 = (int)p0.x; 
-   int x1 = (int)p1.x; 
-   int y0 = (int)p0.y; 
-   int y1 = (int)p1.y; 
+   int x0 = (int)p0[0]; 
+   int x1 = (int)p1[0]; 
+   int y0 = (int)p0[1]; 
+   int y1 = (int)p1[1]; 
    // Get delta x and the delta y
    int dx = std::abs(x1 - x0);
    int dy = std::abs(y1 - y0);

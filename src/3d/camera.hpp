@@ -28,7 +28,7 @@ public:
    /// @brief: Direction the camera is pointing in the form of a vector
    vec3 pointDirection;
 
-   camera(sf::Vector2u res, float fov = 90, sf::Color bgColor = black);
+   camera(sf::Vector2u res, float fov = 90, sf::Color bgColor = sf::Color(ColorToHex(Color::Black)));
 
    /// @brief: Moves or rotates camera by given values (relative) movement is 
    /// based on the direction of the camera ( z moves forward/back, x moves sideways)
@@ -74,7 +74,7 @@ private:
    mat4x4 m_matProject;
 
    /// @brief: virtual planes that represent the edge of the view frustum in 3d space
-   vec3 m_planes[6];
+   vec4 m_planes[6];
   
    /// @brief: Stores triangles in 3D space from loaded objects to be drawn
    std::vector<tri3d> m_triangleBuffer;
@@ -97,12 +97,12 @@ private:
    /// @brief: Checks if a point is on one side of a plane
    /// @param point: Point in 3d space
    /// @param plain: Plain in 3d space represented by its normal vecor
-   bool pointOutOfPlane(vec3 point, vec3 plane);
+   bool pointOutOfPlane(vec3 point, vec4 plane);
 
    /// @brief: Used to get the position on a line betweeen 2 3d points where 
    /// that line intersects the given plane
    /// @param p1: Point in 3d space
    /// @param p2: 2nd point in 3d space to create a theoretical line with the 1st point
    /// @param plane: Plain in 3d space that intersects the theoretical line
-   vec3 planeIntercect(vec3 p1, vec3 p2, vec3 plane);
+   vec3 planeIntercect(vec3 p1, vec3 p2, vec4 plane);
 };

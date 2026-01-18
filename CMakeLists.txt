@@ -7,21 +7,32 @@ project(TST LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 # create complie_commands.json so nvim can read the cmake include paths
 # This is usefull for troubleshooting compile errors and link errors
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+enable_language(C) # This enables comiling for the glad library written in C
+
+
+
+# Add GLFW CMake source location
+add_subdirectory(lib/GLFW)
 
 # Combine all the source files under SOURCE_FILES variable
 set(SOURCE_FILES
+   lib/glad/src/glad.c
    src/app/main.cpp
-   src/app/window.cpp
+   src/3d/window.cpp
    src/utils/utils.cpp
    src/utils/data.cpp
    src/3d/obj3d.cpp
    src/3d/camera.cpp
    src/utils/matrix.cpp
-   src/3d/polygon.cpp)
+   src/3d/polygon.cpp
+   src/openGL/gl.cpp
+   src/openGL/glObject.cpp
+   src/openGL/freeType.cpp
+   src/glShaders/glShader.cpp
+)
 
 # Creates executable from source files
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
@@ -30,14 +41,25 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 target_include_directories(${PROJECT_NAME} PRIVATE 
    ${CMAKE_SOURCE_DIR}/src/3d
    ${CMAKE_SOURCE_DIR}/src/app
-   ${CMAKE_SOURCE_DIR}/src/utils) 
+   ${CMAKE_SOURCE_DIR}/src/utils
+   ${CMAKE_SOURCE_DIR}/src/openGL
+   ${CMAKE_SOURCE_DIR}/src/glShaders
+   ${CMAKE_SOURCE_DIR}/lib/glad/include
+   ${CMAKE_SOURCE_DIR}/lib/freeType/include
+)
 
 # Find SFML
 find_package(SFML 3 REQUIRED COMPONENTS Graphics Window System)
+find_package(Freetype REQUIRED)
 
 # Link libraries to the excecutable
 target_link_libraries(${PROJECT_NAME} PRIVATE 
-   SFML::Graphics SFML::Window SFML::System)
+   SFML::Graphics
+   SFML::Window
+   SFML::System
+   glfw
+   Freetype::Freetype
+)
 
 
 ## This creates the instructions for an install files structure

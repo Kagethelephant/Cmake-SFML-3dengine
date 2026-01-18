@@ -2,6 +2,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <string>
+#include "data.hpp"
 #include "matrix.hpp"
 #include "polygon.hpp"
 
@@ -34,7 +35,7 @@ public:
    std::vector<tri3d> mesh;
 
 
-   object3d(std::string filename = "", vec3 _position = vec3(0,0,0), vec3 _scale = vec3(1,1,1), sf::Color _color = sf::Color::White, sf::Color _lineColor = sf::Color::Transparent, bool _ccwWinding = false);
+   object3d(std::string filename = "", vec3 _position = vec3(0,0,0), vec3 _scale = vec3(1,1,1), sf::Color _color = sf::Color::White, sf::Color _lineColor = sf::Color(ColorToHex(Color::Transperant)), bool _ccwWinding = false);
 
    /// @brief: Load an OBJ file. OBJ file must only contain triangle polygons and no textures
    /// @param filename: Relative file location of the obj file
