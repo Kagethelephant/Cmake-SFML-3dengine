@@ -12,10 +12,10 @@
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // INTITIALIZE THE RENDERER
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-gl_vertexObject::gl_vertexObject(int _width, int _height) : fbo{FixedFBO(_width, _height)}{
+gl_vertexObject::gl_vertexObject(gl_window& _window) : window{_window}{
    // This is the VAO that is used to bind the VBO
-   width = _width;
-   height = _height;
+   width = window.width;
+   height = window.height;
 
    mat_project = matrix_project(70.0f, (float)width/(float)height, 0.1f, 1000.0f);
    quadVertices = {
@@ -52,6 +52,7 @@ gl_vertexObject::gl_vertexObject(int _width, int _height) : fbo{FixedFBO(_width,
    glEnableVertexAttribArray(0);  
    glEnableVertexAttribArray(1);  
 
+   // fbo.init(width, height);
 
    // glGenFramebuffers(1, &fbo);
    // glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -199,7 +200,7 @@ void gl_vertexObject::bindRender(){
    // glBindFramebuffer(GL_FRAMEBUFFER, fbo);
    // glBindFramebuffer(GL_FRAMEBUFFER, fbo.fbo);
    // glViewport(0, 0, width, height);
-   fbo.bind();
+   window.fbo.bind();
    glUseProgram(shaderProgram3D);
    glBindVertexArray(vao);
    glEnable(GL_DEPTH_TEST);
@@ -240,17 +241,17 @@ void gl_vertexObject::render(object& obj){
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // DRAW THE RENDER TEXTURE TO THE GLFW BUFFER
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void gl_vertexObject::draw(int windowWidth, int windowHeight) {
+void gl_vertexObject::draw() {
 
       glBindFramebuffer(GL_FRAMEBUFFER, 0);
-      glViewport(0, 0, windowWidth, windowHeight);
+      glViewport(0, 0, window.windowWidth, window.windowHeight);
       glUseProgram(shaderProgramUI);
       glBindVertexArray(UIvao);
       glDisable(GL_DEPTH_TEST);
 
 
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, fbo.getTexture());
+      glBindTexture(GL_TEXTURE_2D, window.fbo.getTexture());
       // glUniform1i(glGetUniformLocation(shaderProgramUI, "screenTexture"), 0);
       glDrawArrays(GL_TRIANGLES, 0, 6);
 }

@@ -89,7 +89,7 @@ int main(int argc, char* argv[])
 
       gl_window window(400);
 
-      gl_vertexObject vao(window.width,window.height);
+      gl_vertexObject vao(window);
 
       unsigned int cowModel = vao.createModel("../resources/objects/cow.obj");
       vao.bindObjects();
@@ -126,10 +126,10 @@ int main(int argc, char* argv[])
          vao.render(object2);
          vao.render(object3);
 
-         text.RenderText(shaderProgramUI,vao.fbo,"Hello", 10, 10, window.width, window.height);
+         text.RenderText(shaderProgramUI,window,"Hello", 10, 10);
          // text.RenderText(shaderProgramUI,vao.fbo.fbo,"Hello", 10, 10, window.width, window.height);
 
-         vao.draw(window.windowWidth,window.windowHeight);
+         vao.draw();
 
          glfwSwapBuffers(window.window);
          glfwPollEvents();

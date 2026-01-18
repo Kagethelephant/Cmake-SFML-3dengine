@@ -29,7 +29,6 @@ gl_window::gl_window(int _height){
    height = _height;
    width = height*aspectRatio;
 
-   // fbo.init(width, height);
 
    // Create GLFW window
    // set 4th param = glfwGetPrimaryMonitor() to make fullscreen
@@ -44,16 +43,19 @@ gl_window::gl_window(int _height){
    glViewport(0, 0, windowWidth, windowHeight);
    // Callback function to resize the viewport when the window resizes during glfwPollEvents
    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback); 
+
+   fbo.init(width, height);
 }
 
 
 
 
-FixedFBO::FixedFBO(int fboWidth, int fboHeight) : width(fboWidth), height(fboHeight){
-   create();
-}
+// FixedFBO::FixedFBO(int fboWidth, int fboHeight) : width(fboWidth), height(fboHeight){
+//    create();
+// }
 
 void FixedFBO::init(int _width, int _height){
+   destroy();
    width = _width;
    height = _height;
    create();
@@ -134,7 +136,7 @@ void FixedFBO::create(){
 }
 
 void FixedFBO::destroy(){
-   if (depthRbo) glDeleteRenderbuffers(1, &depthRbo);
+   if (depthRbo) glDeleteTextures(1, &depthRbo);
    if (colorTex) glDeleteTextures(1, &colorTex);
    if (fbo)      glDeleteFramebuffers(1, &fbo);
 

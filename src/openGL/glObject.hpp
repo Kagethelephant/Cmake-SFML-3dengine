@@ -31,7 +31,7 @@ class gl_vertexObject {
 
 public:
 
-   gl_vertexObject(int _width, int _height);
+   gl_vertexObject(gl_window& _window);
 
    /// @brief: Shader program to render 3d objects
    GLuint shaderProgram3D;
@@ -65,7 +65,8 @@ public:
    GLuint vbo;
    GLuint ebo;
 
-   FixedFBO fbo;
+   gl_window& window;
+   // FixedFBO fbo;
    // GLuint fbo;
    // GLuint texture;
    // GLuint depth;
@@ -80,7 +81,7 @@ public:
    void bindObjects();
    void bindRender();
    void render(object& obj);
-   void draw(int windowWidth, int windowHeight);
+   void draw();
 
 
    // Object to store the location of each of the meshes in the vertex data

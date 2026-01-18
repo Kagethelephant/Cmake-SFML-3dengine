@@ -9,9 +9,14 @@
 
 class FixedFBO {
 public:
-   FixedFBO(){};
-   FixedFBO(int fboWidth, int fboHeight);
+   FixedFBO() : fbo(0), colorTex(0), depthRbo(0) {}
+   // FixedFBO(int fboWidth, int fboHeight);
    ~FixedFBO();
+
+   
+   FixedFBO(const FixedFBO&) = delete;
+   FixedFBO& operator=(const FixedFBO&) = delete;
+
 
    void init(int width, int height);
 
@@ -47,7 +52,7 @@ public:
 
    GLFWwindow* window;
    
-   // FixedFBO fbo;
+   FixedFBO fbo;
    int width;
    int height;
    int windowWidth;
