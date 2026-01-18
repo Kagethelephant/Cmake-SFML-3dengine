@@ -5,6 +5,40 @@
 
 
 
+
+
+class FixedFBO {
+public:
+   FixedFBO(){};
+   FixedFBO(int fboWidth, int fboHeight);
+   ~FixedFBO();
+
+   void init(int width, int height);
+
+   void resize(int fboWidth, int fboHeight);
+
+   void bind();
+   static void unbind();
+
+   GLuint getTexture() const { return colorTex; }
+   int getWidth()  const { return width; }
+   int getHeight() const { return height; }
+
+private:
+   void create();
+   void destroy();
+
+   GLuint fbo = 0;
+   GLuint colorTex = 0;
+   GLuint depthRbo = 0;
+
+   int width = 0;
+   int height = 0;
+};
+
+
+
+
 class gl_window {
 
 public:
@@ -12,31 +46,12 @@ public:
    gl_window(int _height);
 
    GLFWwindow* window;
+   
+   // FixedFBO fbo;
    int width;
    int height;
    int windowWidth;
    int windowHeight;
    float aspectRatio;
 
-};
-
-class gl_fbo {
-
-public:
-   gl_fbo() {}
-   gl_fbo(GLuint _width, GLuint _height);
-   ~gl_fbo() {deleteFbo();}
-   
-   GLuint texture;
-   GLuint depth;
-
-   GLuint height;
-   GLuint width;
-   GLuint fbo;
-
-   void resize(GLuint width, GLuint height);
-
-private:
-   void createFbo(GLuint width, GLuint height);
-   void deleteFbo();
 };

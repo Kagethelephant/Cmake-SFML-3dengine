@@ -1,4 +1,5 @@
 #include "freeType.hpp"
+#include "gl.hpp"
 #include <ft2build.h>
 #include <iostream>
 #include <utility>
@@ -102,7 +103,7 @@ void textEngine::loadFont(const char *filePath){
 }
 
 
-void textEngine::RenderText(GLuint shaderProgram, GLuint fbo, std::string text, float x, float y, int width, int height){
+void textEngine::RenderText(GLuint shaderProgram, FixedFBO& fbo, std::string text, float x, float y, int width, int height){
 
    glEnable(GL_BLEND);
    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -113,7 +114,7 @@ void textEngine::RenderText(GLuint shaderProgram, GLuint fbo, std::string text, 
    int shaderColor = glGetUniformLocation(shaderProgram, "textColor");
    glUniform3fv(shaderColor,1,&color[0]);
 
-   glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+   fbo.bind();
    glActiveTexture(GL_TEXTURE0);
    glBindVertexArray(vao);
 

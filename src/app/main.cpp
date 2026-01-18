@@ -127,6 +127,7 @@ int main(int argc, char* argv[])
          vao.render(object3);
 
          text.RenderText(shaderProgramUI,vao.fbo,"Hello", 10, 10, window.width, window.height);
+         // text.RenderText(shaderProgramUI,vao.fbo.fbo,"Hello", 10, 10, window.width, window.height);
 
          vao.draw(window.windowWidth,window.windowHeight);
 

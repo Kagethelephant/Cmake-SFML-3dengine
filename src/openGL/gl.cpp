@@ -29,6 +29,8 @@ gl_window::gl_window(int _height){
    height = _height;
    width = height*aspectRatio;
 
+   // fbo.init(width, height);
+
    // Create GLFW window
    // set 4th param = glfwGetPrimaryMonitor() to make fullscreen
    window = glfwCreateWindow(windowWidth, windowHeight, "The Game", NULL, NULL);
@@ -47,55 +49,96 @@ gl_window::gl_window(int _height){
 
 
 
-gl_fbo::gl_fbo(GLuint _width, GLuint _height) {
-   createFbo(_width, _height);
+FixedFBO::FixedFBO(int fboWidth, int fboHeight) : width(fboWidth), height(fboHeight){
+   create();
 }
 
-void gl_fbo::resize(GLuint _width, GLuint _height){
-   deleteFbo();
-   createFbo(_width, _height);
-}
-
-void gl_fbo::createFbo(GLuint _width, GLuint _height){
-
+void FixedFBO::init(int _width, int _height){
    width = _width;
    height = _height;
-
-   glGenFramebuffers(1, &fbo);
-   glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-   // generate texture
-   glGenTextures(1, &texture);
-   glBindTexture(GL_TEXTURE_2D, texture);
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _width, _height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-   // attach it to currently bound framebuffer object
-   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);  
-
-   glGenTextures(1, &depth);
-   glBindTexture(GL_TEXTURE_2D, depth);
-   glTexImage2D(GL_TEXTURE_2D,0,GL_DEPTH_COMPONENT24,_width, _height,0,GL_DEPTH_COMPONENT,GL_FLOAT,NULL);
-   // REQUIRED settings for depth textures
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-   // Attach depth texture
-   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,depth,0);
-
-   GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0 };
-   glDrawBuffers(1, drawBuffers);
+   create();
    
-   if(!(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE)){
-      std::cout <<"FRAME BUFFER NOT COMPLETE" << std::endl;
-   }
-   // Reset to default frame buffer and texture
-   glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+FixedFBO::~FixedFBO(){
+   destroy();
+}
+
+void FixedFBO::resize(int fboWidth, int fboHeight){
+   if (fboWidth == width && fboHeight == height)
+      return;
+
+   destroy();
+   width  = fboWidth;
+   height = fboHeight;
+   create();
+}
+
+void FixedFBO::bind(){
+   glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+   glViewport(0, 0, width, height);
+}
+
+void FixedFBO::unbind(){
    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void FixedFBO::create(){
+   glGenFramebuffers(1, &fbo);
+   glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
-void gl_fbo::deleteFbo(){
+   // Color attachment
+   glGenTextures(1, &colorTex);
+   glBindTexture(GL_TEXTURE_2D, colorTex);
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
 
-   glDeleteFramebuffers(1, &fbo);
-   glDeleteRenderbuffers(1, &depth);
-   glDeleteTextures(1, &texture);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTex, 0);
+
+
+
+   glGenTextures(1, &depthRbo);
+   glBindTexture(GL_TEXTURE_2D, depthRbo);
+   glTexImage2D(GL_TEXTURE_2D,0,GL_DEPTH_COMPONENT24,width, height,0,GL_DEPTH_COMPONENT,GL_FLOAT,NULL);
+   // REQUIRED settings for depth textures
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+   // Attach depth texture
+   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,depthRbo,0);
+
+
+   // // Depth-stencil renderbuffer
+   // glGenRenderbuffers(1, &depthRbo);
+   // glBindRenderbuffer(GL_RENDERBUFFER, depthRbo);
+   // glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+
+   // glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthRbo);
+
+
+   GLenum buffers[] = { GL_COLOR_ATTACHMENT0 };
+   glDrawBuffers(1, buffers);
+
+   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+      std::cerr << "FixedFBO incomplete\n";
+
+   GLint currentFbo;
+   glGetIntegerv(GL_FRAMEBUFFER_BINDING, &currentFbo);
+   std::cout << "FBO ID: " << fbo << "\n";
+   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void FixedFBO::destroy(){
+   if (depthRbo) glDeleteRenderbuffers(1, &depthRbo);
+   if (colorTex) glDeleteTextures(1, &colorTex);
+   if (fbo)      glDeleteFramebuffers(1, &fbo);
+
+   depthRbo = 0;
+   colorTex = 0;
+   fbo = 0;
 }

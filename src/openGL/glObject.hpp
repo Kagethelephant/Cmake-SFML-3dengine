@@ -2,6 +2,8 @@
 
 #include "data.hpp"
 #include "matrix.hpp"
+#include "gl.hpp"
+
 #include <glad/glad.h>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
@@ -63,9 +65,10 @@ public:
    GLuint vbo;
    GLuint ebo;
 
-   GLuint fbo;
-   GLuint texture;
-   GLuint depth;
+   FixedFBO fbo;
+   // GLuint fbo;
+   // GLuint texture;
+   // GLuint depth;
 
    GLuint UIvao;
    GLuint UIvbo;
