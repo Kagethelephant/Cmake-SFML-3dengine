@@ -75,7 +75,7 @@ void gl_vertexObject::rotate(float u, float v, float w) {
    
    camRotation += vec3(u, v, w);
    vec3 up = vec3(0,1,0) * matrix_transform(0, 0, 0, camRotation[0], camRotation[1], camRotation[2]);
-   camDirection = (vec3(0,0,1) * matrix_transform(0, 0, 0, camRotation[0], camRotation[1], camRotation[2])).normal();
+   camDirection = (vec3(0,0,-1) * matrix_transform(0, 0, 0, camRotation[0], camRotation[1], camRotation[2])).normal();
    mat_view = matrix_view(matrix_pointAt(camPosition, camDirection, up));
 }
 

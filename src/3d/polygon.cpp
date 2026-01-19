@@ -66,7 +66,7 @@ void tri3d::draw(tri3d oldTri, std::vector<std::uint8_t>& buffer, std::vector<fl
             
             // if barycentric coord is egative than point is out of triangle
             int index = (res.x * y + x);
-            if (baryz <= zbuffer[index]){
+            if (baryz >= zbuffer[index]){
                buffer[index*4] = color.r; 
                buffer[index*4 + 1] = color.g; 
                buffer[index*4 + 2] = color.b; 

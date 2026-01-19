@@ -98,7 +98,7 @@ private:
    /// @brief: Checks if a point is on one side of a plane
    /// @param point: Point in 3d space
    /// @param plain: Plain in 3d space represented by its normal vecor
-   bool pointOutOfPlane(vec3& point, vec4& plane);
+   bool pointOutOfPlane(vec3& p, vec4& plane);
 
    /// @brief: Used to get the position on a line betweeen 2 3d points where 
    /// that line intersects the given plane

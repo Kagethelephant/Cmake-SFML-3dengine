@@ -48,7 +48,7 @@ public:
    /// @brief: Rotation from facing in the negative z direction (absolute)
    vec3 camRotation = vec3(0,0,0);
    /// @brief: Vector of the camera direction created from the rotation
-   vec3 camDirection = vec3(0,0,1);
+   vec3 camDirection = vec3(0,0,-1);
    
    /// @brief: Matrix that moves vertices into the correct position in camera space
    mat4x4 mat_view;
