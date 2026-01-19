@@ -25,7 +25,7 @@ camera::camera(sf::Vector2u res, float fov, sf::Color bgColor) {
    // Calculate the planes that make up the frustum (box that represents the field of view)
    float aspectRatio = (float)m_resolution.x/(float)m_resolution.y;
    float n = 0.1f;
-   float f = 1000.0f;
+   far = 1000.0f;
    float border = 2.0f; // degrees to cutoff edge of view to visualize the clipping function 
    float halfFovRadians = tanf((fov - border) * (M_PI / 180.0f)/2); // Convert degrees to radians
    
@@ -42,16 +42,16 @@ camera::camera(sf::Vector2u res, float fov, sf::Color bgColor) {
    m_planes[2] = topRight.cross(bottomRight).normal(); // Right plane
    m_planes[3] = bottomLeft.cross(topLeft).normal(); // Left plane
    m_planes[4] = vec4(0,0,-1,n); // Near plane
-   m_planes[5] = vec4(0,0,1,-f); // Far plane
+   m_planes[5] = vec4(0,0,1,-far); // Far plane
    
    // Create the projection matrix that will be used to project 3D points to a 2D view
-   m_matProject = matrix_project(fov,aspectRatio,n,f);  
+   m_matProject = matrix_project(fov,aspectRatio,n,far);  
    // Texture to draw our 3D stuff to an sfml window 
    m_pixelTexture = sf::Texture(m_resolution);
 
    // Create a background buffer the size of the window to clear the pixel buffer with a color
    m_clearBuffer = std::vector<std::uint8_t>(m_resolution.x * m_resolution.y * 4, 0);
-   m_zBuffer = std::vector<float>(m_resolution.x * m_resolution.y, f);
+   m_zBuffer = std::vector<float>(m_resolution.x * m_resolution.y, far);
 
    int index = 0;
    for (int y = 0; y < m_resolution.y; y++)
@@ -96,7 +96,7 @@ std::vector<tri3d> camera::clipTriangles(std::vector<tri3d> triangles) {
    
    // Clear the pixel buffer with the background color before drawing each triangle
    m_pixelBuffer = m_clearBuffer;
-   m_zBuffer = std::vector<float>(m_resolution.x * m_resolution.y, 1000.0);
+   m_zBuffer = std::vector<float>(m_resolution.x * m_resolution.y, far);
    // Create the direction of the light used to shade our triangles
    vec3 light = vec3(-1,1,-1).normal();
       
@@ -154,7 +154,7 @@ void camera::update() {
 
    // Clear the pixel buffer with the background color before drawing each triangle
    m_pixelBuffer = m_clearBuffer;
-   m_zBuffer = std::vector<float>(m_resolution.x * m_resolution.y, 1000.0);
+   m_zBuffer = std::vector<float>(m_resolution.x * m_resolution.y, far);
    // Create the direction of the light used to shade our triangles
    vec3 light = vec3(-1,1,-1).normal();
 
@@ -197,11 +197,11 @@ void camera::update() {
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // UTILITY FUNCTIONS
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-bool camera::pointOutOfPlane(vec3 point, vec4 plane){
+bool camera::pointOutOfPlane(vec3& point, vec4& plane){
    return ((point.dot(plane.xyz()) + plane[3]) > 0);
 }
 
-vec3 camera::planeIntercect(vec3 p0, vec3 p1, vec4 plane){
+vec3 camera::planeIntercect(vec3& p0, vec3& p1, vec4& plane){
    // t is where the plane inersects the line. scale of 0-1, 0 being p0 and 1 being p1
    float t = (p0.dot(plane.xyz()) + plane[3]) / (plane[0]*(p0[0]-p1[0]) + plane[1]*(p0[1]-p1[1]) + plane[2]*(p0[2]-p1[2]));
    return((p0 + ((p1 - p0) * t)));
@@ -215,7 +215,7 @@ void camera::move(float x, float y, float z, float u, float v, float w) {
    
    // Get up / Y  and forward / Z component of the camera after rotating
    vec3 up = vec3(0,1,0) * matrix_transform(0, 0, 0, rotation[0], rotation[1], rotation[2]);
-   pointDirection = (vec3(0,0,1) * matrix_transform(0, 0, 0, rotation[0], rotation[1], rotation[2])).normal();
+   pointDirection = (vec3(0,0,-1) * matrix_transform(0, 0, 0, rotation[0], rotation[1], rotation[2])).normal();
 
    // Adjust position of camera. Movement is based on camera direction. z means in and out x means side to side
    // xyz parameters are not world xyz. Position is world xyz so we need to translate

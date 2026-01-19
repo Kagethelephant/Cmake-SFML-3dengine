@@ -1,4 +1,5 @@
 #include "gl.hpp"
+#include <algorithm>
 #include <glad/glad.h>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
@@ -6,58 +7,68 @@
 #include <iostream>
 
 
-// Resize the viewport on window resize during the pollEvents
-void framebuffer_size_callback(GLFWwindow* window, int width, int height){
-   glViewport(0, 0, width, height);
-} 
-
 gl_window::gl_window(int _height){
-   // Start up GLFW
-   glfwInit();
 
-   // Set the GLFW version and use CORE profile (only modern GLFW commands)
+   glfwInit();
    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-   // Get the aspect ratio from the primary monitor
+   // Get primary monitor size
    const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
    windowWidth = mode->width;
    windowHeight = mode->height;
 
-   aspectRatio = (float)windowWidth/(float)windowHeight;
-   height = _height;
-   width = height*aspectRatio;
+   fboHeight = _height;
+   targetAspect = float(windowWidth) / float(windowHeight);  // initial estimate
+   fboWidth = int(fboHeight * targetAspect);
+   offsetX = 0;
+   offsetY = 0;
 
-
-   // Create GLFW window
-   // set 4th param = glfwGetPrimaryMonitor() to make fullscreen
    window = glfwCreateWindow(windowWidth, windowHeight, "The Game", NULL, NULL);
-   // Sets this window as the context so all window functions modify this window
    glfwMakeContextCurrent(window);
+   // Maximum width and height are set to GLFW_DONT_CARE to allow unlimited expansion
+   glfwSetWindowSizeLimits(window, GLFW_DONT_CARE, fboHeight, GLFW_DONT_CARE, GLFW_DONT_CARE);
 
-   // Load glad. Glad loads openGL functions and pointers at runtime.
    gladLoadGL();
 
-   // Create viewport. Specifies the area in the window to draw things
    glViewport(0, 0, windowWidth, windowHeight);
-   // Callback function to resize the viewport when the window resizes during glfwPollEvents
-   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback); 
 
-   fbo.init(width, height);
+   // Setup callbacks
+   glfwSetWindowUserPointer(window, this);
+   glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int w, int h){
+
+      auto* self = static_cast<gl_window*>(glfwGetWindowUserPointer(window));
+      if (!self) return;
+
+      self->windowWidth  = w;
+      self->windowHeight = h;
+      self->windowAspect  = float(w) / float(h);
+
+      self->resizePending = true;
+   });
+
+   fbo.init(fboWidth, fboHeight);
+}
+
+
+void gl_window::resize(){
+   if (resizePending){
+
+      fbo.resize(fboWidth, fboHeight, offsetX, offsetY);
+      resizePending = false;
+   }
 }
 
 
 
 
-// FixedFBO::FixedFBO(int fboWidth, int fboHeight) : width(fboWidth), height(fboHeight){
-//    create();
-// }
-
-void FixedFBO::init(int _width, int _height){
+void FixedFBO::init(int fboWidth, int fboHeight, int fboX, int fboY){
    destroy();
-   width = _width;
-   height = _height;
+   width  = fboWidth;
+   height = fboHeight;
+   x = fboX;
+   y = fboY;
    create();
    
 }
@@ -66,13 +77,15 @@ FixedFBO::~FixedFBO(){
    destroy();
 }
 
-void FixedFBO::resize(int fboWidth, int fboHeight){
-   if (fboWidth == width && fboHeight == height)
+void FixedFBO::resize(int fboWidth, int fboHeight, int fboX, int fboY){
+   if (fboWidth == width && fboHeight == height && fboX == x && fboY == y)
       return;
 
    destroy();
    width  = fboWidth;
    height = fboHeight;
+   x = fboX;
+   y = fboY;
    create();
 }
 
@@ -102,26 +115,16 @@ void FixedFBO::create(){
    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTex, 0);
 
 
-
-   glGenTextures(1, &depthRbo);
-   glBindTexture(GL_TEXTURE_2D, depthRbo);
-   glTexImage2D(GL_TEXTURE_2D,0,GL_DEPTH_COMPONENT24,width, height,0,GL_DEPTH_COMPONENT,GL_FLOAT,NULL);
+   glGenTextures(1, &depth);
+   glBindTexture(GL_TEXTURE_2D, depth);
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
    // REQUIRED settings for depth textures
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
    // Attach depth texture
-   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,depthRbo,0);
-
-
-   // // Depth-stencil renderbuffer
-   // glGenRenderbuffers(1, &depthRbo);
-   // glBindRenderbuffer(GL_RENDERBUFFER, depthRbo);
-   // glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
-
-   // glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthRbo);
-
+   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,depth,0);
 
    GLenum buffers[] = { GL_COLOR_ATTACHMENT0 };
    glDrawBuffers(1, buffers);
@@ -136,11 +139,11 @@ void FixedFBO::create(){
 }
 
 void FixedFBO::destroy(){
-   if (depthRbo) glDeleteTextures(1, &depthRbo);
+   if (depth) glDeleteTextures(1, &depth);
    if (colorTex) glDeleteTextures(1, &colorTex);
    if (fbo)      glDeleteFramebuffers(1, &fbo);
 
-   depthRbo = 0;
+   depth = 0;
    colorTex = 0;
    fbo = 0;
 }

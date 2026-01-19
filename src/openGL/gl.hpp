@@ -9,7 +9,7 @@
 
 class FixedFBO {
 public:
-   FixedFBO() : fbo(0), colorTex(0), depthRbo(0) {}
+   FixedFBO() : fbo(0), colorTex(0), depth(0) {}
    // FixedFBO(int fboWidth, int fboHeight);
    ~FixedFBO();
 
@@ -18,9 +18,9 @@ public:
    FixedFBO& operator=(const FixedFBO&) = delete;
 
 
-   void init(int width, int height);
+   void init(int fboWidth, int fboHeight, int fboX = 0, int fboY = 0);
 
-   void resize(int fboWidth, int fboHeight);
+   void resize(int fboWidth, int fboHeight, int fboX = 0, int fboY = 0);
 
    void bind();
    static void unbind();
@@ -35,10 +35,12 @@ private:
 
    GLuint fbo = 0;
    GLuint colorTex = 0;
-   GLuint depthRbo = 0;
+   GLuint depth = 0;
 
    int width = 0;
    int height = 0;
+   int x = 0;
+   int y = 0;
 };
 
 
@@ -51,12 +53,16 @@ public:
    gl_window(int _height);
 
    GLFWwindow* window;
-   
-   FixedFBO fbo;
-   int width;
-   int height;
-   int windowWidth;
-   int windowHeight;
-   float aspectRatio;
 
+   FixedFBO fbo;
+   int fboWidth, fboHeight;
+   int offsetX, offsetY;
+   int windowWidth, windowHeight;
+   float windowAspect;
+   float targetAspect;
+
+   bool resizePending = false;
+
+
+   void resize();
 };

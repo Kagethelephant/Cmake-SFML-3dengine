@@ -114,6 +114,7 @@ void textEngine::RenderText(GLuint shaderProgram, gl_window& window, std::string
    int shaderColor = glGetUniformLocation(shaderProgram, "textColor");
    glUniform3fv(shaderColor,1,&color[0]);
 
+
    window.fbo.bind();
    glActiveTexture(GL_TEXTURE0);
    glBindVertexArray(vao);
@@ -130,10 +131,10 @@ void textEngine::RenderText(GLuint shaderProgram, gl_window& window, std::string
       float w = ch.size[0];
       float h = ch.size[1];
 
-      float xmin = (2*(xpos)/window.width) -1;
-      float xmax = (2*(xpos+w)/window.width) -1;
-      float ymin = (2*(ypos)/window.height) -1;
-      float ymax = (2*(ypos+h)/window.height) -1;
+      float xmin = (2*(xpos)/window.fboWidth) -1;
+      float xmax = (2*(xpos+w)/window.fboWidth) -1;
+      float ymin = (2*(ypos)/window.fboHeight) -1;
+      float ymax = (2*(ypos+h)/window.fboHeight) -1;
 
 
       // std::cout << "Xmax: " << xmax << std::endl;

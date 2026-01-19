@@ -14,10 +14,10 @@
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 gl_vertexObject::gl_vertexObject(gl_window& _window) : window{_window}{
    // This is the VAO that is used to bind the VBO
-   width = window.width;
-   height = window.height;
+   width = window.fboWidth;
+   height = window.fboHeight;
 
-   mat_project = matrix_project(70.0f, (float)width/(float)height, 0.1f, 1000.0f);
+   mat_project = matrix_project(70.0f, window.targetAspect, 0.1f, 1000.0f);
    quadVertices = {
       -1.0f,  1.0f, 0.0f, 1.0f,
       -1.0f, -1.0f, 0.0f, 0.0f,
@@ -51,38 +51,6 @@ gl_vertexObject::gl_vertexObject(gl_window& _window) : window{_window}{
    // This tells GL to use the vertex attributes defined above (it does not do this by default)
    glEnableVertexAttribArray(0);  
    glEnableVertexAttribArray(1);  
-
-   // fbo.init(width, height);
-
-   // glGenFramebuffers(1, &fbo);
-   // glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-   // // generate texture
-   // glGenTextures(1, &texture);
-   // glBindTexture(GL_TEXTURE_2D, texture);
-   // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-   // // attach it to currently bound framebuffer object
-   // glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);  
-
-   // glGenTextures(1, &depth);
-   // glBindTexture(GL_TEXTURE_2D, depth);
-   // glTexImage2D(GL_TEXTURE_2D,0,GL_DEPTH_COMPONENT24,width, height,0,GL_DEPTH_COMPONENT,GL_FLOAT,NULL);
-   // // REQUIRED settings for depth textures
-   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-   // // Attach depth texture
-   // glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,depth,0);
-
-   // GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0 };
-   // glDrawBuffers(1, drawBuffers);
-   // 
-   // if(!(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE)){
-   //    std::cout <<"FRAME BUFFER NOT COMPLETE" << std::endl;
-   // }
-   // // Reset to default frame buffer and texture
-   // glBindTexture(GL_TEXTURE_2D, 0);
-   // glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
    std::cout << "VAO Initialized" << std::endl;
 }
@@ -197,9 +165,6 @@ void gl_vertexObject::bindObjects(){
 void gl_vertexObject::bindRender(){
 
    vec4 bgColor = hexColorToFloat(Color::Black);
-   // glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-   // glBindFramebuffer(GL_FRAMEBUFFER, fbo.fbo);
-   // glViewport(0, 0, width, height);
    window.fbo.bind();
    glUseProgram(shaderProgram3D);
    glBindVertexArray(vao);
@@ -249,10 +214,9 @@ void gl_vertexObject::draw() {
       glBindVertexArray(UIvao);
       glDisable(GL_DEPTH_TEST);
 
-
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, window.fbo.getTexture());
-      // glUniform1i(glGetUniformLocation(shaderProgramUI, "screenTexture"), 0);
+      glUniform1i(glGetUniformLocation(shaderProgramUI, "screenTexture"), 0);
       glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 

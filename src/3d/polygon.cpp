@@ -3,6 +3,7 @@
 #include <SFML/Graphics.hpp>
 #include <algorithm>
 #include <vector>
+#include <iostream>
 #include "data.hpp"
 #include "matrix.hpp"
 
@@ -25,6 +26,9 @@ void tri3d::draw(tri3d oldTri, std::vector<std::uint8_t>& buffer, std::vector<fl
    float z0 = oldTri.v[0][2];
    float z1 = oldTri.v[1][2];
    float z2 = oldTri.v[2][2];
+
+   // std::cout << "old Z:  " << oldTri.v[0][2] <<std::endl;
+   // std::cout << "proj Z: " << v[0][2] <<std::endl;
 
    // berycentric coordinate variables
    vec2 v0, v1, vp;

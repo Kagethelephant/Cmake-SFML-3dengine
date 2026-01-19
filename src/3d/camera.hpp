@@ -22,7 +22,7 @@ class camera : public sf::Drawable {
 public:
    
    /// @brief: Position of the camera in 3D space
-   vec3 position = vec3(0,0,-5);
+   vec3 position = vec3(0,0,0);
    /// @brief: Direction that the camera is pointing in degrees about the rotational axis (updates direction)
    vec3 rotation = vec3(0,0,0);
    /// @brief: Direction the camera is pointing in the form of a vector
@@ -75,6 +75,7 @@ private:
 
    /// @brief: virtual planes that represent the edge of the view frustum in 3d space
    vec4 m_planes[6];
+   float far;
   
    /// @brief: Stores triangles in 3D space from loaded objects to be drawn
    std::vector<tri3d> m_triangleBuffer;
@@ -97,12 +98,12 @@ private:
    /// @brief: Checks if a point is on one side of a plane
    /// @param point: Point in 3d space
    /// @param plain: Plain in 3d space represented by its normal vecor
-   bool pointOutOfPlane(vec3 point, vec4 plane);
+   bool pointOutOfPlane(vec3& point, vec4& plane);
 
    /// @brief: Used to get the position on a line betweeen 2 3d points where 
    /// that line intersects the given plane
    /// @param p1: Point in 3d space
    /// @param p2: 2nd point in 3d space to create a theoretical line with the 1st point
    /// @param plane: Plain in 3d space that intersects the theoretical line
-   vec3 planeIntercect(vec3 p1, vec3 p2, vec4 plane);
+   vec3 planeIntercect(vec3& p1, vec3& p2, vec4& plane);
 };
