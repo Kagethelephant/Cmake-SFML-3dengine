@@ -1,4 +1,5 @@
 #include "freeType.hpp"
+#include "data.hpp"
 #include "gl.hpp"
 #include <ft2build.h>
 #include <iostream>
@@ -13,7 +14,7 @@ textEngine::textEngine(){
       std::cout << "Could not init FreeType" << std::endl;
    }
 
-   color = vec3(.1,.3,.5);
+   color = hexColorToFloat(Color::White).xyz();
 
    glGenVertexArrays(1, &vao);
    glGenBuffers(1, &vbo);
@@ -59,7 +60,7 @@ void textEngine::loadFont(const char *filePath){
       std::cout << "Failed to load font" << std::endl;
    }
    // Set font pixel size
-   FT_Set_Pixel_Sizes(face, 0, 16);
+   FT_Set_Pixel_Sizes(face, 0, 8);
 
    fontFaces.push_back(face);
 
@@ -126,7 +127,7 @@ void textEngine::RenderText(GLuint shaderProgram, gl_window& window, std::string
       // float baseY = y - characters['H'].bearing[1];
 
       float xpos = x + ch.bearing[0];
-      float ypos = y - (ch.size[1] - ch.bearing[1]);
+      float ypos = window.fboHeight - y - ch.bearing[1];
 
       float w = ch.size[0];
       float h = ch.size[1];

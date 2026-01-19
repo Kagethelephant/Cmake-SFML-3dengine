@@ -121,6 +121,10 @@ int main(int argc, char* argv[])
 
          GLuint shaderProgramUI = createShaderProgram("../src/glShaders/textVertex.glsl", "../src/glShaders/textFragment.glsl");
 
+         double lastTime = glfwGetTime();
+         int frameCount = 0;
+         int fps;
+
          // ------------------------------ MAIN WINDOW LOOP ---------------------------------
          // Main loop for the window
          while(!glfwWindowShouldClose(window.window)){
@@ -137,7 +141,21 @@ int main(int argc, char* argv[])
             vao.render(object2);
             vao.render(object3);
 
-            text.RenderText(shaderProgramUI,window,"Hello", 10, 10);
+            double currentTime = glfwGetTime();
+            frameCount++;
+            // If a second has passed
+            if (currentTime - lastTime >= 1.0)
+            {
+               // Calculate FPS and display it (e.g., in the window title or console)
+               fps = (int)frameCount / (currentTime - lastTime);
+               frameCount = 0;
+               lastTime = currentTime;
+            }
+
+            text.RenderText(shaderProgramUI,window,"X: " + std::to_string(vao.camPosition[0]), 10, 10);
+            text.RenderText(shaderProgramUI,window,"Y: " + std::to_string(vao.camPosition[1]), 10, 20);
+            text.RenderText(shaderProgramUI,window,"Z: " + std::to_string(vao.camPosition[2]), 10, 30);
+            text.RenderText(shaderProgramUI,window,"FPS: " + std::to_string(fps), 10, 40);
             // text.RenderText(shaderProgramUI,vao.fbo.fbo,"Hello", 10, 10, window.width, window.height);
 
             vao.draw();
