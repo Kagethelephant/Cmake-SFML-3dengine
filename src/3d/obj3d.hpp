@@ -30,13 +30,13 @@ public:
 
    mat4x4 matScale = matrix_scale(scales[0], scales[1], scales[2]);
 
-   unsigned int model;
+   unsigned int* model;
 
    /// @brief: Base color to draw the object (this will be shaded by the camera)
    Color color = Color::White;
 
 
-   object3d(unsigned int _model) : model{_model} {};
+   object3d(unsigned int* _model) : model{_model} {};
 
 
    void scale(float sx, float sy, float sz);

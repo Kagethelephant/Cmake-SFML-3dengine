@@ -29,6 +29,9 @@ public:
    /// @brief: Direction the camera is pointing in the form of a vector
    vec3 pointDirection;
 
+   vec3 lightPos = vec3(0,5,-2);
+   vec3 lightCol = vec3(1,1,1);
+
    windowMaster& window;
 
    camera(windowMaster& _window);
@@ -55,7 +58,7 @@ public:
    /// @param camera: camera object that will be used to view the object to be drawn
    /// @param col: Color to draw the object (this will be the brightest color, 
    /// individual triangles will be shaded according to their orientation to the light)
-   void update(object3d& object);
+   void renderObject(object3d& object);
 
    /// @brief: Envoked by calling `sf::RenderTexture.draw(camera)` this draws the same as any
    void draw();
@@ -66,16 +69,9 @@ public:
       unsigned int size;
    };
 
-   struct light {
-      vec3 position = vec3(0,0,0);
-      vec4 color = vec4(1.0f,1.0f,1.0f,1.0f);
-   };
-
    std::vector<model> models;
-   std::vector<light> lights;
 
    unsigned int createModel (std::string filename, bool ccwWinding = false);
-   light& createLight(vec3 position, vec4 color = vec4(1.0f,1.0f,1.0f,1.0f));
 
 private:
 

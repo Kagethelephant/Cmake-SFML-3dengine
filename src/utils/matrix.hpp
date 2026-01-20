@@ -62,8 +62,8 @@ struct vec2 {
    void operator -= (const vec2& v) { this->c[0] -= v.c[0]; this->c[1] -= v.c[1]; } // Subtract 2 vectors
    void operator *= (const float& f) { this->c[0] *= f; this->c[1] *= f; } // Scale vector by float
    void operator /= (const float& f) { this->c[0] /= f; this->c[1] /= f; } // Scale vector by float
-   // Dot product overload
-   float operator * (const vec2& v) {return (this->c[0] * v.c[0] + this->c[1] * v.c[1]); }
+   // Componentwise multiplication overload
+   vec2 operator * (const vec2& v) {return vec2(this->c[0] * v.c[0], this->c[1] * v.c[1]); }
 };
 
 
@@ -113,8 +113,8 @@ struct vec3 {
    void operator -= (const vec3& v) { this->c[0] -= v.c[0]; this->c[1] -= v.c[1]; this->c[2] -= v.c[2]; } // Subtract 2 vectors
    void operator *= (const float& f) { this->c[0] *= f; this->c[1] *= f; this->c[2] *= f; } // Scale vector by float
    void operator /= (const float& f) { this->c[0] /= f; this->c[1] /= f; this->c[2] /= f; } // Scale vector by float
-   // Dot product overload
-   float operator * (const vec3& v) {return (this->c[0] * v.c[0]) + (this->c[1] * v.c[1]) + (this->c[2] * v.c[2]); }
+   // Componentwise multiplication overload
+   vec3 operator * (const vec3& v) {return vec3(this->c[0] * v.c[0], this->c[1] * v.c[1], this->c[2] * v.c[2]); }
 
    // Overload for multiplying a vector against a matrix
    vec3 operator * (const mat4x4& m) {
@@ -194,8 +194,8 @@ struct vec4 {
    void operator -= (const vec4& v) { this->c[0] -= v.c[0]; this->c[1] -= v.c[1]; this->c[2] -= v.c[2]; } // Subtract 2 vectors
    void operator *= (const float& f) { this->c[0] *= f; this->c[1] *= f; this->c[2] *= f; } // Scale vector by float
    void operator /= (const float& f) { this->c[0] /= f; this->c[1] /= f; this->c[2] /= f; } // Scale vector by float
-   // Dot product overload
-   float operator * (const vec4& v) {return (this->c[0] * v.c[0]) + (this->c[1] * v.c[1]) + (this->c[2] * v.c[2]); }
+   // Dot product overloa
+   vec4 operator * (const vec4& v) {return vec4(this->c[0] * v.c[0], this->c[1] * v.c[1], this->c[2] * v.c[2], this->c[3] * v.c[3]); }
 
    // Overload for multiplying a vector against a matrix
    vec4 operator * (const mat4x4& m) {

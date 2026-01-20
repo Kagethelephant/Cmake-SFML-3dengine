@@ -31,8 +31,32 @@ int main(int argc, char* argv[])
    std::cout << "OpenGL?" << std::endl;
    std::cin >> opengl;
 
+
+
+   unsigned int cowModel;
+   unsigned int potModel;
+
+   // Create the 3D objects to be rendered
+   object3d cow1(&cowModel);
+   object3d cow2(&cowModel);
+   object3d cow3(&cowModel);
+   object3d teapot(&potModel);
+   cow1.color = Color::White;
+   cow2.color = Color::Red;
+   cow3.color = Color::Blue;
+   teapot.color = Color::Green;
+   cow1.move(-12, 0, -10);
+   cow2.move(0, 0, -10);
+   cow3.move(12, 0, -10);
+   teapot.scale(.02,.02,.02);
+   teapot.move(-12, 0, 0);
+
    // Global random number generator (global so everything shares the same seed)
    randObj rander(false, 13412234);
+
+
+
+
 
    if(opengl == "N" || opengl == "n"){
 
@@ -42,30 +66,13 @@ int main(int argc, char* argv[])
       // Camera handles all of the 3d rendering
       camera cam(game);
 
-      unsigned int cow = cam.createModel("../resources/objects/cow.obj");
-      unsigned int pot = cam.createModel("../resources/objects/teapot.obj", true);
-
-      // Create the 3D objects to be rendered
-      object3d object(cow);
-      object3d object2(cow);
-      object3d object3(cow);
-      object3d teapot(pot);
-      object.color = Color::White;
-      object2.color = Color::Red;
-      object3.color = Color::Blue;
-      teapot.color = Color::Green;
-
-      object.move(-12, 0, -10);
-      object2.move(0, 0, -10);
-      object3.move(12, 0, -10);
-      teapot.scale(.02,.02,.02);
-      teapot.move(-12, 0, 0);
-      
+      cowModel = cam.createModel("../resources/objects/cow.obj");
+      potModel = cam.createModel("../resources/objects/teapot.obj", true);
 
       while (game.window.isOpen())
       {
          // Get user input
-         bool up, down, right, left, space, keyA, keyD, user_input, keyB;
+         bool up, down, right, left, space, keyA, keyD, keyB;
 
          if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)){game.window.close();}
          up = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up);
@@ -79,16 +86,10 @@ int main(int argc, char* argv[])
          // Update position of camera based on input
          cam.move((left-right)*.1, (space-keyB)*.1, (up-down)*.1, 0, (keyD-keyA)*.1, 0);
 
-         // Object meshes are cleared from camera every frame so we need to load them each frame
-         // cam.viewSpaceTransform(object);
-         // cam.viewSpaceTransform(object2);
-         // cam.viewSpaceTransform(object3);
-         // cam.viewSpaceTransform(teapot);
-         // Update the 2D projection
-         cam.update(object);
-         cam.update(object2);
-         cam.update(object3);
-         cam.update(teapot);
+         cam.renderObject(cow1);
+         cam.renderObject(cow2);
+         cam.renderObject(cow3);
+         cam.renderObject(teapot);
          // Draw the camera 2D projection to the window
          cam.draw();
 
@@ -114,23 +115,9 @@ int main(int argc, char* argv[])
 
          gl_vertexObject vao(window);
 
-         unsigned int cowModel = vao.createModel("../resources/objects/cow.obj");
-         unsigned int teaModel = vao.createModel("../resources/objects/teapot.obj");
+         cowModel = vao.createModel("../resources/objects/cow.obj");
+         potModel = vao.createModel("../resources/objects/teapot.obj");
          vao.bindObjects();
-
-         object3d object1(cowModel);
-         object3d object2(cowModel);
-         object3d object3(cowModel);
-         object3d teapot(teaModel);
-         object1.move(-12,0,-10); 
-         object2.move(0,0,-10); 
-         object3.move(12,0,-10); 
-         teapot.move(-12,0,0); 
-         teapot.scale(.02,.02,.02);
-         object1.color = Color::White;
-         object2.color = Color::Blue;
-         object3.color = Color::Red;
-         teapot.color = Color::Green;
 
          textEngine text;
          text.loadFont("../resources/font/small_pixel.ttf");
@@ -153,9 +140,9 @@ int main(int argc, char* argv[])
 
             vao.bindRender();
 
-            vao.render(object1);
-            vao.render(object2);
-            vao.render(object3);
+            vao.render(cow1);
+            vao.render(cow2);
+            vao.render(cow3);
             vao.render(teapot);
 
             double currentTime = glfwGetTime();

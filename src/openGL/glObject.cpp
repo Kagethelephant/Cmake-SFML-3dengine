@@ -32,8 +32,6 @@ gl_vertexObject::gl_vertexObject(gl_window& _window) : window{_window}{
    shaderProgram3D = createShaderProgram("../src/glShaders/vertex.glsl", "../src/glShaders/fragment.glsl");
    shaderProgramUI = createShaderProgram("../src/glShaders/uiVertex.glsl", "../src/glShaders/uiFragment.glsl");
 
-   createLight(vec3(0,5,0));
-
    move(0,0,0);
    rotate(0,0,0);
    glGenVertexArrays(1, &vao);  
@@ -80,17 +78,6 @@ void gl_vertexObject::rotate(float u, float v, float w) {
    mat_view = matrix_view(matrix_pointAt(camPosition, camDirection, up));
 }
 
-
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// CREATE NEW LIGHT
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-gl_vertexObject::light& gl_vertexObject::createLight(vec3 position, vec4 color){
-   gl_vertexObject::light light;
-   light.position = position;
-   light.color = color;
-   lights.push_back(light);
-   return lights[lights.size()-1];
-}
 
 
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -181,10 +168,10 @@ void gl_vertexObject::bindRender(){
 
 
    int m_light = glGetUniformLocation(shaderProgram3D, "light");
-   glUniform3fv(m_light,1,&lights[0].position[0]);
+   glUniform3fv(m_light,1,&lightPos[0]);
 
    int m_lightCol = glGetUniformLocation(shaderProgram3D, "lightCol");
-   glUniform3fv(m_lightCol,1,&lights[0].color[0]);
+   glUniform3fv(m_lightCol,1,&lightCol[0]);
 }
 
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -201,7 +188,7 @@ void gl_vertexObject::render(object3d& obj){
    glUniformMatrix4fv(m_scale,1,GL_FALSE,&obj.matScale.m[0][0]);
    int m_trans = glGetUniformLocation(shaderProgram3D, "transform");
    glUniformMatrix4fv(m_trans,1,GL_FALSE,&obj.matTransform.m[0][0]);
-   glDrawElements(GL_TRIANGLES,models[obj.model].end, GL_UNSIGNED_INT, (void*)(models[obj.model].start * sizeof(uint32_t)));
+   glDrawElements(GL_TRIANGLES,models[*obj.model].end, GL_UNSIGNED_INT, (void*)(models[*obj.model].start * sizeof(uint32_t)));
 }
 
 

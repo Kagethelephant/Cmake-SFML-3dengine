@@ -188,13 +188,16 @@ void camera::clipTriangles(std::vector<tri3d>& triangles) {
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // TRIANGLE PROJECTION
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void camera::update(object3d& object) {
+void camera::renderObject(object3d& object) {
   
    // Create the direction of the light used to shade our triangles
-   vec3 light = vec3(0,5,-1).normal();
+
+
+
+
    sf::Color color = hexColorToSFML(object.color);
 
-   model mod = models[object.model];
+   model mod = models[*object.model];
    mat4x4 modelView = object.matScale * object.matTransform * m_matView;
 
    for(int i=mod.start; i<mod.start + mod.size; i++){
@@ -206,14 +209,33 @@ void camera::update(object3d& object) {
    // Clip triangles
    clipTriangles(m_triangleBuffer);
 
+   vec3 lightPosView = (lightPos * m_matView);
 
-   for(tri3d triangle : m_triangleBuffer) {
+   for(tri3d& triangle : m_triangleBuffer) {
 
       // GET SHADE OF TRIANGLE
       //---------------------------------------------------------------------------------------------
       // Determine shade of color based on the angle of the triangle face compared to light direction
-      float shade = triangle.normal().dot(light);
-      sf::Color shadeColor((color.r/2.0)*(shade+1), (color.g/2.0)*(shade+1), (color.b/2.0)*(shade+1));
+      
+      vec3 ambient = lightCol * 0.2;
+      
+      vec3 norm = triangle.normal();
+
+      vec3 lightDir = (lightPosView - triangle.v[0]).normal();
+      float diff = std::max(norm.dot(lightDir), 0.0f);
+      vec3 diffuse = lightCol * diff;
+
+      vec3 result = hexColorToRGB(object.color).xyz() * (ambient + diffuse);
+      result[0] = std::clamp(result[0], 0.0f, 255.0f);
+      result[1] = std::clamp(result[1], 0.0f, 255.0f);
+      result[2] = std::clamp(result[2], 0.0f, 255.0f);
+
+      // float shade = triangle.normal().dot(lightPos);
+      sf::Color shadeColor(
+         static_cast<std::uint8_t>(result[0]),
+         static_cast<std::uint8_t>(result[1]),
+         static_cast<std::uint8_t>(result[2])
+      );
       
       // PROJECT 3D TRIANGLES TO SCREEN SPACE
       //---------------------------------------------------------------------------------------------

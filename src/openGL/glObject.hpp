@@ -50,6 +50,9 @@ public:
    vec3 camRotation = vec3(0,0,0);
    /// @brief: Vector of the camera direction created from the rotation
    vec3 camDirection = vec3(0,0,-1);
+
+   vec3 lightPos = vec3(0,5,-2);
+   vec3 lightCol = vec3(1,1,1);
    
    /// @brief: Matrix that moves vertices into the correct position in camera space
    mat4x4 mat_view;
@@ -91,16 +94,9 @@ public:
       GLuint end;
    };
 
-   struct light {
-      vec3 position = vec3(0,0,0);
-      vec4 color = vec4(1.0f,1.0f,1.0f,1.0f);
-   };
-
    std::vector<model> models;
-   std::vector<light> lights;
 
    unsigned int createModel (std::string filename);
-   light& createLight(vec3 position, vec4 color = vec4(1.0f,1.0f,1.0f,1.0f));
 
 
 private:
