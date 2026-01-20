@@ -22,27 +22,28 @@ public:
    /// @brief: Rotation from original orientation in radians
    vec3 rotation = vec3(0,0,0);
    /// @brief: Scale of the object
-   vec3 scale = vec3(1,1,1);
+   vec3 scales = vec3(1,1,1);
    /// @brief: Winding of triangle mesh. default clockwise
    bool ccwWinding = false;
 
+   mat4x4 matTransform = matrix_transform(position[0], position[1], position[2], rotation[0], rotation[1], rotation[2]);
+
+   mat4x4 matScale = matrix_scale(scales[0], scales[1], scales[2]);
+
+   unsigned int model;
+
    /// @brief: Base color to draw the object (this will be shaded by the camera)
-   sf::Color color;
-   /// @brief: Optional line color to outline all of the triangles
-   sf::Color lineColor;
-
-   /// @brief: Stores the mesh of tiangles loaded from the OBJ file
-   std::vector<tri3d> mesh;
+   Color color = Color::White;
 
 
-   object3d(std::string filename = "", vec3 _position = vec3(0,0,0), vec3 _scale = vec3(1,1,1), sf::Color _color = sf::Color::White, sf::Color _lineColor = sf::Color(ColorToHex(Color::Transperant)), bool _ccwWinding = false);
+   object3d(unsigned int _model) : model{_model} {};
 
-   /// @brief: Load an OBJ file. OBJ file must only contain triangle polygons and no textures
-   /// @param filename: Relative file location of the obj file
-   void load(std::string filename);
 
-   /// @brief: Update the rotation matrix of the object (relative adjustment)
-   void update(vec3 position, vec3 rotation, vec3 scale);
+   void scale(float sx, float sy, float sz);
+
+   void move(float x, float y, float z);
+
+   void rotate(float u, float v, float w);
 
 private:
 

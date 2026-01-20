@@ -11,7 +11,7 @@
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // FILL TRIANGLE
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void tri3d::draw(tri3d oldTri, std::vector<std::uint8_t>& buffer, std::vector<float>& zbuffer, sf::Vector2u res, sf::Color color, sf::Color lineColor) {
+void tri3d::draw(std::vector<std::uint8_t>& buffer, std::vector<float>& zbuffer, sf::Vector2u res, sf::Color color) {
    // Scanline tiangle filling method. This is the most common way to fill triangles with a color
    // It is more efficient to do this with graphics acceleration because cross products are expensive
    // for the CPU to calculate. If you comment this out you will see the FPS go up substantially.
@@ -23,9 +23,9 @@ void tri3d::draw(tri3d oldTri, std::vector<std::uint8_t>& buffer, std::vector<fl
    int ymin = std::min(std::min(v[0][1],v[1][1]),v[2][1]);
 
    // Get the z coordinates of the triangle before projection
-   float z0 = oldTri.v[0][2];
-   float z1 = oldTri.v[1][2];
-   float z2 = oldTri.v[2][2];
+   float z0 = v[0][2];
+   float z1 = v[1][2];
+   float z2 = v[2][2];
 
    // std::cout << "old Z:  " << oldTri.v[0][2] <<std::endl;
    // std::cout << "proj Z: " << v[0][2] <<std::endl;
@@ -66,72 +66,13 @@ void tri3d::draw(tri3d oldTri, std::vector<std::uint8_t>& buffer, std::vector<fl
             
             // if barycentric coord is egative than point is out of triangle
             int index = (res.x * y + x);
-            if (baryz >= zbuffer[index]){
+            if (baryz <= zbuffer[index]){
                buffer[index*4] = color.r; 
                buffer[index*4 + 1] = color.g; 
                buffer[index*4 + 2] = color.b; 
                zbuffer[index] = baryz; 
             }
          }
-      }
-   }
-   // If there is a lineColor provided draw the outline using bresenham function
-   if(!(lineColor == sf::Color(ColorToHex(Color::Transperant)))){
-      m_bresenhamLine(v[0], v[1], buffer, res, lineColor);
-      m_bresenhamLine(v[1], v[2], buffer, res, lineColor);
-      m_bresenhamLine(v[2], v[0], buffer, res, lineColor);
-   }
-}
-
-
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// OUTLINE TRIANGLE
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void tri3d::m_bresenhamLine(vec3 p0, vec3 p1, std::vector<std::uint8_t>& buffer, sf::Vector2u res, sf::Color color) {
-   // Cast the vector coordinates as integers, this function cannot handle floats
-   int x0 = (int)p0[0]; 
-   int x1 = (int)p1[0]; 
-   int y0 = (int)p0[1]; 
-   int y1 = (int)p1[1]; 
-   // Get delta x and the delta y
-   int dx = std::abs(x1 - x0);
-   int dy = std::abs(y1 - y0);
-   // Get the direction to iterate (sign x and sign y)
-   int sx = (x0 < x1) ? 1 : -1;
-   int sy = (y0 < y1) ? 1 : -1;
-
-   // Used to determine the ratio of where the line lies between the center of the two potential next pixels
-   // ie. if sx and sy are positive and dx = 12 and dy = 2, the initial err would be 10. This means that
-   // when the line passes the center of the first square to right, it will be 2/12 from the center of the 
-   // bottom square to the center of the top square. The bottom square will be chosen
-   int err = dx - dy; 
-
-   while (true) {
-      // Plot point
-      int index = (res.x * y0 + x0) * 4;
-      buffer [index] = color.r; 
-      buffer [index + 1] = color.g; 
-      buffer [index + 2] = color.b; 
-
-      // Last point was plotted
-      if (x0 == x1 && y0 == y1) break;
-      // Multiply the error by 2 because we want to know if the line
-      // intercets over halfway between the two squares in question
-      int e2 = 2 * err;
-
-      // Check if the line is now closer to the next y cell, if so move a level
-      // and adjust the error to account for the position change
-      if (e2 > -dy) {
-         err -= dy;
-         // Move x once in the direction determined by sx
-         x0 += sx;
-      }
-      // Check if the line is now closer to the next x cell, if so move a level
-      // and adjust the error to account for the position change
-      if (e2 < dx){
-         err += dx;
-         // Move y once in the direction determined by sy
-         y0 += sy;
       }
    }
 }

@@ -2,6 +2,7 @@
 #include "data.hpp"
 #include "matrix.hpp"
 #include "gl.hpp"
+#include "obj3d.hpp"
 
 #include "glShader.hpp"
 #include <iostream>
@@ -97,7 +98,7 @@ gl_vertexObject::light& gl_vertexObject::createLight(vec3 position, vec4 color){
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 unsigned int gl_vertexObject::createModel(std::string filename) {
 
-   gl_model newObject;
+   model newObject;
 
    int vertStart = vertices.size()/3;
    newObject.start = indices.size();
@@ -189,10 +190,11 @@ void gl_vertexObject::bindRender(){
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // DRAW MODELS AT LOCATIONS DICTATED BY OBJECTS
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void gl_vertexObject::render(object& obj){
-
+void gl_vertexObject::render(object3d& obj){
+   
+   vec4 color = hexColorToFloat(obj.color);
    int m_objCol = glGetUniformLocation(shaderProgram3D, "objCol");
-   glUniform3fv(m_objCol,1,&obj.color[0]);
+   glUniform3fv(m_objCol,1,&color[0]);
 
    // update the uniform color
    int m_scale = glGetUniformLocation(shaderProgram3D, "scale");

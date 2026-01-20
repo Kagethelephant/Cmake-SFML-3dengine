@@ -9,6 +9,7 @@
 #include "matrix.hpp"
 #include "polygon.hpp"
 #include "obj3d.hpp"
+#include "window.hpp"
 
 
 /// @brief: Takes mesh data from 3D objects, projects the 3D polygons to a 2D view in the 
@@ -17,7 +18,7 @@
 /// @param res: Resolution of the desired output view 
 /// @param fov: Field of view for camera in degrees
 /// @param bgColor: Color to clear the pixel buffer with each frame
-class camera : public sf::Drawable {
+class camera {
 
 public:
    
@@ -28,7 +29,9 @@ public:
    /// @brief: Direction the camera is pointing in the form of a vector
    vec3 pointDirection;
 
-   camera(sf::Vector2u res, float fov = 90, sf::Color bgColor = sf::Color(ColorToHex(Color::Black)));
+   windowMaster& window;
+
+   camera(windowMaster& _window);
 
    /// @brief: Moves or rotates camera by given values (relative) movement is 
    /// based on the direction of the camera ( z moves forward/back, x moves sideways)
@@ -43,7 +46,7 @@ public:
    /// @brief: Load the mesh of polygons from the 3D object and sort it with any other 
    /// in the triangle buffer by z value (camera z not world z)
    /// @param object: 3D object to load polygon mesh from
-   void loadObject(object3d& object);
+   void viewSpaceTransform(object3d& object);
 
    /// @brief: Called externally to draw the triangles in the mesh 
    /// @param texture: std::vector of uint8_t representing a pixel array to be drawn to the screen
@@ -52,11 +55,27 @@ public:
    /// @param camera: camera object that will be used to view the object to be drawn
    /// @param col: Color to draw the object (this will be the brightest color, 
    /// individual triangles will be shaded according to their orientation to the light)
-   void update();
+   void update(object3d& object);
 
    /// @brief: Envoked by calling `sf::RenderTexture.draw(camera)` this draws the same as any
-   void draw(sf::RenderTarget& target, sf::RenderStates states) const ;
+   void draw();
 
+   // Object to store the location of each of the meshes in the vertex data
+   struct model {
+      unsigned int start;
+      unsigned int size;
+   };
+
+   struct light {
+      vec3 position = vec3(0,0,0);
+      vec4 color = vec4(1.0f,1.0f,1.0f,1.0f);
+   };
+
+   std::vector<model> models;
+   std::vector<light> lights;
+
+   unsigned int createModel (std::string filename, bool ccwWinding = false);
+   light& createLight(vec3 position, vec4 color = vec4(1.0f,1.0f,1.0f,1.0f));
 
 private:
 
@@ -65,6 +84,10 @@ private:
    /// @brief: Resolution of the window 
    sf::Vector2u m_resolution;
 
+   //OPENGL MIRRORED ITEMS
+   std::vector<float> vertices;
+   std::vector<unsigned int> indices;
+   //OPENGL MIRRORED ITEMS
 
    /// @brief: Makes an object rotate to point direction
    mat4x4 m_matPointAt; 
@@ -80,6 +103,9 @@ private:
    /// @brief: Stores triangles in 3D space from loaded objects to be drawn
    std::vector<tri3d> m_triangleBuffer;
 
+   /// @brief: Stores triangles in 3D space from loaded objects to be drawn
+   std::vector<tri3d> m_modelBuffer;
+
    /// @brief: Texture to draw the pixelBuffer to so it can be drawn to an SFML window
    sf::Texture m_pixelTexture;
    /// @brief: Buffer to store the pixel data (place to draw triangles)
@@ -89,8 +115,9 @@ private:
    /// @brief: Buffer to store the lowest z position to decide whether we should draw over it
    std::vector<float> m_zBuffer;
    
-   std::vector<tri3d> clipTriangles(std::vector<tri3d> triangles);
+   void clipTriangles(std::vector<tri3d>& triangles);
 
+   bool backFaceCulling(tri3d& tri);
 
    /// @brief: Clears the pixel buffer with the background color
    bool clearPixelBuffer();

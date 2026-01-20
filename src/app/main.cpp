@@ -31,23 +31,36 @@ int main(int argc, char* argv[])
    std::cout << "OpenGL?" << std::endl;
    std::cin >> opengl;
 
+   // Global random number generator (global so everything shares the same seed)
+   randObj rander(false, 13412234);
+
    if(opengl == "N" || opengl == "n"){
 
-      // Global random number generator (global so everything shares the same seed)
-      randObj rander(false, 13412234);
 
       // Create windowMaster that handles all of the background SFML window stuff and simplifies drawing
       windowMaster game(400,false);
       // Camera handles all of the 3d rendering
-      camera cam(game.resolution, 70);
+      camera cam(game);
+
+      unsigned int cow = cam.createModel("../resources/objects/cow.obj");
+      unsigned int pot = cam.createModel("../resources/objects/teapot.obj", true);
 
       // Create the 3D objects to be rendered
-      object3d object("../resources/objects/cow.obj", vec3(-12, 0, -10), vec3(1, 1, 1), sf::Color(ColorToHex(Color::White)));
-      object3d object2("../resources/objects/cow.obj", vec3(12, 0, -10), vec3(1, 1, 1), sf::Color(ColorToHex(Color::Red)));
-      object3d object3("../resources/objects/cow.obj", vec3(0, 0, -10), vec3(1, 1, 1), sf::Color(ColorToHex(Color::Blue)));
-      object3d teapot("../resources/objects/teapot.obj", vec3(-10, 0, 5), vec3(.01, .01, .01), sf::Color(ColorToHex(Color::Green)), sf::Color(ColorToHex(Color::Transperant)), true);
+      object3d object(cow);
+      object3d object2(cow);
+      object3d object3(cow);
+      object3d teapot(pot);
+      object.color = Color::White;
+      object2.color = Color::Red;
+      object3.color = Color::Blue;
+      teapot.color = Color::Green;
 
-      std::cout << "*****LOOP START*****" << std::endl;
+      object.move(-12, 0, -10);
+      object2.move(0, 0, -10);
+      object3.move(12, 0, -10);
+      teapot.scale(.02,.02,.02);
+      teapot.move(-12, 0, 0);
+      
 
       while (game.window.isOpen())
       {
@@ -64,17 +77,20 @@ int main(int argc, char* argv[])
          keyD = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D);
 
          // Update position of camera based on input
-         cam.move((left-right)*.1, (space-keyB)*.1, (up-down)*.1, 0, (keyA-keyD)*.1, 0);
+         cam.move((left-right)*.1, (space-keyB)*.1, (up-down)*.1, 0, (keyD-keyA)*.1, 0);
 
          // Object meshes are cleared from camera every frame so we need to load them each frame
-         cam.loadObject(object);
-         cam.loadObject(object2);
-         cam.loadObject(object3);
-         cam.loadObject(teapot);
+         // cam.viewSpaceTransform(object);
+         // cam.viewSpaceTransform(object2);
+         // cam.viewSpaceTransform(object3);
+         // cam.viewSpaceTransform(teapot);
          // Update the 2D projection
-         cam.update();
+         cam.update(object);
+         cam.update(object2);
+         cam.update(object3);
+         cam.update(teapot);
          // Draw the camera 2D projection to the window
-         game.draw(cam);
+         cam.draw();
 
          // Draw some text to the window
          game.drawText("X: " + std::to_string(cam.position[0]), 10, 10);
@@ -86,7 +102,6 @@ int main(int argc, char* argv[])
          game.render();
       }
 
-      std::cout << "*******PROGRAM TERMINATED******* " << std::endl;
    }
    else {
 
@@ -100,21 +115,22 @@ int main(int argc, char* argv[])
          gl_vertexObject vao(window);
 
          unsigned int cowModel = vao.createModel("../resources/objects/cow.obj");
+         unsigned int teaModel = vao.createModel("../resources/objects/teapot.obj");
          vao.bindObjects();
 
-         object object1(cowModel);
-         object object2(cowModel);
-         object object3(cowModel);
+         object3d object1(cowModel);
+         object3d object2(cowModel);
+         object3d object3(cowModel);
+         object3d teapot(teaModel);
          object1.move(-12,0,-10); 
          object2.move(0,0,-10); 
          object3.move(12,0,-10); 
-         object1.color = hexColorToFloat(Color::White);
-         object2.color = hexColorToFloat(Color::Blue);
-         object3.color = hexColorToFloat(Color::Red);
-
-         vec3 lightPos(0.0f,0.0f,0.0f);
-         vec3 lightColor(1.6f,1.0f,1.8f);
-         vec3 objColor(0.6f,0.4f,0.2f);
+         teapot.move(-12,0,0); 
+         teapot.scale(.02,.02,.02);
+         object1.color = Color::White;
+         object2.color = Color::Blue;
+         object3.color = Color::Red;
+         teapot.color = Color::Green;
 
          textEngine text;
          text.loadFont("../resources/font/small_pixel.ttf");
@@ -130,16 +146,17 @@ int main(int argc, char* argv[])
          while(!glfwWindowShouldClose(window.window)){
             // Get keyboard inputs
             if (glfwGetKey(window.window, GLFW_KEY_ESCAPE) == GLFW_PRESS) glfwSetWindowShouldClose(window.window, true);
-            if (glfwGetKey(window.window, GLFW_KEY_S) == GLFW_PRESS) {vao.move(0, 0, 0.1);}
-            if (glfwGetKey(window.window, GLFW_KEY_W) == GLFW_PRESS) {vao.move(0, 0, -0.1);}
-            if (glfwGetKey(window.window, GLFW_KEY_A) == GLFW_PRESS) {vao.rotate(0, -0.05, 0);}
-            if (glfwGetKey(window.window, GLFW_KEY_D) == GLFW_PRESS) {vao.rotate(0, 0.05, 0);}
+            if (glfwGetKey(window.window, GLFW_KEY_S) == GLFW_PRESS) {vao.move(0, 0, -0.01);}
+            if (glfwGetKey(window.window, GLFW_KEY_W) == GLFW_PRESS) {vao.move(0, 0, 0.01);}
+            if (glfwGetKey(window.window, GLFW_KEY_A) == GLFW_PRESS) {vao.rotate(0, -0.005, 0);}
+            if (glfwGetKey(window.window, GLFW_KEY_D) == GLFW_PRESS) {vao.rotate(0, 0.005, 0);}
 
             vao.bindRender();
 
             vao.render(object1);
             vao.render(object2);
             vao.render(object3);
+            vao.render(teapot);
 
             double currentTime = glfwGetTime();
             frameCount++;

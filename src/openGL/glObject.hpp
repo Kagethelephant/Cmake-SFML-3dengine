@@ -3,6 +3,7 @@
 #include "data.hpp"
 #include "matrix.hpp"
 #include "gl.hpp"
+#include "obj3d.hpp"
 
 #include <glad/glad.h>
 #include <GL/gl.h>
@@ -80,12 +81,12 @@ public:
 
    void bindObjects();
    void bindRender();
-   void render(object& obj);
+   void render(object3d& obj);
    void draw();
 
 
    // Object to store the location of each of the meshes in the vertex data
-   struct gl_model {
+   struct model {
       GLuint start;
       GLuint end;
    };
@@ -95,7 +96,7 @@ public:
       vec4 color = vec4(1.0f,1.0f,1.0f,1.0f);
    };
 
-   std::vector<gl_model> models;
+   std::vector<model> models;
    std::vector<light> lights;
 
    unsigned int createModel (std::string filename);
@@ -132,7 +133,7 @@ struct object {
    /// @brief: The rotation of the object around its origin
    vec3 rotation = vec3(0,0,0);
 
-   vec4 color = hexColorToFloat(Color::Red);
+   Color color = Color::White;
 
    /// @brief: Scale the object in given axis (absolute)
    /// @param sx: Scale in x axis

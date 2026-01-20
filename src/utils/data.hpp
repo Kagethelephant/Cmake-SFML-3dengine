@@ -32,4 +32,9 @@ enum class Color : unsigned int {
 
 vec4 hexColorToFloat(Color hexValue);
 
-unsigned int ColorToHex(Color hexValue);
+
+vec4 hexColorToRGB(Color color);
+
+
+sf::Color hexColorToSFML(Color color);
+

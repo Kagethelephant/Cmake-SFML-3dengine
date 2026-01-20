@@ -2,76 +2,27 @@
 
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/ConvexShape.hpp>
-#include <iostream>
-#include <fstream>
-#include <sstream> // Use this instead of strstream, strstream is depricated because it returns
-#include <string>
-#include <vector>
 #include <math.h>
 #include "polygon.hpp"
 #include "matrix.hpp"
 
 
-// CONSTRUCTOR
-//---------------------------------------------------------------------------------------------
-object3d::object3d(std::string filename, vec3 _position, vec3 _scale, sf::Color _color, sf::Color _lineColor, bool _ccwWinding) {
 
-   ccwWinding = _ccwWinding;
-   if (!(filename == "")) {load(filename);}
-   color = _color;
-   lineColor = _lineColor;
-   position = _position;
-   scale = _scale;
-   update(position, rotation, scale);
+// UPDATE POSITION
+//---------------------------------------------------------------------------------------------
+void object3d::scale(float sx, float sy, float sz){
+   scales = vec3(sx,sy,sz);
+   matScale = matrix_scale(scales[0], scales[1], scales[2]);
 }
 
-// LOAD OBJECT
-//---------------------------------------------------------------------------------------------
-void object3d::load(std::string filename) {
 
-   // Try to open the file
-   std::ifstream obj(filename);
-   // Create an array to hold the chars of each line
-   // cycle through all the lines in the file until we are at the end
-   std::vector<vec3> verts;
-   while(!obj.eof()) {
-      // Create a char array to store the line from the file
-      char line[128];
-      obj.getline(line,128);
-      // Pass the line from the file "stream" into the line
-      std::stringstream stream;
-      stream << line;
-      // Check if the line is a vertice or a triangle
-      char junk;
-      if(line[0] == 'v') {
-         // If it is a vertice then pull the xyz values from the string and put it in the vert array
-         vec3 v;
-         stream >> junk >> v[0] >> v[1] >> v[2];
-         verts.push_back(v);
-      }
-      if(line[0] == 'f') {
-         // If it is a triangle then get the corosponding vertices and load it into the mesh
-         if(ccwWinding){
-            int f[3];
-            stream >> junk >> f[0] >> f[2] >> f[1];
-            mesh.push_back(tri3d(verts[f[0] - 1], verts[f[1] - 1], verts[f[2] - 1], this));
-         }
-         else {
-            int f[3];
-            stream >> junk >> f[0] >> f[1] >> f[2];
-            mesh.push_back(tri3d(verts[f[0] - 1], verts[f[1] - 1], verts[f[2] - 1], this));
-         }
-      }
-   }
+void object3d::move(float x, float y, float z){
+   position = vec3(x,y,z);
+   matTransform = matrix_transform(position[0], position[1], position[2], rotation[0], rotation[1], rotation[2]);
 }
 
-// UBDATE POSITION
-//---------------------------------------------------------------------------------------------
-void object3d::update(vec3 position, vec3 rotation, vec3 scale){ 
 
-   // Must use reference here because we want to alter the original triangle in the mesh
-   for (tri3d& t : mesh) {
-      t *= matrix_scale(scale[0], scale[1], scale[2]);
-      t *= matrix_transform(position[0], position[1], position[2], rotation[0], rotation[1], rotation[2]);
-   }
+void object3d::rotate(float u, float v, float w){
+   rotation = vec3(u,v,w);
+   matTransform = matrix_transform(position[0], position[1], position[2], rotation[0], rotation[1], rotation[2]);
 }

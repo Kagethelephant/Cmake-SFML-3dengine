@@ -29,6 +29,7 @@ gl_window::gl_window(int _height){
    glfwMakeContextCurrent(window);
    // Maximum width and height are set to GLFW_DONT_CARE to allow unlimited expansion
    glfwSetWindowSizeLimits(window, GLFW_DONT_CARE, fboHeight, GLFW_DONT_CARE, GLFW_DONT_CARE);
+   glfwSwapInterval(0);
 
    gladLoadGL();
 
@@ -70,7 +71,7 @@ void FixedFBO::init(int fboWidth, int fboHeight, int fboX, int fboY){
    x = fboX;
    y = fboY;
    create();
-   
+
 }
 
 FixedFBO::~FixedFBO(){
