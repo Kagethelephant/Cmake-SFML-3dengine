@@ -21,17 +21,16 @@ add_subdirectory(lib/GLFW)
 set(SOURCE_FILES
    lib/glad/src/glad.c
    src/app/main.cpp
-   src/3d/window.cpp
+   src/app/object.cpp
    src/utils/utils.cpp
    src/utils/data.cpp
-   src/3d/obj3d.cpp
-   src/3d/camera.cpp
    src/utils/matrix.cpp
-   src/3d/polygon.cpp
-   src/openGL/gl.cpp
-   src/openGL/glObject.cpp
-   src/openGL/freeType.cpp
-   src/glShaders/glShader.cpp
+   src/sfml/sfWindow.cpp
+   src/sfml/sfRender.cpp
+   src/openGL/glWindow.cpp
+   src/openGL/glRender.cpp
+   src/openGL/glText.cpp
+   src/shaders/shader.cpp
 )
 
 # Creates executable from source files
@@ -39,11 +38,7 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
 # Include other header files
 target_include_directories(${PROJECT_NAME} PRIVATE 
-   ${CMAKE_SOURCE_DIR}/src/3d
-   ${CMAKE_SOURCE_DIR}/src/app
-   ${CMAKE_SOURCE_DIR}/src/utils
-   ${CMAKE_SOURCE_DIR}/src/openGL
-   ${CMAKE_SOURCE_DIR}/src/glShaders
+   ${CMAKE_SOURCE_DIR}/src
    ${CMAKE_SOURCE_DIR}/lib/glad/include
    ${CMAKE_SOURCE_DIR}/lib/freeType/include
 )

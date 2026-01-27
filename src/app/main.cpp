@@ -7,21 +7,21 @@
 #include <ostream>
 #include <string>
 #include <iostream>
-#include "data.hpp"
-#include "obj3d.hpp"
-#include "camera.hpp"
-#include "utils.hpp"
-#include <window.hpp>
+#include "utils/data.hpp"
+#include "object.hpp"
+#include "sfml/sfRender.hpp"
+#include "utils/utils.hpp"
+#include <sfml/sfWindow.hpp>
 
 #include <glad/glad.h>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <math.h>
 #include <string>
-#include "freeType.hpp"
-#include "gl.hpp"
-#include "glObject.hpp"
-#include "matrix.hpp"
+#include "openGL/glText.hpp"
+#include "openGL/glWindow.hpp"
+#include "openGL/glRender.hpp"
+#include "utils/matrix.hpp"
 #include <iostream>
 
 int main(int argc, char* argv[])
@@ -37,10 +37,10 @@ int main(int argc, char* argv[])
    unsigned int potModel;
 
    // Create the 3D objects to be rendered
-   object3d cow1(&cowModel);
-   object3d cow2(&cowModel);
-   object3d cow3(&cowModel);
-   object3d teapot(&potModel);
+   object cow1(&cowModel);
+   object cow2(&cowModel);
+   object cow3(&cowModel);
+   object teapot(&potModel);
    cow1.color = Color::White;
    cow2.color = Color::Red;
    cow3.color = Color::Blue;
@@ -86,10 +86,10 @@ int main(int argc, char* argv[])
          // Update position of camera based on input
          cam.move((left-right)*.1, (space-keyB)*.1, (up-down)*.1, 0, (keyD-keyA)*.1, 0);
 
-         cam.renderObject(cow1);
-         cam.renderObject(cow2);
-         cam.renderObject(cow3);
-         cam.renderObject(teapot);
+         cam.render(cow1);
+         cam.render(cow2);
+         cam.render(cow3);
+         cam.render(teapot);
          // Draw the camera 2D projection to the window
          cam.draw();
 
@@ -122,7 +122,7 @@ int main(int argc, char* argv[])
          textEngine text;
          text.loadFont("../resources/font/small_pixel.ttf");
 
-         GLuint shaderProgramUI = createShaderProgram("../src/glShaders/textVertex.glsl", "../src/glShaders/textFragment.glsl");
+         GLuint shaderProgramUI = createShaderProgram("../src/shaders/text_vertex.glsl", "../src/shaders/text_fragment.glsl");
 
          double lastTime = glfwGetTime();
          int frameCount = 0;

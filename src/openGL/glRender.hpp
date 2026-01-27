@@ -1,9 +1,8 @@
 #pragma once
 
-#include "data.hpp"
-#include "matrix.hpp"
-#include "gl.hpp"
-#include "obj3d.hpp"
+#include "utils/matrix.hpp"
+#include "openGL/glWindow.hpp"
+#include "app/object.hpp"
 
 #include <glad/glad.h>
 #include <GL/gl.h>
@@ -70,10 +69,6 @@ public:
    GLuint ebo;
 
    gl_window& window;
-   // FixedFBO fbo;
-   // GLuint fbo;
-   // GLuint texture;
-   // GLuint depth;
 
    GLuint UIvao;
    GLuint UIvbo;
@@ -84,7 +79,7 @@ public:
 
    void bindObjects();
    void bindRender();
-   void render(object3d& obj);
+   void render(object& obj);
    void draw();
 
 
@@ -103,49 +98,3 @@ private:
 
 };
 
-
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// OBJECT
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-/// @brief: 3D object that contains the poition orientation and scale of the model to be drawn
-/// @param _model: The index of the model to be used from the VAO
-struct object {
-
-   object(unsigned int _model) : model(_model) {}
-
-   /// @brief: Index of the model in whe render VAO
-   unsigned int model;
-
-   /// @brief: Matrix used to scale to the object
-   mat4x4 matScale = matrix_scale(1, 1, 1);
-   /// @brief: Matrix used to transform the object (move and rotate)
-   mat4x4 matTransform = matrix_transform(0, 0, 0, 0, 0, 0);
-
-   /// @brief: The scale of the object in all axis
-   vec3 scales = vec3(1,1,1);
-   /// @brief: The position of the origin of the object
-   vec3 position = vec3(0,0,0);
-   /// @brief: The rotation of the object around its origin
-   vec3 rotation = vec3(0,0,0);
-
-   Color color = Color::White;
-
-   /// @brief: Scale the object in given axis (absolute)
-   /// @param sx: Scale in x axis
-   /// @param sy: Scale in y axis
-   /// @param sz: Scale in z axis
-   void scale(float sx, float sy, float sz);
-
-   /// @brief: Move the object relitively
-   /// @param x: Move in x axis
-   /// @param y: Move in y axis
-   /// @param z: Move in z axis
-   void move(float x, float y, float z);
-
-   /// @brief: Rotate the object around the origin
-   /// @param u: Rotate around the x axis (in radians)
-   /// @param v: Rotate around the y axis (in radians)
-   /// @param w: Rotate around the z axis (in radians)
-   void rotate(float u, float v, float w);
-};

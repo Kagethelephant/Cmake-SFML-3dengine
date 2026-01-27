@@ -1,7 +1,7 @@
 #include <SFML/Graphics/RenderTexture.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <cmath>
-#include <window.hpp>
+#include "sfWindow.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <math.h>

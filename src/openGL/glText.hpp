@@ -1,15 +1,15 @@
 #pragma once
 
-#include "gl.hpp"
+#include "glWindow.hpp"
 #include <glad/glad.h>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <ft2build.h>
 #include <vector>
 #include FT_FREETYPE_H
-#include "matrix.hpp"
+#include "utils/matrix.hpp"
 #include <map>
-#include <glShader.hpp>
+#include <shaders/shader.hpp>
 
 
 

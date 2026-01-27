@@ -1,23 +1,28 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/ConvexShape.hpp>
 #include <SFML/Graphics/Drawable.hpp>
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/System/Vector2.hpp>
-#include "data.hpp"
-#include "matrix.hpp"
-#include "polygon.hpp"
-#include "obj3d.hpp"
-#include "window.hpp"
+#include "utils/matrix.hpp"
+#include "app/object.hpp"
+#include "sfWindow.hpp"
 
+
+enum class ClipPlane {
+    Left,
+    Right,
+    Bottom,
+    Top,
+    Near,
+    Far
+};
 
 /// @brief: Takes mesh data from 3D objects, projects the 3D polygons to a 2D view in the 
-/// form of a pixel buffer to be drawn by and SFML window. This object is sf::drawable so it can be drawn
-/// like other SFML objects. This will draw the projected 3D view generated with `update()`
-/// @param res: Resolution of the desired output view 
-/// @param fov: Field of view for camera in degrees
-/// @param bgColor: Color to clear the pixel buffer with each frame
+/// form of a pixel buffer to be drawn by and SFML window.
+/// @param res: Reference to the window to be rendered to. Used to find resolution and SFML render target
 class camera {
 
 public:
@@ -29,9 +34,12 @@ public:
    /// @brief: Direction the camera is pointing in the form of a vector
    vec3 pointDirection;
 
+   /// @brief: Light position in world space (only supports one light)
    vec3 lightPos = vec3(0,5,-2);
+   /// @brief: Light color that is multiplied by the color of the object it is illuminating
    vec3 lightCol = vec3(1,1,1);
 
+   /// @brief: Reference to the sfml window that we will render to
    windowMaster& window;
 
    camera(windowMaster& _window);
@@ -46,31 +54,32 @@ public:
    /// @param w: Rotate around the pointDirection of the camera
    void move(float x, float y, float z, float u, float v, float w);
 
-   /// @brief: Load the mesh of polygons from the 3D object and sort it with any other 
-   /// in the triangle buffer by z value (camera z not world z)
-   /// @param object: 3D object to load polygon mesh from
-   void viewSpaceTransform(object3d& object);
+   /// @brief: Render 3D vertex data given information from 3D object. This is where most of the
+   /// 3D graphics pipeline is excecuted: vertex shader, vertex post processing (triangle clipping)
+   /// @param object: Object that provides position, orientation, scale, color and model index information
+   void render(object& object);
 
-   /// @brief: Called externally to draw the triangles in the mesh 
-   /// @param texture: std::vector of uint8_t representing a pixel array to be drawn to the screen
-   /// @param tex: SFML texture to draw the pixel aray to 
-   /// @param res: SFML 2d vector containing the resolution of the window
-   /// @param camera: camera object that will be used to view the object to be drawn
-   /// @param col: Color to draw the object (this will be the brightest color, 
-   /// individual triangles will be shaded according to their orientation to the light)
-   void renderObject(object3d& object);
 
-   /// @brief: Envoked by calling `sf::RenderTexture.draw(camera)` this draws the same as any
+
+   /// @brief: Draw pixel buffer to the sfml window passed to this object
    void draw();
 
-   // Object to store the location of each of the meshes in the vertex data
+   /// @brief: Model vertex (really triangles) data locations in the triangle buffer
    struct model {
+      /// @brief: location of first triangle in triangle buffer
       unsigned int start;
+      /// @brief: size in triangles of the model
       unsigned int size;
    };
 
+   /// @brief: An array of the models stored in the triangle buffer
    std::vector<model> models;
 
+   /// @brief: Loads vertex data into the triangle buffer from an OBJ file and saves the 
+   /// location with a model object 
+   /// @param filename: filepath to the OBJ file
+   /// @param ccwWinding: changes the winding on the model so the triangle normal points outwards
+   /// @return: uint location of the model in the models array
    unsigned int createModel (std::string filename, bool ccwWinding = false);
 
 private:
@@ -96,37 +105,51 @@ private:
    vec4 m_planes[6];
    float far;
   
-   /// @brief: Stores triangles in 3D space from loaded objects to be drawn
-   std::vector<tri3d> m_triangleBuffer;
+   // /// @brief: Stores triangles in 3D space from loaded objects to be drawn
+   // std::vector<tri3d> m_triangleBuffer;
+
+   struct triangleAttrib {
+      tri3d triangle;
+      sf::Color color;
+   };
+   /// @brief: Stores triangle attributes (in this case just color, in openGL this would include normal, color, UV coords)
+   std::vector<triangleAttrib> m_triangleAttribs;
 
    /// @brief: Stores triangles in 3D space from loaded objects to be drawn
    std::vector<tri3d> m_modelBuffer;
 
    /// @brief: Texture to draw the pixelBuffer to so it can be drawn to an SFML window
    sf::Texture m_pixelTexture;
-   /// @brief: Buffer to store the pixel data (place to draw triangles)
+   /// @brief: Pixel array for 32 bit trucolor + alpha (8 bits for r,g,b and alpha) used to raster triangles
    std::vector<std::uint8_t> m_pixelBuffer;
    /// @brief: Buffer to clear the pixelBuffer with a background color
    std::vector<std::uint8_t> m_clearBuffer;
-   /// @brief: Buffer to store the lowest z position to decide whether we should draw over it
+   /// @brief: Buffer to store the lowest z position of each pixel to decide whether we should draw over it
    std::vector<float> m_zBuffer;
+
+
+   /// @brief: Scanline triangle fill algorithm. This is a common method of rasterization although it is very inefficient
+   /// when ran on the CPU as we are doing here. steps in pipeline: Rasterization, Fragment Shader
+   /// @param tri: Pixel array for 32 bit trucolor + alpha (8 bits for r,g,b and alpha)
+   /// @param res: The resolution of the window
+   void raster(tri3d& tri, sf::Color& color);
    
-   void clipTriangles(std::vector<tri3d>& triangles);
+   /// @brief: Scanline triangle fill algorithm. This is a common method of rasterization although it is very inefficient
+   void clipTriangles();
 
-   bool backFaceCulling(tri3d& tri);
 
-   /// @brief: Clears the pixel buffer with the background color
-   bool clearPixelBuffer();
+   bool backFaceCulling(const tri3d& tri);
+
 
    /// @brief: Checks if a point is on one side of a plane
    /// @param point: Point in 3d space
    /// @param plain: Plain in 3d space represented by its normal vecor
-   bool pointOutOfPlane(vec3& p, vec4& plane);
+   bool pointOutOfPlane(vec4& p, vec4& plane);
 
    /// @brief: Used to get the position on a line betweeen 2 3d points where 
    /// that line intersects the given plane
    /// @param p1: Point in 3d space
    /// @param p2: 2nd point in 3d space to create a theoretical line with the 1st point
    /// @param plane: Plain in 3d space that intersects the theoretical line
-   vec3 planeIntercect(vec3& p1, vec3& p2, vec4& plane);
+   vec4 planeIntersect(vec4& a, vec4& b, vec4& plane);
 };

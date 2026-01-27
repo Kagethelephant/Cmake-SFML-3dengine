@@ -1,4 +1,4 @@
-#include "camera.hpp"
+#include "sfRender.hpp"
 
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/ConvexShape.hpp>
@@ -10,12 +10,11 @@
 #include <cstdint>
 #include <vector>
 #include <math.h>
-#include "data.hpp"
-#include "polygon.hpp"
-#include "matrix.hpp"
-#include "utils.hpp"
-#include "obj3d.hpp"
-#include "window.hpp"
+#include "utils/data.hpp"
+#include "utils/matrix.hpp"
+#include "utils/utils.hpp"
+#include "app/object.hpp"
+#include "sfWindow.hpp"
 #include <fstream>
 
 
@@ -24,33 +23,23 @@
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 camera::camera(windowMaster& _window) : window{_window}{
 
+   // Calculate the planes that make up the frustum (box that represents the field of view)
    m_resolution = window.resolution;
    float fov = 70;
-   sf::Color bgColor(hexColorToSFML(Color::Black));
-   // Calculate the planes that make up the frustum (box that represents the field of view)
    float aspectRatio = (float)m_resolution.x/(float)m_resolution.y;
    float n = 0.1f;
    far = 1000.0f;
-   float border = 2.0f; // degrees to cutoff edge of view to visualize the clipping function 
-   float halfFovRadians = tanf((fov - border) * (M_PI / 180.0f)/2); // Convert degrees to radians
    
-   float t = halfFovRadians * n;
-   float r = t * aspectRatio;
+   m_planes[0] = vec4( 1, 0, 0, 1); // Left
+   m_planes[1] = vec4(-1, 0, 0, 1); // Right 
+   m_planes[2] = vec4( 0, 1, 0, 1); // Bottom
+   m_planes[3] = vec4( 0, -1, 0, 1); // Top 
+   m_planes[4] = vec4( 0, 0, 1, 1); // Near // 
+   m_planes[5] = vec4( 0, 0, -1, 1); // Far
 
-   vec4 topRight = vec4(r,t,n,0).normal();
-   vec4 topLeft = vec4(-r,t,n,0).normal();
-   vec4 bottomRight = vec4(r,-t,n,0).normal();
-   vec4 bottomLeft = vec4(-r,-t,n,0).normal();
-
-   m_planes[0] = topLeft.cross(topRight).normal(); // Top plane
-   m_planes[1] = bottomRight.cross(bottomLeft).normal(); // Bottom plane
-   m_planes[2] = topRight.cross(bottomRight).normal(); // Right plane
-   m_planes[3] = bottomLeft.cross(topLeft).normal(); // Left plane
-   m_planes[4] = vec4(0,0,-1,-n); // Near plane
-   m_planes[5] = vec4(0,0,1,far); // Far plane
    
    // Create the projection matrix that will be used to project 3D points to a 2D view
-   m_matProject = matrix_project(fov,aspectRatio,n,-far);  
+   m_matProject = matrix_project(fov,aspectRatio,n,far);  
    // Texture to draw our 3D stuff to an sfml window 
    m_pixelTexture = sf::Texture(m_resolution);
 
@@ -58,6 +47,7 @@ camera::camera(windowMaster& _window) : window{_window}{
    m_clearBuffer = std::vector<std::uint8_t>(m_resolution.x * m_resolution.y * 4, 0);
    m_zBuffer = std::vector<float>(m_resolution.x * m_resolution.y, far);
 
+   sf::Color bgColor(hexColorToSFML(Color::Black));
    int index = 0;
    for (int y = 0; y < m_resolution.y; y++)
    {
@@ -82,7 +72,7 @@ unsigned int camera::createModel(std::string filename, bool ccwWinding) {
    std::ifstream obj(filename);
    // Create an array to hold the chars of each line
    // cycle through all the lines in the file until we are at the end
-   std::vector<vec3> verts;
+   std::vector<vec4> tris;
    while(!obj.eof()) {
       // Create a char array to store the line from the file
       char line[128];
@@ -94,21 +84,21 @@ unsigned int camera::createModel(std::string filename, bool ccwWinding) {
       char junk;
       if(line[0] == 'v') {
          // If it is a vertice then pull the xyz values from the string and put it in the vert array
-         vec3 v;
+         vec4 v;
          stream >> junk >> v[0] >> v[1] >> v[2];
-         verts.push_back(v);
+         tris.push_back(v);
       }
       if(line[0] == 'f') {
          // If it is a triangle then get the corosponding vertices and load it into the mesh
          if(ccwWinding){
             int f[3];
             stream >> junk >> f[0] >> f[2] >> f[1];
-            m_modelBuffer.push_back(tri3d(verts[f[0] - 1], verts[f[1] - 1], verts[f[2] - 1]));
+            m_modelBuffer.push_back(tri3d(tris[f[0] - 1], tris[f[1] - 1], tris[f[2] - 1]));
          }
          else {
             int f[3];
             stream >> junk >> f[0] >> f[1] >> f[2];
-            m_modelBuffer.push_back(tri3d(verts[f[0] - 1], verts[f[1] - 1], verts[f[2] - 1]));
+            m_modelBuffer.push_back(tri3d(tris[f[0] - 1], tris[f[1] - 1], tris[f[2] - 1]));
          }
       }
    }
@@ -116,12 +106,6 @@ unsigned int camera::createModel(std::string filename, bool ccwWinding) {
    newModel.size = m_modelBuffer.size()-newModel.start-1;
    models.push_back(newModel);
 
-
-   std::cout << "New model created" << std::endl;
-   std::cout << "Model Triangles Total: " << m_modelBuffer.size() << std::endl;
-   std::cout << "Model Start: " << newModel.start << std::endl;
-   std::cout << "Model Size: " << newModel.size << std::endl;
-   std::cout << "Model End: " << newModel.start + newModel.size << std::endl;
    return models.size()-1;
 
 }
@@ -131,22 +115,32 @@ unsigned int camera::createModel(std::string filename, bool ccwWinding) {
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // TRIANGLE CLIPPING
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void camera::clipTriangles(std::vector<tri3d>& triangles) {
+void camera::clipTriangles() {
    
    // Create buffer to hold triangles that need to go through the split function and 
    // a buffer of triangles that have already been through the split function
-   std::vector<tri3d> splitBuffer;
-   splitBuffer.reserve(triangles.size() * 2);
+   std::vector<triangleAttrib> splitBuffer;
+   splitBuffer.reserve(m_triangleAttribs.size() * 2);
    // Cycle through each plane and each triangle so we can clip them against each plane
    int next, last;
-   vec3 p1, p2;
+   vec4 p1, p2;
 
+   int pl = 0;
+   int clippedP = 0;
    for (vec4& plane : m_planes) {
-      for(tri3d& t : triangles) {
+      for(triangleAttrib& attrib : m_triangleAttribs) {
+         tri3d& t = attrib.triangle;
          // For consiseness check what points are out of the current plane ahead of time
          bool clipped[3] = {pointOutOfPlane(t.v[0], plane), pointOutOfPlane(t.v[1], plane), pointOutOfPlane(t.v[2], plane)};
          // If all of the points are not clipped by this plane then pass along the triangle to the next step
-         if (clipped[0]+clipped[1]+clipped[2] == 0){splitBuffer.push_back(t); continue;}
+         if (clipped[0]+clipped[1]+clipped[2] == 0){splitBuffer.push_back(attrib); continue;}
+         if (clipped[0]+clipped[1]+clipped[2] == 3){
+            if (clippedP != pl) {
+               clippedP = pl;
+               // std::cout << "Clipped: " << pl << std::endl;
+            }
+            continue;
+         }
 
          // Cycle through all of the points to find the clipped points
          
@@ -159,28 +153,29 @@ void camera::clipTriangles(std::vector<tri3d>& triangles) {
                // If there are 2 points and they are the current and next point
                if (clipped[next]){
                   // Find new points where the edges of the triangles intercect the plane
-                  p1 = planeIntercect(t.v[i], t.v[last], plane);
-                  p2 = planeIntercect(t.v[next], t.v[last], plane);
+                  p1 = planeIntersect(t.v[i], t.v[last], plane);
+                  p2 = planeIntersect(t.v[next], t.v[last], plane);
                   // Make a new triangle with the 2 new points and the one unclipped point
                   // emplace_back avoids making another copy like push_back
-                  splitBuffer.emplace_back(p1,p2,t.v[last]);
+                  splitBuffer.push_back({tri3d(p1,p2,t.v[last]),attrib.color});
                   break;
                }
                // If there is only one point and it is the current point
                else {
                   // Find new points where the edges of the triangles intercect the plane
-                  p1 = planeIntercect(t.v[i], t.v[last], plane);
-                  p2 = planeIntercect(t.v[i], t.v[next], plane);
+                  p1 = planeIntersect(t.v[i], t.v[last], plane);
+                  p2 = planeIntersect(t.v[i], t.v[next], plane);
                   // Create 2 new triangles with the 2 new points and the 2 unclipped points
-                  splitBuffer.emplace_back(p1,p2,t.v[next]);
-                  splitBuffer.emplace_back(p1,t.v[next],t.v[last]);
+                  splitBuffer.push_back({tri3d(p1,p2,t.v[next]),attrib.color});
+                  splitBuffer.push_back({tri3d(p1,t.v[next],t.v[last]),attrib.color});
                   break;
                }
             }
          }
       }
+      pl ++;
       // Pass triangles from the working buffer back into the loop for the next plane (and clear working buffer)
-      triangles.swap(splitBuffer);
+      m_triangleAttribs.swap(splitBuffer);
       splitBuffer.clear();
    }
 }
@@ -188,40 +183,28 @@ void camera::clipTriangles(std::vector<tri3d>& triangles) {
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // TRIANGLE PROJECTION
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void camera::renderObject(object3d& object) {
+void camera::render(object& object) {
   
    // Create the direction of the light used to shade our triangles
-
-
-
-
    sf::Color color = hexColorToSFML(object.color);
+   // Transform the light into viewspace
+   vec3 lightPosView = (lightPos * m_matView);
 
    model mod = models[*object.model];
    mat4x4 modelView = object.matScale * object.matTransform * m_matView;
 
+   // Backface Culling and viewspace transformation
    for(int i=mod.start; i<mod.start + mod.size; i++){
       tri3d triangle = m_modelBuffer[i] * modelView;
-      if (backFaceCulling(triangle)) continue;
-      m_triangleBuffer.emplace_back(triangle);
-   }
-
-   // Clip triangles
-   clipTriangles(m_triangleBuffer);
-
-   vec3 lightPosView = (lightPos * m_matView);
-
-   for(tri3d& triangle : m_triangleBuffer) {
 
       // GET SHADE OF TRIANGLE
       //---------------------------------------------------------------------------------------------
       // Determine shade of color based on the angle of the triangle face compared to light direction
-      
       vec3 ambient = lightCol * 0.2;
       
-      vec3 norm = triangle.normal();
+      vec3 norm = triangle.normal().xyz();
 
-      vec3 lightDir = (lightPosView - triangle.v[0]).normal();
+      vec3 lightDir = (lightPosView - triangle.v[0].xyz()).normal();
       float diff = std::max(norm.dot(lightDir), 0.0f);
       vec3 diffuse = lightCol * diff;
 
@@ -231,31 +214,114 @@ void camera::renderObject(object3d& object) {
       result[2] = std::clamp(result[2], 0.0f, 255.0f);
 
       // float shade = triangle.normal().dot(lightPos);
-      sf::Color shadeColor(
+      sf::Color color(
          static_cast<std::uint8_t>(result[0]),
          static_cast<std::uint8_t>(result[1]),
          static_cast<std::uint8_t>(result[2])
       );
-      
-      // PROJECT 3D TRIANGLES TO SCREEN SPACE
-      //---------------------------------------------------------------------------------------------
-      // Use projection matrix to convert 3D points to 2D points in the camera view
-      triangle.v[0] *= m_matProject;
-      triangle.v[1] *= m_matProject;
-      triangle.v[2] *= m_matProject;
 
+      triangle *= m_matProject;
+      m_triangleAttribs.push_back({triangle, color});
+   }
 
-      for (int i=0; i<3; i++){
-         // Projection results are between -1 and 1. So shift to the positive and scale to fit screen
-         // X: left (-1) → right (+1)
-         triangle.v[i][0] = (triangle.v[i][0] + 1.0f) * 0.5f * m_resolution.x;
-         // Y: top (+1) → bottom (-1), then map to screen space
-         triangle.v[i][1] = (1.0f - triangle.v[i][1]) * 0.5f * m_resolution.y;
+   // Clip triangles.
+   clipTriangles();
+
+   for(int i=0; i< m_triangleAttribs.size(); i++) {
+      tri3d& triangle = m_triangleAttribs[i].triangle;
+
+      triangle.perspectiveDivide();
+      if(!backFaceCulling(triangle)){
+
+         for (int i=0; i<3; i++){
+            // Projection results are between -1 and 1. So shift to the positive and scale to fit screen
+            // Y in SFML is +y = down so we need to reverse the y direction
+            triangle.v[i][0] = (triangle.v[i][0] + 1.0f) * 0.5f * m_resolution.x;
+            triangle.v[i][1] = (1.0f - triangle.v[i][1]) * 0.5f * m_resolution.y;
+         }
+         raster(triangle, m_triangleAttribs[i].color);
       }
-      triangle.draw(m_pixelBuffer, m_zBuffer, m_resolution, shadeColor);
    }
    // Clear the buffer of triangles for the next itteration
-   m_triangleBuffer.clear();
+   m_triangleAttribs.clear();
+}
+
+
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// FILL TRIANGLE
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+void camera::raster(tri3d& tri, sf::Color& color) {
+   // Scanline tiangle filling method. This is the most common way to fill triangles with a color
+   // It is more efficient to do this with graphics acceleration because cross products are expensive
+   // for the CPU to calculate. If you comment this out you will see the FPS go up substantially.
+
+   // Get the coordinates of the rectangle that will cover the triangle (clamped to the buffer size)
+   int xmax = std::min(std::max(std::max(tri.v[0][0], tri.v[1][0]), tri.v[2][0]), m_resolution.x - 1.0f);
+   int xmin = std::max(std::min(std::min(tri.v[0][0], tri.v[1][0]), tri.v[2][0]), 1.0f);
+   int ymax = std::min(std::max(std::max(tri.v[0][1], tri.v[1][1]), tri.v[2][1]), m_resolution.y - 1.0f);
+   int ymin = std::max(std::min(std::min(tri.v[0][1], tri.v[1][1]), tri.v[2][1]), 1.0f);
+
+   // For point p on a triangle: p = alpha*A + beta*B + gamma*C
+   // A, B and C representing the points and alpha, beta and gamma representing weight
+   // of how close they are to the points as a percentage
+   // we also have the constraint: alpha + beta + gamma = 1 or (alpha = 1 - beta - gamma)
+   // Subsitute: p = (1 - beta - gamma)*A + beta*B + gamma*C
+   // Simplify: (p - A) = beta*(B - A) + gamma*(C - A)
+
+   // Create the vectors difined above
+   vec2 AB = (tri.v[1]-tri.v[0]).xy(); // B - A
+   vec2 AC = (tri.v[2]-tri.v[0]).xy(); // C - A
+
+   // These are used for the 2x2 system of linear equations to find beta and gamma
+   // [ AB_AB  AB_AC ] [ beta  ] = [ AP_AB ]
+   // [ AB_AC  AC_AC ] [ gamma ]   [ AP_AC ]
+   // This makes determinant = AB_AB * AC_AC - AB_AC * AB_AC
+   // beta  = (AC_AC * AP_AB - AB_AC * AP_AC) / determinant
+   // gamma = (AB_AB * AP_AC - AB_AC * AP_AB) / determinant
+   float AB_AB = AB.dot(AB); 
+   float AC_AC = AC.dot(AC);
+   float AB_AC = AB.dot(AC);
+
+   // Determinant for system of linear of equations
+   float determ = AB_AB * AC_AC - AB_AC * AB_AC;
+
+   // Allocate memory for value calculated in inner loop
+   float AP_AB, AP_AC, alpha, beta, gamma, baryz;
+   vec2 AP;
+
+   // Itterate through each pixel in that rectangle
+   for (int y=ymin; y<=ymax; y++){
+      for (int x=xmin; x<=xmax; x++){
+
+         // Generate the remainder of the values for the system of equations
+         AP = vec2(x-tri.v[0][0], y-tri.v[0][1]); // P - A
+         AP_AB = AP.dot(AB);
+         AP_AC = AP.dot(AC);
+        
+         // Outputs of barycentric coords (escencially a percentage of how close the point is to each vertice)
+         // This is solved with cramers rule for a 2x2 system of linear equations above
+         beta  = (AC_AC * AP_AB - AB_AC * AP_AC)/ determ;
+         gamma = (AB_AB * AP_AC - AB_AC * AP_AB)/ determ;
+         alpha = 1.0f - beta - gamma;
+
+         // Exit the loop if the alpha beta or gamma are less than 0. This means the pixel is out of triangle
+         if (alpha < 0 and beta < 0 and gamma < 0) continue;
+
+         // Insert the calculated coeficients into the barycentric coord formula for just the 
+         // z values to find the depth of the pixel. This can also be used for texture coords
+         baryz = alpha * tri.v[0][2] + beta * tri.v[1][2] + gamma * tri.v[2][2]; 
+
+         // Get the position of the pixel in the z-buffer and only draw a pixel if the pixel should be on top
+         int index = (m_resolution.x * y + x);
+         if (baryz <= m_zBuffer[index]){
+            m_pixelBuffer[index*4] = color.r;
+            m_pixelBuffer[index*4 + 1] = color.g; 
+            m_pixelBuffer[index*4 + 2] = color.b; 
+            m_pixelBuffer[index*4 + 3] = color.a; 
+            m_zBuffer[index] = baryz; 
+         }
+      }
+   }
 }
 
 
@@ -267,6 +333,7 @@ void camera::draw() {
    m_pixelTexture.update(m_pixelBuffer.data());
    // Clear the pixel buffer with the background color before drawing each triangle
    m_pixelBuffer = m_clearBuffer;
+   // Clear the z buffer with far depth
    m_zBuffer.assign(m_zBuffer.size(), far);
    // Allow for an SFML render texture/window to draw the pixel buffer containing the 3D projections
    sf::Sprite tempSpr(m_pixelTexture);
@@ -276,20 +343,28 @@ void camera::draw() {
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // UTILITY FUNCTIONS
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-bool camera::pointOutOfPlane(vec3& p, vec4& plane){
-    // plane.xyz = normal, plane.w = D
-    return (plane.xyz().dot(p) + plane[3]) < 0.0f;
+bool camera::pointOutOfPlane(vec4& p, vec4& plane){
+   // plane.xyz = normal, plane.w = D
+   return plane.dot(p) < 0.0f;
 }
 
-vec3 camera::planeIntercect(vec3& p0, vec3& p1, vec4& plane){
-   // t is where the plane inersects the line. scale of 0-1, 0 being p0 and 1 being p1
-   float t = (p0.dot(plane.xyz()) + plane[3]) / (plane[0]*(p0[0]-p1[0]) + plane[1]*(p0[1]-p1[1]) + plane[2]*(p0[2]-p1[2]));
-   return((p0 + ((p1 - p0) * t)));
+vec4 camera::planeIntersect(vec4& a, vec4& b, vec4& plane) {
+   float t = plane.dot(a) / (plane.dot(a) - plane.dot(b));
+   return a + (b - a) * t;
 }
 
-bool camera::backFaceCulling(tri3d& tri){
-   // Assumes triangle is in view space, so camera is at 0,0,0
-   return (tri.normal().dot(tri.v[0] * -1) < 0.0f);
+
+bool camera::backFaceCulling(const tri3d& tri) {
+    // Use only X/Y in projected space
+    const vec2& a = tri.v[0].xy();
+    const vec2& b = tri.v[1].xy();
+    const vec2& c = tri.v[2].xy();
+    // Compute signed area (2D cross product)
+    float area =
+        (b[0] - a[0]) * (c[1] - a[1]) -
+        (b[1] - a[1]) * (c[0] - a[0]);
+    // Assuming CCW = front-facing
+    return area <= 0.0f;
 }
 
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX

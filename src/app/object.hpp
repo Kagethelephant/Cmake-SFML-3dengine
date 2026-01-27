@@ -1,10 +1,8 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
-#include <string>
-#include "data.hpp"
-#include "matrix.hpp"
-#include "polygon.hpp"
+#include "utils/data.hpp"
+#include "utils/matrix.hpp"
 
 
 /// @brief: 3D object with storing triangle mesh and the means to render it
@@ -13,7 +11,7 @@
 /// @param _scale: Scale to apply to the object (default {1,1,1})
 /// @param _color: Color to draw the object (will be shaded by camera object) (default: white)
 /// @param _lineColor: Color to draw the outline of the triangles (defualt: transperant)
-class object3d {
+class object {
 
 public:
    
@@ -36,7 +34,7 @@ public:
    Color color = Color::White;
 
 
-   object3d(unsigned int* _model) : model{_model} {};
+   object(unsigned int* _model) : model{_model} {};
 
 
    void scale(float sx, float sy, float sz);

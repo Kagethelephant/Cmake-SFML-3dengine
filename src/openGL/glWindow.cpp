@@ -1,5 +1,5 @@
-#include "gl.hpp"
-#include <algorithm>
+#include "glWindow.hpp"
+
 #include <glad/glad.h>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>

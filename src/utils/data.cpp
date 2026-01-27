@@ -1,6 +1,5 @@
 #include "data.hpp"
 #include <SFML/Graphics/Color.hpp>
-#include <iostream>
 
 
 // Define colors

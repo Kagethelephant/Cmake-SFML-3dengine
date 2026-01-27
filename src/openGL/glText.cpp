@@ -1,11 +1,11 @@
-#include "freeType.hpp"
-#include "data.hpp"
-#include "gl.hpp"
+#include "openGL/glText.hpp"
+#include "utils/data.hpp"
+#include "glWindow.hpp"
 #include <ft2build.h>
 #include <iostream>
 #include <utility>
 #include FT_FREETYPE_H
-#include "matrix.hpp"
+#include "utils/matrix.hpp"
 
 textEngine::textEngine(){
 
@@ -75,17 +75,7 @@ void textEngine::loadFont(const char *filePath){
       glGenTextures(1, &texture);
       glBindTexture(GL_TEXTURE_2D, texture);
 
-      glTexImage2D(
-         GL_TEXTURE_2D,
-         0,
-         GL_RED,
-         face->glyph->bitmap.width,
-         face->glyph->bitmap.rows,
-         0,
-         GL_RED,
-         GL_UNSIGNED_BYTE,
-         face->glyph->bitmap.buffer
-      );
+      glTexImage2D(GL_TEXTURE_2D,0,GL_RED,face->glyph->bitmap.width,face->glyph->bitmap.rows,0,GL_RED,GL_UNSIGNED_BYTE,face->glyph->bitmap.buffer);
 
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -115,7 +105,6 @@ void textEngine::RenderText(GLuint shaderProgram, gl_window& window, std::string
    int shaderColor = glGetUniformLocation(shaderProgram, "textColor");
    glUniform3fv(shaderColor,1,&color[0]);
 
-
    window.fbo.bind();
    glActiveTexture(GL_TEXTURE0);
    glBindVertexArray(vao);
@@ -123,8 +112,6 @@ void textEngine::RenderText(GLuint shaderProgram, gl_window& window, std::string
    for (char c : text)
    {
       character ch = characters[c];
-
-      // float baseY = y - characters['H'].bearing[1];
 
       float xpos = x + ch.bearing[0];
       float ypos = window.fboHeight - y - ch.bearing[1];
@@ -137,12 +124,6 @@ void textEngine::RenderText(GLuint shaderProgram, gl_window& window, std::string
       float ymin = (2*(ypos)/window.fboHeight) -1;
       float ymax = (2*(ypos+h)/window.fboHeight) -1;
 
-
-      // std::cout << "Xmax: " << xmax << std::endl;
-      // std::cout << "Ymax: " << ymax << std::endl;
-      // std::cout << "Xmin: " << xmin << std::endl;
-      // std::cout << "Ymin: " << ymin << std::endl;
-      
       vertices = {
          xmin, ymax,   0.0f, 0.0f,
          xmin, ymin,   0.0f, 1.0f,

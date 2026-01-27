@@ -1,10 +1,10 @@
-#include "glObject.hpp"
-#include "data.hpp"
-#include "matrix.hpp"
-#include "gl.hpp"
-#include "obj3d.hpp"
+#include "glRender.hpp"
+#include "utils/data.hpp"
+#include "utils/matrix.hpp"
+#include "glWindow.hpp"
+#include "app/object.hpp"
+#include "shaders/shader.hpp"
 
-#include "glShader.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -29,8 +29,8 @@ gl_vertexObject::gl_vertexObject(gl_window& _window) : window{_window}{
       1.0f,  1.0f, 1.0f, 1.0f
    };
 
-   shaderProgram3D = createShaderProgram("../src/glShaders/vertex.glsl", "../src/glShaders/fragment.glsl");
-   shaderProgramUI = createShaderProgram("../src/glShaders/uiVertex.glsl", "../src/glShaders/uiFragment.glsl");
+   shaderProgram3D = createShaderProgram("../src/shaders/3d_vertex.glsl", "../src/shaders/3d_fragment.glsl");
+   shaderProgramUI = createShaderProgram("../src/shaders/ui_vertex.glsl", "../src/shaders/ui_fragment.glsl");
 
    move(0,0,0);
    rotate(0,0,0);
@@ -177,7 +177,7 @@ void gl_vertexObject::bindRender(){
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // DRAW MODELS AT LOCATIONS DICTATED BY OBJECTS
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void gl_vertexObject::render(object3d& obj){
+void gl_vertexObject::render(object& obj){
    
    vec4 color = hexColorToFloat(obj.color);
    int m_objCol = glGetUniformLocation(shaderProgram3D, "objCol");
@@ -207,26 +207,5 @@ void gl_vertexObject::draw() {
       glBindTexture(GL_TEXTURE_2D, window.fbo.getTexture());
       glUniform1i(glGetUniformLocation(shaderProgramUI, "screenTexture"), 0);
       glDrawArrays(GL_TRIANGLES, 0, 6);
-}
-
-
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// OBJECT FUNCTIONS
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void object::scale(float sx, float sy, float sz){
-   scales = vec3(sx,sy,sz);
-   matScale = matrix_scale(scales[0], scales[1], scales[2]);
-}
-
-
-void object::move(float x, float y, float z){
-   position += vec3(x,y,z);
-   matTransform = matrix_transform(position[0], position[1], position[2], rotation[0], rotation[1], rotation[2]);
-}
-
-
-void object::rotate(float u, float v, float w){
-   rotation += vec3(u,v,w);
-   matTransform = matrix_transform(position[0], position[1], position[2], rotation[0], rotation[1], rotation[2]);
 }
 
