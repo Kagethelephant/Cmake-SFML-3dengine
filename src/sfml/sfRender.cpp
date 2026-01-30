@@ -221,14 +221,15 @@ void camera::render(object& object) {
       );
 
       triangle *= m_matProject;
-      m_triangleAttribs.push_back({triangle, color});
+      m_triangleAttribs.push_back({triangle, color, triangle});
    }
 
    // Clip triangles.
    clipTriangles();
 
    for(int i=0; i< m_triangleAttribs.size(); i++) {
-      tri3d& triangle = m_triangleAttribs[i].triangle;
+      camera::triangleAttrib& attrib = m_triangleAttribs[i];
+      tri3d& triangle = attrib.triangle;
 
       triangle.perspectiveDivide();
       if(!backFaceCulling(triangle)){
@@ -239,7 +240,7 @@ void camera::render(object& object) {
             triangle.v[i][0] = (triangle.v[i][0] + 1.0f) * 0.5f * m_resolution.x;
             triangle.v[i][1] = (1.0f - triangle.v[i][1]) * 0.5f * m_resolution.y;
          }
-         raster(triangle, m_triangleAttribs[i].color);
+         raster(attrib);
       }
    }
    // Clear the buffer of triangles for the next itteration
@@ -250,10 +251,21 @@ void camera::render(object& object) {
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // FILL TRIANGLE
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void camera::raster(tri3d& tri, sf::Color& color) {
-   // Scanline tiangle filling method. This is the most common way to fill triangles with a color
-   // It is more efficient to do this with graphics acceleration because cross products are expensive
-   // for the CPU to calculate. If you comment this out you will see the FPS go up substantially.
+void camera::raster(camera::triangleAttrib& attrib) {
+   // Bounding box triangle filling method with barycentric coordinates to interpolate 
+   // between points (only used to interpolate z)
+   tri3d& tri = attrib.triangle;
+   tri3d& clipTri = attrib.clipSpace;
+   sf::Color& color = attrib.color;
+
+   // Calculate the NDC space Z value corrected with W for interpolation
+   float ndcZ0 = clipTri.v[0][2] * 1/clipTri.v[0][3];
+   float ndcZ1 = clipTri.v[1][2] * 1/clipTri.v[1][3];
+   float ndcZ2 = clipTri.v[2][2] * 1/clipTri.v[2][3];
+   // Calculate the inverse W value for interpolation
+   // float invW0 = 1/clipTri.v[0][3];
+   // float invW1 = 1/clipTri.v[1][3];
+   // float invW2 = 1/clipTri.v[2][3];
 
    // Get the coordinates of the rectangle that will cover the triangle (clamped to the buffer size)
    int xmax = std::min(std::max(std::max(tri.v[0][0], tri.v[1][0]), tri.v[2][0]), m_resolution.x - 1.0f);
@@ -286,7 +298,7 @@ void camera::raster(tri3d& tri, sf::Color& color) {
    float determ = AB_AB * AC_AC - AB_AC * AB_AC;
 
    // Allocate memory for value calculated in inner loop
-   float AP_AB, AP_AC, alpha, beta, gamma, baryz;
+   float AP_AB, AP_AC, alpha, beta, gamma, interpz,interpw, baryz;
    vec2 AP;
 
    // Itterate through each pixel in that rectangle
@@ -305,11 +317,13 @@ void camera::raster(tri3d& tri, sf::Color& color) {
          alpha = 1.0f - beta - gamma;
 
          // Exit the loop if the alpha beta or gamma are less than 0. This means the pixel is out of triangle
-         if (alpha < 0 and beta < 0 and gamma < 0) continue;
+         if (alpha < 0 || beta < 0 || gamma < 0) continue;
 
          // Insert the calculated coeficients into the barycentric coord formula for just the 
          // z values to find the depth of the pixel. This can also be used for texture coords
-         baryz = alpha * tri.v[0][2] + beta * tri.v[1][2] + gamma * tri.v[2][2]; 
+         interpz = alpha * ndcZ0 + beta * ndcZ1 + gamma * ndcZ2; 
+         // interpw = alpha * invW0 + beta * invW1 + gamma * invW2; 
+         baryz = interpz ; // Convert NDC to depth buffer value [0 - 1]
 
          // Get the position of the pixel in the z-buffer and only draw a pixel if the pixel should be on top
          int index = (m_resolution.x * y + x);

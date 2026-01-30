@@ -111,6 +111,7 @@ private:
    struct triangleAttrib {
       tri3d triangle;
       sf::Color color;
+      tri3d clipSpace;
    };
    /// @brief: Stores triangle attributes (in this case just color, in openGL this would include normal, color, UV coords)
    std::vector<triangleAttrib> m_triangleAttribs;
@@ -132,12 +133,14 @@ private:
    /// when ran on the CPU as we are doing here. steps in pipeline: Rasterization, Fragment Shader
    /// @param tri: Pixel array for 32 bit trucolor + alpha (8 bits for r,g,b and alpha)
    /// @param res: The resolution of the window
-   void raster(tri3d& tri, sf::Color& color);
+   void raster(camera::triangleAttrib& attrib);
    
-   /// @brief: Scanline triangle fill algorithm. This is a common method of rasterization although it is very inefficient
+   /// @brief: In-place clipping of triangles in m_triangleAttribs against all 6 planes 
+   /// planes in clip space (after projection, before perspective division)
    void clipTriangles();
 
 
+   /// @brief: Checks the given triangle
    bool backFaceCulling(const tri3d& tri);
 
 
