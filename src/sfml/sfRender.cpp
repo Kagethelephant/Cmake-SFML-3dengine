@@ -157,7 +157,8 @@ void camera::clipTriangles() {
                   p2 = planeIntersect(t.v[next], t.v[last], plane);
                   // Make a new triangle with the 2 new points and the one unclipped point
                   // emplace_back avoids making another copy like push_back
-                  splitBuffer.push_back({tri3d(p1,p2,t.v[last]),attrib.color});
+                  tri3d tri1(p1,p2,t.v[last]);
+                  splitBuffer.push_back({tri1,attrib.color,tri1});
                   break;
                }
                // If there is only one point and it is the current point
@@ -166,8 +167,10 @@ void camera::clipTriangles() {
                   p1 = planeIntersect(t.v[i], t.v[last], plane);
                   p2 = planeIntersect(t.v[i], t.v[next], plane);
                   // Create 2 new triangles with the 2 new points and the 2 unclipped points
-                  splitBuffer.push_back({tri3d(p1,p2,t.v[next]),attrib.color});
-                  splitBuffer.push_back({tri3d(p1,t.v[next],t.v[last]),attrib.color});
+                  tri3d tri1(p1,p2,t.v[next]);
+                  splitBuffer.push_back({tri1,attrib.color,tri1});
+                  tri3d tri2(p1,t.v[next],t.v[last]);
+                  splitBuffer.push_back({tri2,attrib.color,tri2});
                   break;
                }
             }
@@ -259,9 +262,9 @@ void camera::raster(camera::triangleAttrib& attrib) {
    sf::Color& color = attrib.color;
 
    // Calculate the NDC space Z value corrected with W for interpolation
-   float ndcZ0 = clipTri.v[0][2] * 1/clipTri.v[0][3];
-   float ndcZ1 = clipTri.v[1][2] * 1/clipTri.v[1][3];
-   float ndcZ2 = clipTri.v[2][2] * 1/clipTri.v[2][3];
+   float ndcZ0 = clipTri.v[0][2] / clipTri.v[0][3];
+   float ndcZ1 = clipTri.v[1][2] / clipTri.v[1][3];
+   float ndcZ2 = clipTri.v[2][2] / clipTri.v[2][3];
    // Calculate the inverse W value for interpolation
    // float invW0 = 1/clipTri.v[0][3];
    // float invW1 = 1/clipTri.v[1][3];
