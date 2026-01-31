@@ -45,7 +45,7 @@ camera::camera(windowMaster& _window) : window{_window}{
 
    // Create a background buffer the size of the window to clear the pixel buffer with a color
    m_clearBuffer = std::vector<std::uint8_t>(m_resolution.x * m_resolution.y * 4, 0);
-   m_zBuffer = std::vector<float>(m_resolution.x * m_resolution.y, far);
+   m_zBuffer = std::vector<float>(m_resolution.x * m_resolution.y, 1.0f);
 
    sf::Color bgColor(hexColorToSFML(Color::Black));
    int index = 0;
@@ -256,7 +256,7 @@ void camera::render(object& object) {
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 void camera::raster(camera::triangleAttrib& attrib) {
    // Bounding box triangle filling method with barycentric coordinates to interpolate 
-   // between points (only used to interpolate z)
+   // between points. This is the trickiest part of the pipeline
    tri3d& tri = attrib.triangle;
    tri3d& clipTri = attrib.clipSpace;
    sf::Color& color = attrib.color;
@@ -265,7 +265,7 @@ void camera::raster(camera::triangleAttrib& attrib) {
    float ndcZ0 = clipTri.v[0][2] / clipTri.v[0][3];
    float ndcZ1 = clipTri.v[1][2] / clipTri.v[1][3];
    float ndcZ2 = clipTri.v[2][2] / clipTri.v[2][3];
-   // Calculate the inverse W value for interpolation
+   // Calculate the inverse W value for interpolation on attributes
    // float invW0 = 1/clipTri.v[0][3];
    // float invW1 = 1/clipTri.v[1][3];
    // float invW2 = 1/clipTri.v[2][3];
@@ -322,11 +322,11 @@ void camera::raster(camera::triangleAttrib& attrib) {
          // Exit the loop if the alpha beta or gamma are less than 0. This means the pixel is out of triangle
          if (alpha < 0 || beta < 0 || gamma < 0) continue;
 
-         // Insert the calculated coeficients into the barycentric coord formula for just the 
-         // z values to find the depth of the pixel. This can also be used for texture coords
+         // Find interpolated NDC z value with barycentric formula
          interpz = alpha * ndcZ0 + beta * ndcZ1 + gamma * ndcZ2; 
+         // Find interpolated W value for perspective correction on attributes (not x,y,z)
          // interpw = alpha * invW0 + beta * invW1 + gamma * invW2; 
-         baryz = interpz ; // Convert NDC to depth buffer value [0 - 1]
+         baryz = interpz * 0.5f + 0.5f; // Convert NDC to depth buffer value [0 - 1]
 
          // Get the position of the pixel in the z-buffer and only draw a pixel if the pixel should be on top
          int index = (m_resolution.x * y + x);
@@ -351,7 +351,7 @@ void camera::draw() {
    // Clear the pixel buffer with the background color before drawing each triangle
    m_pixelBuffer = m_clearBuffer;
    // Clear the z buffer with far depth
-   m_zBuffer.assign(m_zBuffer.size(), far);
+   m_zBuffer.assign(m_zBuffer.size(), 1.0f);
    // Allow for an SFML render texture/window to draw the pixel buffer containing the 3D projections
    sf::Sprite tempSpr(m_pixelTexture);
    window.draw(tempSpr);
