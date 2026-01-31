@@ -15,7 +15,7 @@ struct mat4x4 {
    float m[4][4] = {0.0f};
    
    // Overload for multiplying two matrices
-   mat4x4 operator * (const mat4x4 &m2){
+   mat4x4 operator * (const mat4x4 &m2) const {
       mat4x4 matrix;
       for (int i = 0; i < 4; i++)
          for (int j = 0; j < 4; j++)
@@ -46,17 +46,17 @@ struct vec2 {
    // Member Functions
    //---------------------------------------------------------------------------------------------
    /// @brief: returns the magnitude of the vector
-   float mag() { return std::sqrt(std::pow(c[0],2) + std::pow(c[1],2)); }
+   float mag() const { return std::sqrt(std::pow(c[0],2) + std::pow(c[1],2)); }
    /// @brief: Returns the normalized vector so the magnitude is 1
-   vec2 normal() { float m = mag(); return vec2(c[0]/m, c[1]/m); }
+   vec2 normal() const { float m = mag(); return vec2(c[0]/m, c[1]/m); }
    /// @brief: Normalizes the vector so the magnitude is 2
    void normalize() { float m = mag(); c[0] /= m; c[1] /= m; }
    /// @brief: Dot producto of 2 vectors. This is escencially the likeness of 2 normalized vectors
-   float dot(const vec2& v) { return ((this->c[0] * v.c[0]) + (this->c[1] * v.c[1])); }
+   float dot(const vec2& v) const { return ((this->c[0] * v.c[0]) + (this->c[1] * v.c[1])); }
    // @brief: There is not necessarily a 2D cross product but you can use this to determine if a vector points to the left or right of another vector
-   float cross(const vec2& v) { return ((this->c[0] * v.c[1]) - (this->c[1] * v.c[0])); }
+   float cross(const vec2& v) const { return ((this->c[0] * v.c[1]) - (this->c[1] * v.c[0])); }
    // @brief: Print the vector parameters
-   void print() {std::cout << "{" << c[0] << ", " << c[1] << ", " << "}" << std::endl;}
+   void print() const {std::cout << "{" << c[0] << ", " << c[1] << ", " << "}" << std::endl;}
 
    // Overload functions
    //---------------------------------------------------------------------------------------------
@@ -64,17 +64,17 @@ struct vec2 {
    float& operator [] (int i) { return c.at(i);}
    float operator [] (int i) const { return c.at(i);}
    // Standard Operators
-   vec2 operator + (const vec2& v) {return vec2(this->c[0] + v.c[0], this->c[1] + v.c[1]); } // Add 2 vectors
-   vec2 operator - (const vec2& v) {return vec2(this->c[0] - v.c[0], this->c[1] - v.c[1]); } // Subtract 2 vectors
-   vec2 operator * (const float& f) {return vec2(this->c[0] * f, this->c[1] * f); } // Scale vector by float
-   vec2 operator / (const float& f) {return vec2(this->c[0] / f, this->c[1] / f); } // Scale vector by float
+   vec2 operator + (const vec2& v) const {return vec2(this->c[0] + v.c[0], this->c[1] + v.c[1]); } // Add 2 vectors
+   vec2 operator - (const vec2& v) const {return vec2(this->c[0] - v.c[0], this->c[1] - v.c[1]); } // Subtract 2 vectors
+   vec2 operator * (const float& f) const {return vec2(this->c[0] * f, this->c[1] * f); } // Scale vector by float
+   vec2 operator / (const float& f) const {return vec2(this->c[0] / f, this->c[1] / f); } // Scale vector by float
    // Compound Operators
    void operator += (const vec2& v) { this->c[0] += v.c[0]; this->c[1] += v.c[1]; } // Add 2 vectors
    void operator -= (const vec2& v) { this->c[0] -= v.c[0]; this->c[1] -= v.c[1]; } // Subtract 2 vectors
    void operator *= (const float& f) { this->c[0] *= f; this->c[1] *= f; } // Scale vector by float
    void operator /= (const float& f) { this->c[0] /= f; this->c[1] /= f; } // Scale vector by float
    // Componentwise multiplication overload
-   vec2 operator * (const vec2& v) {return vec2(this->c[0] * v.c[0], this->c[1] * v.c[1]); }
+   vec2 operator * (const vec2& v) const {return vec2(this->c[0] * v.c[0], this->c[1] * v.c[1]); }
 };
 
 
@@ -106,17 +106,17 @@ struct vec3 {
    // Member functions
    //---------------------------------------------------------------------------------------------
    /// @brief: returns the magnitude of the vector
-   float mag() { return std::sqrt(std::pow(c[0],2) + std::pow(c[1],2) + std::pow(c[2],2)); }
+   float mag() const { return std::sqrt(std::pow(c[0],2) + std::pow(c[1],2) + std::pow(c[2],2)); }
    /// @brief: Returns the normalized vector so the magnitude is 1
-   vec3 normal() { float m = mag(); return vec3(c[0]/m, c[1]/ m, c[2]/m); }
+   vec3 normal() const { float m = mag(); return vec3(c[0]/m, c[1]/ m, c[2]/m); }
    /// @brief: Normalizes the vector so the magnitude is 2
    void normalize() { float m = mag(); c[0] /= m; c[1] /= m; c[2] /= m; }
    /// @brief: Dot producto of 2 vectors. This is escencially the likeness of 2 normalized vectors
-   float dot(const vec3& v) { return ((this->c[0] * v.c[0]) + (this->c[1] * v.c[1]) + (this->c[2] * v.c[2])); }
+   float dot(const vec3& v) const { return ((this->c[0] * v.c[0]) + (this->c[1] * v.c[1]) + (this->c[2] * v.c[2])); }
    // @brief: Cross product of 2 vectors that will return the normal vector of the plane created from the 2 vectors
-   vec3 cross(const vec3& v) { return vec3(this->c[1] * v.c[2] - this->c[2] * v.c[1], this->c[2] * v.c[0] - this->c[0] * v.c[2], this->c[0] * v.c[1] - this->c[1] * v.c[0]); }
+   vec3 cross(const vec3& v) const { return vec3(this->c[1] * v.c[2] - this->c[2] * v.c[1], this->c[2] * v.c[0] - this->c[0] * v.c[2], this->c[0] * v.c[1] - this->c[1] * v.c[0]); }
    // @brief: Print the vector parameters
-   void print() {std::cout << "{" << c[0] << ", " << c[1] << ", " << c[2] << ", " << "}" << std::endl;}
+   void print() const {std::cout << "{" << c[0] << ", " << c[1] << ", " << c[2] << ", " << "}" << std::endl;}
 
    // Operator overloads
    //---------------------------------------------------------------------------------------------
@@ -124,10 +124,10 @@ struct vec3 {
    float& operator [] (int i) { return c.at(i);}
    float operator [] (int i) const { return c.at(i);}
    // Standard Operators 
-   vec3 operator + (const vec3& v) {return vec3(this->c[0] + v.c[0], this->c[1] + v.c[1], this->c[2] + v.c[2]); } // Add 2 vectors
-   vec3 operator - (const vec3& v) {return vec3(this->c[0] - v.c[0], this->c[1] - v.c[1], this->c[2] - v.c[2]); } // Subtract 2 vectors
-   vec3 operator * (const float& f) {return vec3(this->c[0] * f, this->c[1] * f, this->c[2] * f); } // Scale vector by float
-   vec3 operator / (const float& f) {return vec3(this->c[0] / f, this->c[1] / f, this->c[2] / f); } // Scale vector by float
+   vec3 operator + (const vec3& v) const {return vec3(this->c[0] + v.c[0], this->c[1] + v.c[1], this->c[2] + v.c[2]); } // Add 2 vectors
+   vec3 operator - (const vec3& v) const {return vec3(this->c[0] - v.c[0], this->c[1] - v.c[1], this->c[2] - v.c[2]); } // Subtract 2 vectors
+   vec3 operator * (const float& f) const {return vec3(this->c[0] * f, this->c[1] * f, this->c[2] * f); } // Scale vector by float
+   vec3 operator / (const float& f) const {return vec3(this->c[0] / f, this->c[1] / f, this->c[2] / f); } // Scale vector by float
    // Compound Operators
    void operator += (const vec3& v) { this->c[0] += v.c[0]; this->c[1] += v.c[1]; this->c[2] += v.c[2]; } // Add 2 vectors
    void operator -= (const vec3& v) { this->c[0] -= v.c[0]; this->c[1] -= v.c[1]; this->c[2] -= v.c[2]; } // Subtract 2 vectors
@@ -137,7 +137,7 @@ struct vec3 {
    vec3 operator * (const vec3& v) {return vec3(this->c[0] * v.c[0], this->c[1] * v.c[1], this->c[2] * v.c[2]); }
 
    // Overload for multiplying a vector against a matrix
-   vec3 operator * (const mat4x4& m) {
+   vec3 operator * (const mat4x4& m) const {
       vec3 v;
       v.c[0]  = this->c[0] * m.m[0][0] + this->c[1] * m.m[1][0] + this->c[2] * m.m[2][0] + 1.0f * m.m[3][0];
       v.c[1]  = this->c[0] * m.m[0][1] + this->c[1] * m.m[1][1] + this->c[2] * m.m[2][1] + 1.0f * m.m[3][1];
@@ -196,19 +196,19 @@ struct vec4 {
    // Member functions
    //---------------------------------------------------------------------------------------------
    /// @brief: returns the magnitude of the vector
-   float mag() { return std::sqrt(std::pow(c[0],2) + std::pow(c[1],2) + std::pow(c[2],2)); }
+   float mag() const { return std::sqrt(std::pow(c[0],2) + std::pow(c[1],2) + std::pow(c[2],2)); }
    /// @brief: Returns the normalized vector so the magnitude is 1
-   vec4 normal() { float m = mag(); return vec4(c[0]/m, c[1]/ m, c[2]/m, c[3]); }
+   vec4 normal() const { float m = mag(); return vec4(c[0]/m, c[1]/ m, c[2]/m, c[3]); }
    /// @brief: Normalizes the vector so the magnitude is 2
    void normalize() { float m = mag(); c[0] /= m; c[1] /= m; c[2] /= m; }
    /// @brief: Dot producto of 2 vectors. This is escencially the likeness of 2 normalized vectors
-   float dot(const vec4& v) { return ((this->c[0] * v.c[0]) + (this->c[1] * v.c[1]) + (this->c[2] * v.c[2])+ (this->c[3] * v.c[3])); }
+   float dot(const vec4& v) const { return ((this->c[0] * v.c[0]) + (this->c[1] * v.c[1]) + (this->c[2] * v.c[2])+ (this->c[3] * v.c[3])); }
    // @brief: Cross product of 2 vectors that will return the normal vector of the plane created from the 2 vectors
-   vec4 cross(const vec4& v) { return vec4(this->c[1] * v.c[2] - this->c[2] * v.c[1], this->c[2] * v.c[0] - this->c[0] * v.c[2], this->c[0] * v.c[1] - this->c[1] * v.c[0], this->c[3]); }
+   vec4 cross(const vec4& v) const { return vec4(this->c[1] * v.c[2] - this->c[2] * v.c[1], this->c[2] * v.c[0] - this->c[0] * v.c[2], this->c[0] * v.c[1] - this->c[1] * v.c[0], this->c[3]); }
    // @brief: Devide by the w value (viewspace z value) after projection to give perspective, making far away objects look smaller
    void perspectiveDivide() {if (c[3] != 0.0f) {c[0] /= c[3]; c[1] /= c[3]; c[2] /= c[3];}}
    // @brief: Print the vector parameters
-   void print() {std::cout << "{" << c[0] << ", " << c[1] << ", " << c[2] << ", " << c[3] << "}" << std::endl;}
+   void print() const {std::cout << "{" << c[0] << ", " << c[1] << ", " << c[2] << ", " << c[3] << "}" << std::endl;}
 
 
    // Operator overloads
@@ -217,10 +217,10 @@ struct vec4 {
    float& operator [] (int i) { return c.at(i);}
    float operator [] (int i) const { return c.at(i);}
    // Standard Operators 
-   vec4 operator + (const vec4& v) {return vec4(this->c[0] + v.c[0], this->c[1] + v.c[1], this->c[2] + v.c[2], this->c[3] + v.c[3]); } // Add 2 vectors
-   vec4 operator - (const vec4& v) {return vec4(this->c[0] - v.c[0], this->c[1] - v.c[1], this->c[2] - v.c[2], this->c[3] - v.c[3]); } // Subtract 2 vectors
-   vec4 operator * (const float& f) {return vec4(this->c[0] * f, this->c[1] * f, this->c[2] * f, this->c[3] * f); } // Scale vector by float
-   vec4 operator / (const float& f) {return vec4(this->c[0] / f, this->c[1] / f, this->c[2] / f, this->c[3] / f); } // Scale vector by float
+   vec4 operator + (const vec4& v) const {return vec4(this->c[0] + v.c[0], this->c[1] + v.c[1], this->c[2] + v.c[2], this->c[3] + v.c[3]); } // Add 2 vectors
+   vec4 operator - (const vec4& v) const {return vec4(this->c[0] - v.c[0], this->c[1] - v.c[1], this->c[2] - v.c[2], this->c[3] - v.c[3]); } // Subtract 2 vectors
+   vec4 operator * (const float& f) const {return vec4(this->c[0] * f, this->c[1] * f, this->c[2] * f, this->c[3] * f); } // Scale vector by float
+   vec4 operator / (const float& f) const {return vec4(this->c[0] / f, this->c[1] / f, this->c[2] / f, this->c[3] / f); } // Scale vector by float
    // Compound Operators
    void operator += (const vec4& v) { this->c[0] += v.c[0]; this->c[1] += v.c[1]; this->c[2] += v.c[2]; this->c[3] += v.c[3];} // Add 2 vectors
    void operator -= (const vec4& v) { this->c[0] -= v.c[0]; this->c[1] -= v.c[1]; this->c[2] -= v.c[2]; this->c[3] -= v.c[3]; } // Subtract 2 vectors
@@ -230,7 +230,7 @@ struct vec4 {
    vec4 operator * (const vec4& v) {return vec4(this->c[0] * v.c[0], this->c[1] * v.c[1], this->c[2] * v.c[2], this->c[3] * v.c[3]); }
 
    // Overload for multiplying a vector against a matrix
-   vec4 operator * (const mat4x4& m) {
+   vec4 operator * (const mat4x4& m) const {
       vec4 v;
       v.c[0] = this->c[0] * m.m[0][0] + this->c[1] * m.m[1][0] + this->c[2] * m.m[2][0] + this->c[3] * m.m[3][0];
       v.c[1] = this->c[0] * m.m[0][1] + this->c[1] * m.m[1][1] + this->c[2] * m.m[2][1] + this->c[3] * m.m[3][1];
@@ -271,14 +271,14 @@ public:
    tri3d(vec4 v0, vec4 v1, vec4 v2) : v{v0,v1,v2}{};
 
    // @brief: Generates a vector normal to the triangles face starting from the triangles 0 point
-   vec4 normal() {return ((this->v[0] - this->v[1]).cross(this->v[0] - this->v[2])).normal(); }
+   vec4 normal() const {return ((this->v[0] - this->v[1]).cross(this->v[0] - this->v[2])).normal(); }
    // @brief: Devide by the w value (viewspace z value) after projection to give perspective, making far away objects look smaller
    void perspectiveDivide() {v[0].perspectiveDivide(); v[1].perspectiveDivide(); v[2].perspectiveDivide();}
    // @brief: Print the vector parameters
-   void print() {v[0].print(); v[1].print(); v[2].print();}
+   void print() const {v[0].print(); v[1].print(); v[2].print();}
 
    // Operator overloads for multiplying a whole triagle by a matrix (just multiplies the underlying vectors)
-   tri3d operator * (const mat4x4& m) { return tri3d(this->v[0] * m, this->v[1] * m, this->v[2] * m); }
+   tri3d operator * (const mat4x4& m) const { return tri3d(this->v[0] * m, this->v[1] * m, this->v[2] * m); }
    void operator *= (const mat4x4& m) { this->v[0] *= m; this->v[1] *= m; this->v[2] *= m; }
 
 private:

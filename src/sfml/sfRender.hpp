@@ -6,6 +6,7 @@
 #include <SFML/Graphics/Drawable.hpp>
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/System/Vector2.hpp>
+#include <cstdint>
 #include "utils/matrix.hpp"
 #include "app/object.hpp"
 #include "sfWindow.hpp"
@@ -52,12 +53,12 @@ public:
    /// @param u: Rotate around the right direction of the camera
    /// @param v: Rotate around the up direction of the camera
    /// @param w: Rotate around the pointDirection of the camera
-   void move(float x, float y, float z, float u, float v, float w);
+   void move(const float x, const float y, const float z, const float u, const float v, const float w);
 
    /// @brief: Render 3D vertex data given information from 3D object. This is where most of the
    /// 3D graphics pipeline is excecuted: vertex shader, vertex post processing (triangle clipping)
    /// @param object: Object that provides position, orientation, scale, color and model index information
-   void render(object& object);
+   void render(const object& object);
 
 
 
@@ -80,7 +81,7 @@ public:
    /// @param filename: filepath to the OBJ file
    /// @param ccwWinding: changes the winding on the model so the triangle normal points outwards
    /// @return: uint location of the model in the models array
-   unsigned int createModel (std::string filename, bool ccwWinding = false);
+   unsigned int createModel (const std::string filename, const bool ccwWinding = false);
 
 private:
 
@@ -110,14 +111,17 @@ private:
 
    struct triangleAttrib {
       tri3d triangle;
-      sf::Color color;
-      tri3d clipSpace;
+      Color color;
+      tri3d clipPos;
+      tri3d fragPos;
    };
    /// @brief: Stores triangle attributes (in this case just color, in openGL this would include normal, color, UV coords)
    std::vector<triangleAttrib> m_triangleAttribs;
 
    /// @brief: Stores triangles in 3D space from loaded objects to be drawn
-   std::vector<tri3d> m_modelBuffer;
+   std::vector<unsigned int> m_indices;
+   /// @brief: Stores triangles in 3D space from loaded objects to be drawn
+   std::vector<float> m_vertices;
 
    /// @brief: Texture to draw the pixelBuffer to so it can be drawn to an SFML window
    sf::Texture m_pixelTexture;
@@ -133,7 +137,7 @@ private:
    /// when ran on the CPU as we are doing here. steps in pipeline: Rasterization, Fragment Shader
    /// @param tri: Pixel array for 32 bit trucolor + alpha (8 bits for r,g,b and alpha)
    /// @param res: The resolution of the window
-   void raster(camera::triangleAttrib& attrib);
+   void raster(const camera::triangleAttrib& attrib);
    
    /// @brief: In-place clipping of triangles in m_triangleAttribs against all 6 planes 
    /// planes in clip space (after projection, before perspective division)
@@ -147,12 +151,12 @@ private:
    /// @brief: Checks if a point is on one side of a plane
    /// @param point: Point in 3d space
    /// @param plain: Plain in 3d space represented by its normal vecor
-   bool pointOutOfPlane(vec4& p, vec4& plane);
+   bool pointOutOfPlane(const vec4& p, const vec4& plane);
 
    /// @brief: Used to get the position on a line betweeen 2 3d points where 
    /// that line intersects the given plane
    /// @param p1: Point in 3d space
    /// @param p2: 2nd point in 3d space to create a theoretical line with the 1st point
    /// @param plane: Plain in 3d space that intersects the theoretical line
-   vec4 planeIntersect(vec4& a, vec4& b, vec4& plane);
+   vec4 planeIntersect(const vec4& a, const vec4& b, const vec4& plane);
 };

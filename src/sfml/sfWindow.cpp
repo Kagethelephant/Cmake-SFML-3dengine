@@ -83,7 +83,7 @@ void windowMaster::render(){
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // DRAW SFML OBJECTS
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void windowMaster::draw(const sf::Drawable& drawable, int layer){
+const void windowMaster::draw(const sf::Drawable& drawable, int layer){
    m_layers[layer].draw(drawable);
 }
 

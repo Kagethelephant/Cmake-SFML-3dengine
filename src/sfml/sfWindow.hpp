@@ -37,7 +37,7 @@ public:
    /// @brief: Draws an sf::drawable the same way a standard SFML window would but with optional layers
    /// @param drawable: sf::drawable to draw 
    /// @param layer: Texture layer to draw the text to (default: 0)
-   void draw(const sf::Drawable& drawable, int layer = 0);
+   const void draw(const sf::Drawable& drawable, int layer = 0);
 
    /// @brief: Draws all layer textures to the renderWindow and displays it to the window
    void render();
