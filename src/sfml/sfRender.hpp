@@ -37,6 +37,7 @@ public:
 
    /// @brief: Light position in world space (only supports one light)
    vec3 lightPos = vec3(0,5,-2);
+   vec3 lightPosView;
    /// @brief: Light color that is multiplied by the color of the object it is illuminating
    vec3 lightCol = vec3(1,1,1);
 
@@ -106,12 +107,10 @@ private:
    vec4 m_planes[6];
    float far;
   
-   // /// @brief: Stores triangles in 3D space from loaded objects to be drawn
-   // std::vector<tri3d> m_triangleBuffer;
 
    struct triangleAttrib {
       tri3d triangle;
-      Color color;
+      tri3d color;
       tri3d clipPos;
       tri3d fragPos;
    };
@@ -159,4 +158,10 @@ private:
    /// @param p2: 2nd point in 3d space to create a theoretical line with the 1st point
    /// @param plane: Plain in 3d space that intersects the theoretical line
    vec4 planeIntersect(const vec4& a, const vec4& b, const vec4& plane);
+
+
+   float planeIntersectT(const vec4& a, const vec4& b, const vec4& plane);
+
+
+   float edgeFunction(const vec2& a, const vec2& b, const vec2& p);
 };

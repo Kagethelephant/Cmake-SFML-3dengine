@@ -118,8 +118,10 @@ unsigned int camera::createModel(std::string filename, bool ccwWinding) {
 void camera::render(const object& object) {
   
 
+   // Transform the light into viewspace
+   lightPosView = (lightPos * m_matView);
    // Create the direction of the light used to shade our triangles
-   Color color = object.color;
+   tri3d color(hexColorToRGB(object.color), hexColorToRGB(object.color), hexColorToRGB(object.color));
 
    model mod = models[*object.model];
    // Model * View * Project matrix
@@ -183,11 +185,14 @@ void camera::clipTriangles() {
    splitBuffer.reserve(m_triangleAttribs.size() * 2);
    // Cycle through each plane and each triangle so we can clip them against each plane
    int next, last;
+   float t1, t2;
    vec4 p1, p2;
 
    for (vec4& plane : m_planes) {
       for(triangleAttrib& attrib : m_triangleAttribs) {
          tri3d& t = attrib.triangle;
+         tri3d& c = attrib.color;
+         tri3d& f = attrib.fragPos;
          // For consiseness check what points are out of the current plane ahead of time
          bool clipped[3] = {pointOutOfPlane(t.v[0], plane), pointOutOfPlane(t.v[1], plane), pointOutOfPlane(t.v[2], plane)};
          // If all of the points are not clipped by this plane then pass along the triangle to the next step
@@ -204,24 +209,48 @@ void camera::clipTriangles() {
                // If there are 2 points and they are the current and next point
                if (clipped[next]){
                   // Find new points where the edges of the triangles intercect the plane
-                  p1 = planeIntersect(t.v[i], t.v[last], plane);
-                  p2 = planeIntersect(t.v[next], t.v[last], plane);
+                  t1 = planeIntersectT(t.v[i], t.v[last], plane);
+                  t2 = planeIntersectT(t.v[next], t.v[last], plane);
+                  //    return a + (b - a) * t;
+                  p1 = t.v[i] + (t.v[last] - t.v[i]) * t1;
+                  p2 = t.v[next] + (t.v[last] - t.v[next]) * t2;
+                  tri3d tri1(p1,p2,t.v[last]);
+
+                  p1 = c.v[i] + (c.v[last] - c.v[i]) * t1;
+                  p2 = c.v[next] + (c.v[last] - c.v[next]) * t2;
+                  tri3d color1(p1,p2,c.v[last]);
+
+                  p1 = f.v[i] + (f.v[last] - f.v[i]) * t1;
+                  p2 = f.v[next] + (f.v[last] - f.v[next]) * t2;
+                  tri3d frag1(p1,p2,f.v[last]);
                   // Make a new triangle with the 2 new points and the one unclipped point
                   // emplace_back avoids making another copy like push_back
-                  tri3d tri1(p1,p2,t.v[last]);
-                  splitBuffer.push_back({tri1,attrib.color,tri1, attrib.fragPos});
+                  splitBuffer.push_back({tri1,color1,tri1, frag1});
                   break;
                }
                // If there is only one point and it is the current point
                else {
                   // Find new points where the edges of the triangles intercect the plane
-                  p1 = planeIntersect(t.v[i], t.v[last], plane);
-                  p2 = planeIntersect(t.v[i], t.v[next], plane);
+                  t1 = planeIntersectT(t.v[i], t.v[last], plane);
+                  t2 = planeIntersectT(t.v[i], t.v[next], plane);
                   // Create 2 new triangles with the 2 new points and the 2 unclipped points
+                  p1 = t.v[i] + (t.v[last] - t.v[i]) * t1;
+                  p2 = t.v[i] + (t.v[next] - t.v[i]) * t2;
                   tri3d tri1(p1,p2,t.v[next]);
-                  splitBuffer.push_back({tri1,attrib.color,tri1, attrib.fragPos});
                   tri3d tri2(p1,t.v[next],t.v[last]);
-                  splitBuffer.push_back({tri2,attrib.color,tri2, attrib.fragPos});
+
+                  p1 = c.v[i] + (c.v[last] - c.v[i]) * t1;
+                  p2 = c.v[i] + (c.v[next] - c.v[i]) * t2;
+                  tri3d color1(p1,p2,c.v[next]);
+                  tri3d color2(p1,c.v[next],c.v[last]);
+
+                  p1 = f.v[i] + (f.v[last] - f.v[i]) * t1;
+                  p2 = f.v[i] + (f.v[next] - f.v[i]) * t2;
+                  tri3d frag1(p1,p2,f.v[next]);
+                  tri3d frag2(p1,f.v[next],f.v[last]);
+
+                  splitBuffer.push_back({tri1,color1,tri1, frag1});
+                  splitBuffer.push_back({tri2,color2,tri2, frag2});
                   break;
                }
             }
@@ -244,19 +273,28 @@ void camera::raster(const camera::triangleAttrib& attrib) {
    // between points. This is the trickiest part of the pipeline
    const tri3d& tri = attrib.triangle;
    const tri3d& clipTri = attrib.clipPos;
-   const Color& color = attrib.color;
+   const tri3d& color = attrib.color;
 
-   // Transform the light into viewspace
-   vec3 lightPosView = (lightPos * m_matView);
-
-   // Calculate the NDC space Z value corrected with W for interpolation
-   float ndcZ0 = clipTri.v[0][2] / clipTri.v[0][3];
-   float ndcZ1 = clipTri.v[1][2] / clipTri.v[1][3];
-   float ndcZ2 = clipTri.v[2][2] / clipTri.v[2][3];
+   // Screen-space positions
+   vec2 p0(tri.v[0][0], tri.v[0][1]);
+   vec2 p1(tri.v[1][0], tri.v[1][1]);
+   vec2 p2(tri.v[2][0], tri.v[2][1]);
    // Calculate the inverse W value for interpolation on attributes
    float invW0 = 1/clipTri.v[0][3];
    float invW1 = 1/clipTri.v[1][3];
    float invW2 = 1/clipTri.v[2][3];
+   // Calculate the NDC space Z value corrected with W for interpolation
+   float ndcZ0 = clipTri.v[0][2] * invW0;
+   float ndcZ1 = clipTri.v[1][2] * invW1;
+   float ndcZ2 = clipTri.v[2][2] * invW2;
+   // Calculate the fragPos / w for perspective correction
+   vec4 fragOverW0 = attrib.fragPos.v[0] * invW0;
+   vec4 fragOverW1 = attrib.fragPos.v[1] * invW1;
+   vec4 fragOverW2 = attrib.fragPos.v[2] * invW2;
+   // Calculate the fragPos / w for perspective correction
+   vec4 colOverW0 = attrib.color.v[0] * invW0;
+   vec4 colOverW1 = attrib.color.v[1] * invW1;
+   vec4 colOverW2 = attrib.color.v[2] * invW2;
 
    // Get the coordinates of the rectangle that will cover the triangle (clamped to the buffer size)
    int xmax = std::min(std::max(std::max(tri.v[0][0], tri.v[1][0]), tri.v[2][0]), m_resolution.x - 1.0f);
@@ -264,23 +302,21 @@ void camera::raster(const camera::triangleAttrib& attrib) {
    int ymax = std::min(std::max(std::max(tri.v[0][1], tri.v[1][1]), tri.v[2][1]), m_resolution.y - 1.0f);
    int ymin = std::max(std::min(std::min(tri.v[0][1], tri.v[1][1]), tri.v[2][1]), 1.0f);
 
-   // For point p on a triangle: p = alpha*A + beta*B + gamma*C
-   // A, B and C representing the points and alpha, beta and gamma representing weight
-   // of how close they are to the points as a percentage
-   // we also have the constraint: alpha + beta + gamma = 1 or (alpha = 1 - beta - gamma)
-   // Subsitute: p = (1 - beta - gamma)*A + beta*B + gamma*C
-   // Simplify: (p - A) = beta*(B - A) + gamma*(C - A)
 
-   // Create the vectors difined above
+   // For point p on a triangle: p = alpha*A + beta*B + gamma*C
+   // A, B and C representing the points on triangle and alpha, beta and 
+   // gamma representing weight of how close they are to the points (by areas)
+   // we also have the constraint: alpha + beta + gamma = 1 or (alpha = 1 - beta - gamma)
+
+   // Screen-space edge vectors originating from vertex A
    vec2 AB = (tri.v[1]-tri.v[0]).xy(); // B - A
    vec2 AC = (tri.v[2]-tri.v[0]).xy(); // C - A
 
-   // These are used for the 2x2 system of linear equations to find beta and gamma
+   // These are used for the 2x2 system of linear equations used
+   // to find the jacobian of the barycentric coordinates
    // [ AB_AB  AB_AC ] [ beta  ] = [ AP_AB ]
    // [ AB_AC  AC_AC ] [ gamma ]   [ AP_AC ]
    // This makes determinant = AB_AB * AC_AC - AB_AC * AB_AC
-   // beta  = (AC_AC * AP_AB - AB_AC * AP_AC) / determinant
-   // gamma = (AB_AB * AP_AC - AB_AC * AP_AB) / determinant
    float AB_AB = AB.dot(AB); 
    float AC_AC = AC.dot(AC);
    float AB_AC = AB.dot(AC);
@@ -289,83 +325,108 @@ void camera::raster(const camera::triangleAttrib& attrib) {
    float determ = AB_AB * AC_AC - AB_AC * AB_AC;
    float invDet = 1.0f / determ;
 
-   vec2 dBeta(AC_AC * invDet, -AB_AC * invDet);
-   vec2 dGamma(-AB_AC * invDet, AB_AB * invDet);
-
+   // Delta in all barycentric coordinates for changes in x and y
+   vec2 dBeta(  AC.dot(AC) * invDet, -AB.dot(AC) * invDet);
+   vec2 dGamma(-AB.dot(AC) * invDet,  AB.dot(AB) * invDet);
    vec2 dAlpha = vec2(0,0) - dBeta - dGamma;
 
-   vec3 dFdx_fragPos =
-      (attrib.fragPos.v[0] * dAlpha[0] +
-      attrib.fragPos.v[1] * dBeta[0] +
-      attrib.fragPos.v[2] * dGamma[0]).xyz();
+   // Partial derivitive of screenspace xy as it relates to viewspace coords (frag pos) or for
+   // change of 1 pixel in x or y how much does the viewspace coord change
+   vec3 dFdx_fragPos = (attrib.fragPos.v[0] * dAlpha[0] + attrib.fragPos.v[1] * dBeta[0] + attrib.fragPos.v[2] * dGamma[0]).xyz();
+   vec3 dFdy_fragPos = (attrib.fragPos.v[0] * dAlpha[1] + attrib.fragPos.v[1] * dBeta[1] + attrib.fragPos.v[2] * dGamma[1]).xyz();
 
-   vec3 dFdy_fragPos =
-      (attrib.fragPos.v[0] * dAlpha[1] +
-      attrib.fragPos.v[1] * dBeta[1] +
-      attrib.fragPos.v[2] * dGamma[1]).xyz();
-
+   // Since these are orthogonal vectors on the surface of the triangle
+   // we can calculate the normal from these with the cross product
    vec3 norm = dFdx_fragPos.cross(dFdy_fragPos).normal();
+
+
+   // Area of the triangle used to find barycentric weights in the loop
+   float area = edgeFunction(p0, p1, p2);
+   if (area == 0.0f) return;
+   float invArea = 1.0f / area;
+
+   // dx and dy represent how much the barycentric areas change
+   // for a change in x or y of one pixel for each edge
+   float E0_dx = p2[1] - p1[1];
+   float E0_dy = p1[0] - p2[0];
+   float E1_dx = p0[1] - p2[1];
+   float E1_dy = p2[0] - p0[0];
+   float E2_dx = p1[1] - p0[1];
+   float E2_dy = p0[0] - p1[0];
+
+   // +0.5.f is consistant with opengl pixel-center rules
+   vec2 p(xmin + 0.5f, ymin + 0.5f);
+
+   // Initial barycentric areas for the first pixel for each edge
+   float E0_row = edgeFunction(p1, p2, p);
+   float E1_row = edgeFunction(p2, p0, p);
+   float E2_row = edgeFunction(p0, p1, p);
+
    // Allocate memory for value calculated in inner loop
-   float AP_AB, AP_AC, alpha, beta, gamma, interpz,interpw, baryz;
-   vec2 AP;
+   float alpha, beta, gamma, interpz,interpw, baryz;
 
    // Itterate through each pixel in that rectangle
    for (int y=ymin; y<=ymax; y++){
+
+      // Get initial edge areas for the current row y (E_row is incremented below for change in y)
+      float E0 = E0_row;
+      float E1 = E1_row;
+      float E2 = E2_row;
+
       for (int x=xmin; x<=xmax; x++){
 
-         // Generate the remainder of the values for the system of equations
-         AP = vec2(x-tri.v[0][0], y-tri.v[0][1]); // P - A
-         AP_AB = AP.dot(AB);
-         AP_AC = AP.dot(AC);
-        
-         // Outputs of barycentric coords (escencially a percentage of how close the point is to each vertice)
-         // This is solved with cramers rule for a 2x2 system of linear equations above
-         beta  = (AC_AC * AP_AB - AB_AC * AP_AC)/ determ;
-         gamma = (AB_AB * AP_AC - AB_AC * AP_AB)/ determ;
-         alpha = 1.0f - beta - gamma;
+         // Exit the loop if any of the barycentric areas are less than 0. This means the pixel is out of triangle
+         if (E0 >= 0 && E1 >= 0 && E2 >= 0) {
 
-         // Exit the loop if the alpha beta or gamma are less than 0. This means the pixel is out of triangle
-         if (alpha < 0 || beta < 0 || gamma < 0) continue;
+            // Divide by the area of the triangle to get the barycentric weight
+            alpha = E0 * invArea;
+            beta  = E1 * invArea;
+            gamma = E2 * invArea;
 
-         // Find interpolated NDC z value with barycentric formula
-         interpz = alpha * ndcZ0 + beta * ndcZ1 + gamma * ndcZ2; 
-         // Find interpolated W value for perspective correction on attributes (not x,y,z)
-         interpw = alpha * invW0 + beta * invW1 + gamma * invW2; 
-         baryz = interpz * 0.5f + 0.5f; // Convert NDC to depth buffer value [0 - 1]
+            // Find interpolated NDC z value with barycentric formula
+            interpz = alpha * ndcZ0 + beta * ndcZ1 + gamma * ndcZ2; 
+            baryz = interpz * 0.5f + 0.5f; // Convert NDC to depth buffer value [0 - 1]
 
-         // Get the position of the pixel in the z-buffer and only draw a pixel if the pixel should be on top
-         int index = (m_resolution.x * y + x);
-         if (baryz <= m_zBuffer[index]){
+            // Get the position of the pixel in the z-buffer and only draw a pixel if the pixel should be on top
+            int index = (m_resolution.x * y + x);
+            if (baryz <= m_zBuffer[index]){
 
-            vec3 fragPos =
-               (attrib.fragPos.v[0] * alpha +
-               attrib.fragPos.v[1] * beta +
-               attrib.fragPos.v[2] * gamma).xyz() / interpw;
+               // Find interpolated W value for perspective correction on attributes (not x,y,z)
+               interpw = alpha * invW0 + beta * invW1 + gamma * invW2; 
 
-            vec3 lightDir = (lightPosView - fragPos).normal();
-            float diff = std::max(norm.dot(lightDir), 0.0f);
+               vec3 fragPos = ((fragOverW0 * alpha + fragOverW1 * beta + fragOverW2 * gamma)/interpw).xyz();
+               vec4 interpColor = ((colOverW0 * alpha + colOverW1 * beta + colOverW2 * gamma)/interpw);
 
-            vec3 ambient = lightCol * 0.2;
-            vec3 diffuse = lightCol * diff;
+               vec3 lightDir = (lightPosView - fragPos).normal();
+               float diff = std::max(norm.dot(lightDir), 0.0f);
 
-            vec3 result = hexColorToRGB(color).xyz() * (ambient + diffuse);
-            result[0] = std::clamp(result[0], 0.0f, 255.0f);
-            result[1] = std::clamp(result[1], 0.0f, 255.0f);
-            result[2] = std::clamp(result[2], 0.0f, 255.0f);
+               vec3 ambient = lightCol * 0.2;
+               vec3 diffuse = lightCol * diff;
 
-            sf::Color color(
-               static_cast<std::uint8_t>(result[0]),
-               static_cast<std::uint8_t>(result[1]),
-               static_cast<std::uint8_t>(result[2])
-            );
+               vec4 result = interpColor * vec4((ambient + diffuse),1.0f);
+               result[0] = std::clamp(result[0], 0.0f, 255.0f);
+               result[1] = std::clamp(result[1], 0.0f, 255.0f);
+               result[2] = std::clamp(result[2], 0.0f, 255.0f);
+               result[3] = std::clamp(result[3], 0.0f, 255.0f);
 
-            m_pixelBuffer[index*4] = result[0];
-            m_pixelBuffer[index*4 + 1] = result[1]; 
-            m_pixelBuffer[index*4 + 2] = result[2]; 
-            m_pixelBuffer[index*4 + 3] = color.a; 
-            m_zBuffer[index] = baryz; 
+               m_pixelBuffer[index*4] = result[0];
+               m_pixelBuffer[index*4 + 1] = result[1]; 
+               m_pixelBuffer[index*4 + 2] = result[2]; 
+               m_pixelBuffer[index*4 + 3] = result[3]; 
+               m_zBuffer[index] = baryz; 
+            }
          }
+         
+         // Move along the edge for the given x position using dx
+         E0 += E0_dx;
+         E1 += E1_dx;
+         E2 += E2_dx;
       }
+
+      // Move along the edge for the given y position using dy
+      E0_row += E0_dy;
+      E1_row += E1_dy;
+      E2_row += E2_dy;
    }
 }
 
@@ -393,11 +454,16 @@ bool camera::pointOutOfPlane(const vec4& p, const vec4& plane){
    return plane.dot(p) < 0.0f;
 }
 
-vec4 camera::planeIntersect(const vec4& a, const vec4& b, const vec4& plane) {
-   float t = plane.dot(a) / (plane.dot(a) - plane.dot(b));
-   return a + (b - a) * t;
+float camera::planeIntersectT(const vec4& a, const vec4& b, const vec4& plane) {
+   return plane.dot(a) / (plane.dot(a) - plane.dot(b));
 }
-
+// vec4 camera::planeIntersect(const vec4& a, const vec4& b, const vec4& plane) {
+//    float t = plane.dot(a) / (plane.dot(a) - plane.dot(b));
+//    return a + (b - a) * t;
+// }
+float camera::edgeFunction(const vec2& a, const vec2& b, const vec2& p){
+    return (p[0] - a[0]) * (b[1] - a[1]) - (p[1] - a[1]) * (b[0] - a[0]);
+}
 
 bool camera::backFaceCulling(const tri3d& tri) {
     // Use only X/Y in screen space.
