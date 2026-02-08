@@ -1,7 +1,7 @@
-#include "glRender.hpp"
+#include "gpuRender.hpp"
 #include "utils/data.hpp"
 #include "utils/matrix.hpp"
-#include "glWindow.hpp"
+#include "window.hpp"
 #include "app/object.hpp"
 #include "shaders/shader.hpp"
 
@@ -9,6 +9,8 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <sys/types.h>
+#include <vector>
 
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // INTITIALIZE THE RENDERER
@@ -152,6 +154,7 @@ void gl_vertexObject::bindObjects(){
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 void gl_vertexObject::bindRender(){
 
+   // lightPosview = lightPos * mat_view;
    vec4 bgColor = hexColorToFloat(Color::Black);
    window.fbo.bind();
    glUseProgram(shaderProgram3D);
@@ -209,3 +212,19 @@ void gl_vertexObject::draw() {
       glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
+
+void gl_vertexObject::draw(std::vector<u_int8_t> buf) {
+
+   glBindTexture(GL_TEXTURE_2D, window.fbo.getTexture());
+   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+   glTexSubImage2D(
+      GL_TEXTURE_2D,
+      0,
+      0, 0,
+      width, height,
+      GL_RGBA,
+      GL_UNSIGNED_BYTE,
+      buf.data()
+);
+}

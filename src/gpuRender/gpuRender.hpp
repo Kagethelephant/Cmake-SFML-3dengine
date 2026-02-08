@@ -1,7 +1,7 @@
 #pragma once
 
 #include "utils/matrix.hpp"
-#include "openGL/glWindow.hpp"
+#include "window.hpp"
 #include "app/object.hpp"
 
 #include <glad/glad.h>
@@ -50,7 +50,8 @@ public:
    /// @brief: Vector of the camera direction created from the rotation
    vec3 camDirection = vec3(0,0,-1);
 
-   vec3 lightPos = vec3(0,5,-2);
+   vec3 lightPos = vec3(0,0,0);
+   vec3 lightPosview = vec3(0,0,0);
    vec3 lightCol = vec3(1,1,1);
    
    /// @brief: Matrix that moves vertices into the correct position in camera space
@@ -81,7 +82,7 @@ public:
    void bindRender();
    void render(object& obj);
    void draw();
-
+   void draw(std::vector<u_int8_t> buf);
 
    // Object to store the location of each of the meshes in the vertex data
    struct model {

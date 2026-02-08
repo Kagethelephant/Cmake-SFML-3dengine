@@ -25,11 +25,10 @@ set(SOURCE_FILES
    src/utils/utils.cpp
    src/utils/data.cpp
    src/utils/matrix.cpp
-   src/sfml/sfWindow.cpp
-   src/sfml/sfRender.cpp
-   src/openGL/glWindow.cpp
-   src/openGL/glRender.cpp
-   src/openGL/glText.cpp
+   src/cpuRender/cpuRender.cpp
+   src/gpuRender/window.cpp
+   src/gpuRender/gpuRender.cpp
+   src/gpuRender/text.cpp
    src/shaders/shader.cpp
 )
 

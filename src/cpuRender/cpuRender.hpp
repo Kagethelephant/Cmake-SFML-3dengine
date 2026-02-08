@@ -1,15 +1,9 @@
 #pragma once
 
-#include <SFML/Graphics.hpp>
-#include <SFML/Graphics/Color.hpp>
-#include <SFML/Graphics/ConvexShape.hpp>
-#include <SFML/Graphics/Drawable.hpp>
-#include <SFML/Graphics/Texture.hpp>
-#include <SFML/System/Vector2.hpp>
+#include <gpuRender/window.hpp>
 #include <cstdint>
 #include "utils/matrix.hpp"
 #include "app/object.hpp"
-#include "sfWindow.hpp"
 
 
 enum class ClipPlane {
@@ -29,39 +23,41 @@ class camera {
 public:
    
    /// @brief: Position of the camera in 3D space
-   vec3 position = vec3(0,0,0);
+   vec3 camPosition = vec3(0,0,0);
    /// @brief: Direction that the camera is pointing in degrees about the rotational axis (updates direction)
-   vec3 rotation = vec3(0,0,0);
+   vec3 camRotation = vec3(0,0,0);
    /// @brief: Direction the camera is pointing in the form of a vector
-   vec3 pointDirection;
+   vec3 camDirection;
 
    /// @brief: Light position in world space (only supports one light)
-   vec3 lightPos = vec3(0,5,-2);
+   vec3 lightPos = vec3(0,0,0);
    vec3 lightPosView;
    /// @brief: Light color that is multiplied by the color of the object it is illuminating
    vec3 lightCol = vec3(1,1,1);
 
    /// @brief: Reference to the sfml window that we will render to
-   windowMaster& window;
+   gl_window& window;
 
-   camera(windowMaster& _window);
+   camera(gl_window& _window);
 
-   /// @brief: Moves or rotates camera by given values (relative) movement is 
+   /// @brief: Moves camera by given values (relative) movement is 
    /// based on the direction of the camera ( z moves forward/back, x moves sideways)
    /// @param x: Move sideways (normal to up and pointDirection of camera)
    /// @param y: Move in the up direction ( normal to the forward and right of the camera)
    /// @param x: Move in the direction of camera pointDirection
+   void move(float x, float y, float z);
+
+   /// @brief: Rotates camera by given values (relative) movement is 
+   /// based on the direction of the camera ( z moves forward/back, x moves sideways)
    /// @param u: Rotate around the right direction of the camera
    /// @param v: Rotate around the up direction of the camera
    /// @param w: Rotate around the pointDirection of the camera
-   void move(const float x, const float y, const float z, const float u, const float v, const float w);
+   void rotate(float u, float v, float w);
 
    /// @brief: Render 3D vertex data given information from 3D object. This is where most of the
    /// 3D graphics pipeline is excecuted: vertex shader, vertex post processing (triangle clipping)
    /// @param object: Object that provides position, orientation, scale, color and model index information
    void render(const object& object);
-
-
 
    /// @brief: Draw pixel buffer to the sfml window passed to this object
    void draw();
@@ -74,6 +70,8 @@ public:
       unsigned int size;
    };
 
+   /// @brief: Pixel array for 32 bit trucolor + alpha (8 bits for r,g,b and alpha) used to raster triangles
+   std::vector<std::uint8_t> m_pixelBuffer;
    /// @brief: An array of the models stored in the triangle buffer
    std::vector<model> models;
 
@@ -89,7 +87,7 @@ private:
    /// @brief: Aspect ratio of the window
    float m_aspectRatio;     
    /// @brief: Resolution of the window 
-   sf::Vector2u m_resolution;
+   vec2 m_resolution;
 
    //OPENGL MIRRORED ITEMS
    std::vector<float> vertices;
@@ -122,15 +120,17 @@ private:
    /// @brief: Stores triangles in 3D space from loaded objects to be drawn
    std::vector<float> m_vertices;
 
-   /// @brief: Texture to draw the pixelBuffer to so it can be drawn to an SFML window
-   sf::Texture m_pixelTexture;
-   /// @brief: Pixel array for 32 bit trucolor + alpha (8 bits for r,g,b and alpha) used to raster triangles
-   std::vector<std::uint8_t> m_pixelBuffer;
+   // /// @brief: Texture to draw the pixelBuffer to so it can be drawn to an SFML window
+   // sf::Texture m_pixelTexture;
    /// @brief: Buffer to clear the pixelBuffer with a background color
    std::vector<std::uint8_t> m_clearBuffer;
    /// @brief: Buffer to store the lowest z position of each pixel to decide whether we should draw over it
    std::vector<float> m_zBuffer;
 
+
+   std::vector<vec4> viewVertices;
+
+   std::vector<vec4> clipVertices;
 
    /// @brief: Scanline triangle fill algorithm. This is a common method of rasterization although it is very inefficient
    /// when ran on the CPU as we are doing here. steps in pipeline: Rasterization, Fragment Shader
@@ -142,10 +142,9 @@ private:
    /// planes in clip space (after projection, before perspective division)
    void clipTriangles();
 
-
-   /// @brief: Checks the given triangle
+   /// @brief: Checks the given triangle for winding in screen space
+   /// @param tri: triangle to check for culling
    bool backFaceCulling(const tri3d& tri);
-
 
    /// @brief: Checks if a point is on one side of a plane
    /// @param point: Point in 3d space
@@ -156,12 +155,12 @@ private:
    /// that line intersects the given plane
    /// @param p1: Point in 3d space
    /// @param p2: 2nd point in 3d space to create a theoretical line with the 1st point
-   /// @param plane: Plain in 3d space that intersects the theoretical line
-   vec4 planeIntersect(const vec4& a, const vec4& b, const vec4& plane);
+   /// @param plane: Plain in 3d space that intersects the line
+   /// @return: float t value representing percent of the line where intersectet[0 - 1]
+   float planeIntersect(const vec4& a, const vec4& b, const vec4& plane);
 
-
-   float planeIntersectT(const vec4& a, const vec4& b, const vec4& plane);
-
-
+   /// @brief: Checks if a point is on one side of a plane
+   /// @param point: Point in 3d space
+   /// @param plain: Plain in 3d space represented by its normal vecor
    float edgeFunction(const vec2& a, const vec2& b, const vec2& p);
 };

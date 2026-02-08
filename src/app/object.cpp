@@ -1,7 +1,5 @@
 #include "object.hpp"
 
-#include <SFML/Graphics/Color.hpp>
-#include <SFML/Graphics/ConvexShape.hpp>
 #include <math.h>
 #include "utils/matrix.hpp"
 

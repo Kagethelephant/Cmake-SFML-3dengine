@@ -1,10 +1,6 @@
-#include "sfRender.hpp"
+#include "cpuRender.hpp"
 
-#include <SFML/Graphics/Color.hpp>
-#include <SFML/Graphics/ConvexShape.hpp>
-#include <SFML/Graphics/Sprite.hpp>
-#include <SFML/Graphics/Texture.hpp>
-#include <SFML/System/Vector2.hpp>
+#include <gpuRender/window.hpp>
 #include <iostream>
 #include <algorithm>
 #include <cstdint>
@@ -14,22 +10,21 @@
 #include "utils/matrix.hpp"
 #include "utils/utils.hpp"
 #include "app/object.hpp"
-#include "sfWindow.hpp"
 #include <fstream>
 
 
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // CONSTRUCTOR
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-camera::camera(windowMaster& _window) : window{_window}{
+camera::camera(gl_window& _window) : window{_window}{
 
    // Calculate the planes that make up the frustum (box that represents the field of view)
-   m_resolution = window.resolution;
+   m_resolution = vec2(window.fboWidth,window.fboHeight);
    float fov = 70;
-   float aspectRatio = (float)m_resolution.x/(float)m_resolution.y;
+   float aspectRatio = (float)m_resolution[0]/(float)m_resolution[1];
    float n = 0.1f;
    far = 1000.0f;
-  
+
    m_planes[0] = vec4( 1, 0, 0, 1); // Left
    m_planes[1] = vec4(-1, 0, 0, 1); // Right 
    m_planes[2] = vec4( 0, 1, 0, 1); // Bottom
@@ -40,27 +35,30 @@ camera::camera(windowMaster& _window) : window{_window}{
    
    // Create the projection matrix that will be used to project 3D points to a 2D view
    m_matProject = matrix_project(fov,aspectRatio,n,far);  
-   // Texture to draw our 3D stuff to an sfml window 
-   m_pixelTexture = sf::Texture(m_resolution);
+
+   // // Texture to draw our 3D stuff to an sfml window 
+   // m_pixelTexture = sf::Texture(m_resolution);
 
    // Create a background buffer the size of the window to clear the pixel buffer with a color
-   m_clearBuffer = std::vector<std::uint8_t>(m_resolution.x * m_resolution.y * 4, 0);
-   m_zBuffer = std::vector<float>(m_resolution.x * m_resolution.y, 1.0f);
+   m_clearBuffer = std::vector<std::uint8_t>(m_resolution[0] * m_resolution[1] * 4, 0);
+   m_zBuffer = std::vector<float>(m_resolution[0] * m_resolution[1], 1.0f);
 
-   sf::Color bgColor(hexColorToSFML(Color::Black));
+   vec4 bgColor(hexColorToRGB(Color::Black));
    int index = 0;
-   for (int y = 0; y < m_resolution.y; y++)
+   for (int y = 0; y < m_resolution[1]; y++)
    {
-      for (int x = 0; x < m_resolution.x; x++)
+      for (int x = 0; x < m_resolution[0]; x++)
       {
-         index = (y * m_resolution.x + x);
-         m_clearBuffer[index*4] = bgColor.r;
-         m_clearBuffer[index*4 + 1] = bgColor.g;
-         m_clearBuffer[index*4 + 2] = bgColor.b;
-         m_clearBuffer[index*4 + 3] = bgColor.a;
+         index = (y * m_resolution[0] + x);
+         m_clearBuffer[index*4] = bgColor[0];
+         m_clearBuffer[index*4 + 1] = bgColor[1];
+         m_clearBuffer[index*4 + 2] = bgColor[2];
+         m_clearBuffer[index*4 + 3] = bgColor[3];
       }
    }
    m_pixelBuffer = m_clearBuffer;
+   move(0,0,0);
+   rotate(0, 0, 0);
 }
 
 unsigned int camera::createModel(std::string filename, bool ccwWinding) {
@@ -106,6 +104,11 @@ unsigned int camera::createModel(std::string filename, bool ccwWinding) {
 
    newModel.size = m_indices.size()-newModel.start;
    models.push_back(newModel);
+
+
+   clipVertices.resize(m_vertices.size());
+   viewVertices.resize(m_vertices.size());
+
    return models.size()-1;
 }
 
@@ -118,15 +121,13 @@ unsigned int camera::createModel(std::string filename, bool ccwWinding) {
 void camera::render(const object& object) {
   
 
-   // Transform the light into viewspace
-   lightPosView = (lightPos * m_matView);
    // Create the direction of the light used to shade our triangles
    tri3d color(hexColorToRGB(object.color), hexColorToRGB(object.color), hexColorToRGB(object.color));
 
    model mod = models[*object.model];
    // Model * View * Project matrix
    mat4x4 mvp = object.matScale * object.matTransform * m_matView * m_matProject;
-   mat4x4 mv = object.matScale * object.matTransform * m_matView;
+   mat4x4 m = object.matScale * object.matTransform;
 
    std::vector<vec4> clipVertices;
    clipVertices.resize(m_vertices.size());
@@ -138,11 +139,14 @@ void camera::render(const object& object) {
    for(int i=mod.start; i<mod.start + mod.size; i ++){
       int index = m_indices[i] * 3;
 
+
       clipVertices[m_indices[i]] = (vec4(m_vertices[index], m_vertices[index+1], m_vertices[index+2]) * mvp);
-      viewVertices[m_indices[i]] = (vec4(m_vertices[index], m_vertices[index+1], m_vertices[index+2]) * mv);
+      viewVertices[m_indices[i]] = (vec4(m_vertices[index], m_vertices[index+1], m_vertices[index+2]) * m);
    }
 
    for(int i=mod.start; i<mod.start + mod.size; i += 3){
+
+      // Generate triangles from vertices and indices
       int i0 = m_indices[i];
       int i1 = m_indices[i+1];
       int i2 = m_indices[i+2];
@@ -150,6 +154,7 @@ void camera::render(const object& object) {
       tri3d viewTri(viewVertices[i0], viewVertices[i1], viewVertices[i2]);
       m_triangleAttribs.push_back({clipTri, color, clipTri, viewTri});
    }
+
    // Clip triangles.
    clipTriangles();
 
@@ -157,15 +162,18 @@ void camera::render(const object& object) {
       camera::triangleAttrib& attrib = m_triangleAttribs[i];
       tri3d& triangle = attrib.triangle;
 
+      // Clip space to NDC
       triangle.perspectiveDivide();
 
       for (int i=0; i<3; i++){
          // Projection results are between -1 and 1. So shift to the positive and scale to fit screen
          // Y in SFML is +y = down so we need to reverse the y direction
-         triangle.v[i][0] = (triangle.v[i][0] + 1.0f) * 0.5f * m_resolution.x;
-         triangle.v[i][1] = (1.0f - triangle.v[i][1]) * 0.5f * m_resolution.y;
+         triangle.v[i][0] = (triangle.v[i][0] + 1.0f) * 0.5f * m_resolution[0];
+         triangle.v[i][1] = (triangle.v[i][1] + 1.0f) * 0.5f * m_resolution[1];
+         // triangle.v[i][1] = (1.0f - triangle.v[i][1]) * 0.5f * m_resolution[1];
       }
-
+      
+      // Do not raster if winding is incorrect (cull back faces)
       if(!backFaceCulling(triangle)){ raster(attrib);}
    }
    // Clear the buffer of triangles for the next itteration
@@ -183,6 +191,7 @@ void camera::clipTriangles() {
    // a buffer of triangles that have already been through the split function
    std::vector<triangleAttrib> splitBuffer;
    splitBuffer.reserve(m_triangleAttribs.size() * 2);
+
    // Cycle through each plane and each triangle so we can clip them against each plane
    int next, last;
    float t1, t2;
@@ -190,6 +199,7 @@ void camera::clipTriangles() {
 
    for (vec4& plane : m_planes) {
       for(triangleAttrib& attrib : m_triangleAttribs) {
+
          tri3d& t = attrib.triangle;
          tri3d& c = attrib.color;
          tri3d& f = attrib.fragPos;
@@ -209,17 +219,20 @@ void camera::clipTriangles() {
                // If there are 2 points and they are the current and next point
                if (clipped[next]){
                   // Find new points where the edges of the triangles intercect the plane
-                  t1 = planeIntersectT(t.v[i], t.v[last], plane);
-                  t2 = planeIntersectT(t.v[next], t.v[last], plane);
-                  //    return a + (b - a) * t;
+                  t1 = planeIntersect(t.v[i], t.v[last], plane);
+                  t2 = planeIntersect(t.v[next], t.v[last], plane);
+
+                  // New triangle after clipping
                   p1 = t.v[i] + (t.v[last] - t.v[i]) * t1;
                   p2 = t.v[next] + (t.v[last] - t.v[next]) * t2;
                   tri3d tri1(p1,p2,t.v[last]);
 
+                  // New colors lerped for new points
                   p1 = c.v[i] + (c.v[last] - c.v[i]) * t1;
                   p2 = c.v[next] + (c.v[last] - c.v[next]) * t2;
                   tri3d color1(p1,p2,c.v[last]);
 
+                  // New screen space coords lerped for new points
                   p1 = f.v[i] + (f.v[last] - f.v[i]) * t1;
                   p2 = f.v[next] + (f.v[last] - f.v[next]) * t2;
                   tri3d frag1(p1,p2,f.v[last]);
@@ -231,19 +244,22 @@ void camera::clipTriangles() {
                // If there is only one point and it is the current point
                else {
                   // Find new points where the edges of the triangles intercect the plane
-                  t1 = planeIntersectT(t.v[i], t.v[last], plane);
-                  t2 = planeIntersectT(t.v[i], t.v[next], plane);
+                  t1 = planeIntersect(t.v[i], t.v[last], plane);
+                  t2 = planeIntersect(t.v[i], t.v[next], plane);
+
                   // Create 2 new triangles with the 2 new points and the 2 unclipped points
                   p1 = t.v[i] + (t.v[last] - t.v[i]) * t1;
                   p2 = t.v[i] + (t.v[next] - t.v[i]) * t2;
                   tri3d tri1(p1,p2,t.v[next]);
                   tri3d tri2(p1,t.v[next],t.v[last]);
 
+                  // New colors lerped for new points
                   p1 = c.v[i] + (c.v[last] - c.v[i]) * t1;
                   p2 = c.v[i] + (c.v[next] - c.v[i]) * t2;
                   tri3d color1(p1,p2,c.v[next]);
                   tri3d color2(p1,c.v[next],c.v[last]);
 
+                  // New screen space coords lerped for new points
                   p1 = f.v[i] + (f.v[last] - f.v[i]) * t1;
                   p2 = f.v[i] + (f.v[next] - f.v[i]) * t2;
                   tri3d frag1(p1,p2,f.v[next]);
@@ -274,6 +290,8 @@ void camera::raster(const camera::triangleAttrib& attrib) {
    const tri3d& tri = attrib.triangle;
    const tri3d& clipTri = attrib.clipPos;
    const tri3d& color = attrib.color;
+   // Transform the light into viewspace
+   lightPosView = (lightPos * m_matView);
 
    // Screen-space positions
    vec2 p0(tri.v[0][0], tri.v[0][1]);
@@ -297,136 +315,119 @@ void camera::raster(const camera::triangleAttrib& attrib) {
    vec4 colOverW2 = attrib.color.v[2] * invW2;
 
    // Get the coordinates of the rectangle that will cover the triangle (clamped to the buffer size)
-   int xmax = std::min(std::max(std::max(tri.v[0][0], tri.v[1][0]), tri.v[2][0]), m_resolution.x - 1.0f);
+   int xmax = std::min(std::max(std::max(tri.v[0][0], tri.v[1][0]), tri.v[2][0]), m_resolution[0] - 1.0f);
    int xmin = std::max(std::min(std::min(tri.v[0][0], tri.v[1][0]), tri.v[2][0]), 1.0f);
-   int ymax = std::min(std::max(std::max(tri.v[0][1], tri.v[1][1]), tri.v[2][1]), m_resolution.y - 1.0f);
+   int ymax = std::min(std::max(std::max(tri.v[0][1], tri.v[1][1]), tri.v[2][1]), m_resolution[1] - 1.0f);
    int ymin = std::max(std::min(std::min(tri.v[0][1], tri.v[1][1]), tri.v[2][1]), 1.0f);
 
 
-   // For point p on a triangle: p = alpha*A + beta*B + gamma*C
-   // A, B and C representing the points on triangle and alpha, beta and 
-   // gamma representing weight of how close they are to the points (by areas)
-   // we also have the constraint: alpha + beta + gamma = 1 or (alpha = 1 - beta - gamma)
+   // For point p on a triangle: P = a*A + β*B + γ*C
+   // A, B and C representing the points on triangle and alpha(a), beta(β) and 
+   // gamma(γ) representing weight of areas on triangle subdivided into 3 parts using p
+   // we also have the constraint: a + β + γ = 1 or (a = 1 - β - γ)
+   // So with substitution:        P = (1−β−γ)A + βB + γC 
+   // Rearange to get:             P − A = β(B−A) + γ(C−A) or AP = βAB + γAC
 
    // Screen-space edge vectors originating from vertex A
    vec2 AB = (tri.v[1]-tri.v[0]).xy(); // B - A
    vec2 AC = (tri.v[2]-tri.v[0]).xy(); // C - A
-
-   // These are used for the 2x2 system of linear equations used
-   // to find the jacobian of the barycentric coordinates
-   // [ AB_AB  AB_AC ] [ beta  ] = [ AP_AB ]
-   // [ AB_AC  AC_AC ] [ gamma ]   [ AP_AC ]
-   // This makes determinant = AB_AB * AC_AC - AB_AC * AB_AC
+   // Precompute dot products of edge vectors
    float AB_AB = AB.dot(AB); 
    float AC_AC = AC.dot(AC);
    float AB_AC = AB.dot(AC);
-
-   // Determinant for system of linear of equations
+   // Gram matrix system obtained by dotting AP = βAB + γAC with AB and AC:
+   // [ AB⋅AB  AB⋅AC ] [ β ] = [ AP⋅AB ]
+   // [ AB⋅AC  AC⋅AC ] [ γ ]   [ AP⋅AC ]
+   // Determinant of the Gram matrix
    float determ = AB_AB * AC_AC - AB_AC * AB_AC;
    float invDet = 1.0f / determ;
-
-   // Delta in all barycentric coordinates for changes in x and y
-   vec2 dBeta(  AC.dot(AC) * invDet, -AB.dot(AC) * invDet);
-   vec2 dGamma(-AB.dot(AC) * invDet,  AB.dot(AB) * invDet);
+   // Rows of the inverse Gram matrix below form linear maps that convert
+   // screen-space (x,y) movement into barycentric coordinate changes.
+   // [ AC⋅AC -AB⋅AC]                                           
+   // [-AB⋅AC  AB⋅AC]
+   vec2 dBeta(  AC_AC * invDet, -AB_AC * invDet);
+   vec2 dGamma(-AB_AC * invDet,  AB_AB * invDet);
    vec2 dAlpha = vec2(0,0) - dBeta - dGamma;
-
-   // Partial derivitive of screenspace xy as it relates to viewspace coords (frag pos) or for
-   // change of 1 pixel in x or y how much does the viewspace coord change
+   // Compute ∂fragPos/∂x and ∂fragPos/∂y using barycentric derivatives
    vec3 dFdx_fragPos = (attrib.fragPos.v[0] * dAlpha[0] + attrib.fragPos.v[1] * dBeta[0] + attrib.fragPos.v[2] * dGamma[0]).xyz();
    vec3 dFdy_fragPos = (attrib.fragPos.v[0] * dAlpha[1] + attrib.fragPos.v[1] * dBeta[1] + attrib.fragPos.v[2] * dGamma[1]).xyz();
-
-   // Since these are orthogonal vectors on the surface of the triangle
+   // Since these vectors are tangent to the surface of the triangle
    // we can calculate the normal from these with the cross product
-   vec3 norm = dFdx_fragPos.cross(dFdy_fragPos).normal();
+   vec3 norm = dFdy_fragPos.cross(dFdx_fragPos).normal();
 
-
-   // Area of the triangle used to find barycentric weights in the loop
+   
+   // Signed twice-area of the triangle, used to normalize edge functions
    float area = edgeFunction(p0, p1, p2);
    if (area == 0.0f) return;
    float invArea = 1.0f / area;
-
-   // dx and dy represent how much the barycentric areas change
-   // for a change in x or y of one pixel for each edge
-   float E0_dx = p2[1] - p1[1];
-   float E0_dy = p1[0] - p2[0];
-   float E1_dx = p0[1] - p2[1];
-   float E1_dy = p2[0] - p0[0];
-   float E2_dx = p1[1] - p0[1];
-   float E2_dy = p0[0] - p1[0];
-
+   // Partial derivatives of each edge function with respect to screen-space x and y.
+   // These are constant across the triangle and allow incremental evaluation.
+   float alpha_dx = (p2[1] - p1[1]) * invArea;
+   float alpha_dy = (p1[0] - p2[0]) * invArea;
+   float beta_dx =  (p0[1] - p2[1]) * invArea;
+   float beta_dy =  (p2[0] - p0[0]) * invArea;
+   float gamma_dx = (p1[1] - p0[1]) * invArea;
+   float gamma_dy = (p0[0] - p1[0]) * invArea;
    // +0.5.f is consistant with opengl pixel-center rules
    vec2 p(xmin + 0.5f, ymin + 0.5f);
-
-   // Initial barycentric areas for the first pixel for each edge
-   float E0_row = edgeFunction(p1, p2, p);
-   float E1_row = edgeFunction(p2, p0, p);
-   float E2_row = edgeFunction(p0, p1, p);
+   // Initial edge function values for the first pixel
+   float alpha_row = edgeFunction(p1, p2, p) * invArea;
+   float beta_row = edgeFunction(p2, p0, p) * invArea;
+   float gamma_row = edgeFunction(p0, p1, p) * invArea;
 
    // Allocate memory for value calculated in inner loop
-   float alpha, beta, gamma, interpz,interpw, baryz;
-
+   float alpha, beta, gamma, interpz,interpW, baryz;
    // Itterate through each pixel in that rectangle
    for (int y=ymin; y<=ymax; y++){
-
-      // Get initial edge areas for the current row y (E_row is incremented below for change in y)
-      float E0 = E0_row;
-      float E1 = E1_row;
-      float E2 = E2_row;
+      // Edge function values at the start of the current scanline
+      float alpha = alpha_row;
+      float beta  = beta_row;
+      float gamma = gamma_row;
 
       for (int x=xmin; x<=xmax; x++){
-
-         // Exit the loop if any of the barycentric areas are less than 0. This means the pixel is out of triangle
-         if (E0 >= 0 && E1 >= 0 && E2 >= 0) {
-
-            // Divide by the area of the triangle to get the barycentric weight
-            alpha = E0 * invArea;
-            beta  = E1 * invArea;
-            gamma = E2 * invArea;
+         // Pixel is inside the triangle if all edge functions are non-negative
+         if (alpha >= 0 && beta >= 0 && gamma >= 0) {
 
             // Find interpolated NDC z value with barycentric formula
             interpz = alpha * ndcZ0 + beta * ndcZ1 + gamma * ndcZ2; 
             baryz = interpz * 0.5f + 0.5f; // Convert NDC to depth buffer value [0 - 1]
 
             // Get the position of the pixel in the z-buffer and only draw a pixel if the pixel should be on top
-            int index = (m_resolution.x * y + x);
+            // y is window-space (bottom-left)
+            int index = x + y * m_resolution[0];
             if (baryz <= m_zBuffer[index]){
 
                // Find interpolated W value for perspective correction on attributes (not x,y,z)
-               interpw = alpha * invW0 + beta * invW1 + gamma * invW2; 
+               interpW = 1 / (alpha * invW0 + beta * invW1 + gamma * invW2); 
+               
+               // Get interpolated position in screenspace for lightDir calculation
+               vec3 fragPos = ((fragOverW0 * alpha + fragOverW1 * beta + fragOverW2 * gamma) * interpW).xyz();
+               // Get interpolated color
+               vec4 interpColor = ((colOverW0 * alpha + colOverW1 * beta + colOverW2 * gamma) * interpW);
 
-               vec3 fragPos = ((fragOverW0 * alpha + fragOverW1 * beta + fragOverW2 * gamma)/interpw).xyz();
-               vec4 interpColor = ((colOverW0 * alpha + colOverW1 * beta + colOverW2 * gamma)/interpw);
+               // Calculate diffuse lighting
+               vec3 lightDir = (lightPos - fragPos).normal();
+               float diffuse = std::max(norm.dot(lightDir), 0.0f);
+               // Calculate color by multiplying object color by ambient + diffuse lighting respectively
+               vec4 result = interpColor * vec4((lightCol * 0.2f + lightCol * diffuse),1.0f);
 
-               vec3 lightDir = (lightPosView - fragPos).normal();
-               float diff = std::max(norm.dot(lightDir), 0.0f);
-
-               vec3 ambient = lightCol * 0.2;
-               vec3 diffuse = lightCol * diff;
-
-               vec4 result = interpColor * vec4((ambient + diffuse),1.0f);
-               result[0] = std::clamp(result[0], 0.0f, 255.0f);
-               result[1] = std::clamp(result[1], 0.0f, 255.0f);
-               result[2] = std::clamp(result[2], 0.0f, 255.0f);
-               result[3] = std::clamp(result[3], 0.0f, 255.0f);
-
-               m_pixelBuffer[index*4] = result[0];
-               m_pixelBuffer[index*4 + 1] = result[1]; 
-               m_pixelBuffer[index*4 + 2] = result[2]; 
-               m_pixelBuffer[index*4 + 3] = result[3]; 
+               // Put pixel with clamped color components to match 32-bit color
+               m_pixelBuffer[index*4] =     std::clamp(result[0], 0.0f, 255.0f);
+               m_pixelBuffer[index*4 + 1] = std::clamp(result[1], 0.0f, 255.0f); 
+               m_pixelBuffer[index*4 + 2] = std::clamp(result[2], 0.0f, 255.0f); 
+               m_pixelBuffer[index*4 + 3] = std::clamp(result[3], 0.0f, 255.0f); 
                m_zBuffer[index] = baryz; 
             }
          }
-         
          // Move along the edge for the given x position using dx
-         E0 += E0_dx;
-         E1 += E1_dx;
-         E2 += E2_dx;
+         alpha += alpha_dx;
+         beta  += beta_dx;
+         gamma += gamma_dx;
       }
-
       // Move along the edge for the given y position using dy
-      E0_row += E0_dy;
-      E1_row += E1_dy;
-      E2_row += E2_dy;
+      alpha_row += alpha_dy;
+      beta_row  += beta_dy;
+      gamma_row += gamma_dy;
    }
 }
 
@@ -435,15 +436,15 @@ void camera::raster(const camera::triangleAttrib& attrib) {
 // SF::DRAWABLE IMPLIMENTATION
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 void camera::draw() {
-   // Add pixel buffer data to the SFML texture so it can be drawn to the SFML window
-   m_pixelTexture.update(m_pixelBuffer.data());
+   // // Add pixel buffer data to the SFML texture so it can be drawn to the SFML window
+   // m_pixelTexture.update(m_pixelBuffer.data());
    // Clear the pixel buffer with the background color before drawing each triangle
    m_pixelBuffer = m_clearBuffer;
    // Clear the z buffer with far depth
    m_zBuffer.assign(m_zBuffer.size(), 1.0f);
    // Allow for an SFML render texture/window to draw the pixel buffer containing the 3D projections
-   sf::Sprite tempSpr(m_pixelTexture);
-   window.draw(tempSpr);
+   // sf::Sprite tempSpr(m_pixelTexture);
+   // window.draw(tempSpr);
 }
 
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -454,13 +455,10 @@ bool camera::pointOutOfPlane(const vec4& p, const vec4& plane){
    return plane.dot(p) < 0.0f;
 }
 
-float camera::planeIntersectT(const vec4& a, const vec4& b, const vec4& plane) {
+float camera::planeIntersect(const vec4& a, const vec4& b, const vec4& plane) {
    return plane.dot(a) / (plane.dot(a) - plane.dot(b));
 }
-// vec4 camera::planeIntersect(const vec4& a, const vec4& b, const vec4& plane) {
-//    float t = plane.dot(a) / (plane.dot(a) - plane.dot(b));
-//    return a + (b - a) * t;
-// }
+
 float camera::edgeFunction(const vec2& a, const vec2& b, const vec2& p){
     return (p[0] - a[0]) * (b[1] - a[1]) - (p[1] - a[1]) * (b[0] - a[0]);
 }
@@ -479,22 +477,22 @@ bool camera::backFaceCulling(const tri3d& tri) {
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // MOVE AND ROTATE CAMERA
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void camera::move(float x, float y, float z, float u, float v, float w) {
+void camera::move(float x, float y, float z) {
    
-   // Get up / Y  and forward / Z component of the camera after rotating
-   vec3 up = vec3(0,1,0) * matrix_transform(0, 0, 0, rotation[0], rotation[1], rotation[2]);
-   pointDirection = (vec3(0,0,-1) * matrix_transform(0, 0, 0, rotation[0], rotation[1], rotation[2])).normal();
+   vec3 up = vec3(0,1,0) * matrix_transform(0, 0, 0, camRotation[0], camRotation[1], camRotation[2]);
+   camPosition += (camDirection.cross(up) * x);
+   camPosition += (camDirection * z);
+   camPosition[1] += y;
+   m_matView = matrix_view(matrix_pointAt(camPosition, camDirection, up));
+}
 
-   // Adjust position of camera. Movement is based on camera direction. z means in and out x means side to side
-   // xyz parameters are not world xyz. Position is world xyz so we need to translate
-   position += (pointDirection * z);
-   position += (up.cross(pointDirection) * x);
-   position[1] += y;
-   rotation += vec3(u,v,w);
 
-   // Generate the new "point at" matrix and "view" matrix based on the new orientation of the camera
-   m_matPointAt = matrix_pointAt(position, pointDirection, up);
-   m_matView = matrix_view(m_matPointAt);
+void camera::rotate(float u, float v, float w) {
+   
+   camRotation += vec3(u, v, w);
+   vec3 up = vec3(0,1,0) * matrix_transform(0, 0, 0, camRotation[0], camRotation[1], camRotation[2]);
+   camDirection = (vec3(0,0,-1) * matrix_transform(0, 0, 0, camRotation[0], camRotation[1], camRotation[2])).normal();
+   m_matView = matrix_view(matrix_pointAt(camPosition, camDirection, up));
 }
 
 

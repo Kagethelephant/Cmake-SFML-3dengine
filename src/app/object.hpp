@@ -1,6 +1,5 @@
 #pragma once
 
-#include <SFML/Graphics.hpp>
 #include "utils/data.hpp"
 #include "utils/matrix.hpp"
 

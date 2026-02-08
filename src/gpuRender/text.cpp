@@ -1,6 +1,6 @@
-#include "openGL/glText.hpp"
+#include "text.hpp"
 #include "utils/data.hpp"
-#include "glWindow.hpp"
+#include "window.hpp"
 #include <ft2build.h>
 #include <iostream>
 #include <utility>

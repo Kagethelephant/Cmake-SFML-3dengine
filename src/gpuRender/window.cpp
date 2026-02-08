@@ -1,10 +1,11 @@
-#include "glWindow.hpp"
+#include "window.hpp"
 
 #include <glad/glad.h>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <math.h>
 #include <iostream>
+#include <vector>
 
 
 gl_window::gl_window(int _height){
@@ -106,7 +107,7 @@ void FixedFBO::create(){
    // Color attachment
    glGenTextures(1, &colorTex);
    glBindTexture(GL_TEXTURE_2D, colorTex);
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -139,8 +140,9 @@ void FixedFBO::create(){
    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+
 void FixedFBO::destroy(){
-   if (depth) glDeleteTextures(1, &depth);
+   if (depth)    glDeleteTextures(1, &depth);
    if (colorTex) glDeleteTextures(1, &colorTex);
    if (fbo)      glDeleteFramebuffers(1, &fbo);
 

@@ -58,9 +58,9 @@ mat4x4 matrix_pointAt(vec3 pos, vec3 target, vec3 up) {
    vec3 newRight = target.cross(newUp);
 
    mat4x4 m;
-   m.m[0][0] = newRight.x(); m.m[1][0] = newUp.x(); m.m[2][0] = -target.x(); m.m[3][0] = pos.x();
-   m.m[0][1] = newRight.y(); m.m[1][1] = newUp.y(); m.m[2][1] = -target.y(); m.m[3][1] = pos.y();
-   m.m[0][2] = newRight.z(); m.m[1][2] = newUp.z(); m.m[2][2] = -target.z(); m.m[3][2] = pos.z();
+   m.m[0][0] = newRight[0]; m.m[1][0] = newUp[0]; m.m[2][0] = -target[0]; m.m[3][0] = pos[0];
+   m.m[0][1] = newRight[1]; m.m[1][1] = newUp[1]; m.m[2][1] = -target[1]; m.m[3][1] = pos[1];
+   m.m[0][2] = newRight[2]; m.m[1][2] = newUp[2]; m.m[2][2] = -target[2]; m.m[3][2] = pos[2];
    m.m[0][3] = 0.0f;         m.m[1][3] = 0.0f;      m.m[2][3] = 0.0f;       m.m[3][3] = 1.0f;
    return m;
 }
