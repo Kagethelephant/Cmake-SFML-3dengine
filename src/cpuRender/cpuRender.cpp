@@ -4,6 +4,7 @@
 #include <iostream>
 #include <algorithm>
 #include <cstdint>
+#include <strings.h>
 #include <vector>
 #include <math.h>
 #include "utils/data.hpp"
@@ -61,56 +62,55 @@ camera::camera(gl_window& _window) : window{_window}{
    rotate(0, 0, 0);
 }
 
-unsigned int camera::createModel(std::string filename, bool ccwWinding) {
+// unsigned int camera::createModel(std::string filename, bool ccwWinding) {
 
-   model newModel;
+//    model newModel;
 
-   int vertStart = m_vertices.size()/3;
-   newModel.start = m_indices.size();
-   // Try to open the file
-   std::ifstream obj(filename);
-   // Create an array to hold the chars of each line
-   // cycle through all the lines in the file until we are at the end
-   while(!obj.eof()) {
-      // Create a char array to store the line from the file
-      char line[128];
-      obj.getline(line,128);
-      // Pass the line from the file "stream" into the line
-      std::stringstream stream;
-      stream << line;
-      // Check if the line is a vertice or a triangle
-      char junk;
-      if(line[0] == 'v') {
-         // If it is a vertice then pull the xyz values from the string and put it in the vert array
-         float x,y,z;
-         stream >> junk >> x >> y >> z;
-         m_vertices.push_back(x);
-         m_vertices.push_back(y);
-         m_vertices.push_back(z);
-      }
-      if(line[0] == 'f') {
-         // If it is a triangle then get the corosponding vertices and load it into the mesh
-         
-         // If it is a triangle then get the corosponding vertices and load it into the mesh
-         int f[3];
-         if(ccwWinding){ stream >> junk >> f[0] >> f[2] >> f[1]; }
-         else {          stream >> junk >> f[0] >> f[1] >> f[2]; }
+//    newModel.vertStart = m_vertices.size()/3;
+//    newModel.start = m_indices.size();
+//    // Try to open the file
+//    std::ifstream obj(filename);
+//    // Create an array to hold the chars of each line
+//    // cycle through all the lines in the file until we are at the end
+//    while(!obj.eof()) {
+//       // Create a char array to store the line from the file
+//       char line[128];
+//       obj.getline(line,128);
+//       // Pass the line from the file "stream" into the line
+//       std::stringstream stream;
+//       stream << line;
+//       // Check if the line is a vertice or a triangle
+//       char junk;
+//       if(line[0] == 'v') {
+//          // If it is a vertice then pull the xyz values from the string and put it in the vert array
+//          float x,y,z;
+//          stream >> junk >> x >> y >> z;
+//          m_vertices.push_back(x);
+//          m_vertices.push_back(y);
+//          m_vertices.push_back(z);
+//       }
+//       if(line[0] == 'f') {
+//          // If it is a triangle then get the corosponding vertices and load it into the mesh
+//          
+//          // If it is a triangle then get the corosponding vertices and load it into the mesh
+//          int f[3];
+//          if(ccwWinding){ stream >> junk >> f[0] >> f[2] >> f[1]; }
+//          else {          stream >> junk >> f[0] >> f[1] >> f[2]; }
 
-         m_indices.push_back(f[0]+vertStart-1);
-         m_indices.push_back(f[1]+vertStart-1);
-         m_indices.push_back(f[2]+vertStart-1);
-      }
-   }
+//          m_indices.push_back(f[0]+newModel.vertStart-1);
+//          m_indices.push_back(f[1]+newModel.vertStart-1);
+//          m_indices.push_back(f[2]+newModel.vertStart-1);
+//       }
+//    }
+//    newModel.vertSize = m_vertices.size()/3 - newModel.vertStart;
+//    newModel.size = m_indices.size()-newModel.start;
+//    models.push_back(newModel);
 
-   newModel.size = m_indices.size()-newModel.start;
-   models.push_back(newModel);
+//    clipVertices.resize(m_vertices.size());
+//    viewVertices.resize(m_vertices.size());
 
-
-   clipVertices.resize(m_vertices.size());
-   viewVertices.resize(m_vertices.size());
-
-   return models.size()-1;
-}
+//    return models.size()-1;
+// }
 
 
 
@@ -120,36 +120,35 @@ unsigned int camera::createModel(std::string filename, bool ccwWinding) {
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 void camera::render(const object& object) {
   
-
    // Create the direction of the light used to shade our triangles
    tri3d color(hexColorToRGB(object.color), hexColorToRGB(object.color), hexColorToRGB(object.color));
 
-   model mod = models[*object.model];
+   // Fetch model associated with object
+   model mod = object.verts;
+
    // Model * View * Project matrix
-   mat4x4 mvp = object.matScale * object.matTransform * m_matView * m_matProject;
+   mat4x4 vp = m_matView * m_matProject;
    mat4x4 m = object.matScale * object.matTransform;
 
-   std::vector<vec4> clipVertices;
-   clipVertices.resize(m_vertices.size());
+   clipVertices.resize(mod.vertices.size());
+   viewVertices.resize(mod.vertices.size());
 
-   std::vector<vec4> viewVertices;
-   viewVertices.resize(m_vertices.size());
+   // Vertex shader (Model View Projection matrix multiplication)
+   for(int i=0; i<mod.vertices.size(); i ++){
+      vertex index = mod.vertices[i];
+      vec4 vertice = vec4(index.pos, 1.0f) * m;
 
-   // Backface Culling and viewspace transformation
-   for(int i=mod.start; i<mod.start + mod.size; i ++){
-      int index = m_indices[i] * 3;
-
-
-      clipVertices[m_indices[i]] = (vec4(m_vertices[index], m_vertices[index+1], m_vertices[index+2]) * mvp);
-      viewVertices[m_indices[i]] = (vec4(m_vertices[index], m_vertices[index+1], m_vertices[index+2]) * m);
+      viewVertices[i] = vertice;
+      clipVertices[i] = vertice * vp;
    }
 
-   for(int i=mod.start; i<mod.start + mod.size; i += 3){
+
+   for(int i=0; i<mod.indices.size(); i += 3){
 
       // Generate triangles from vertices and indices
-      int i0 = m_indices[i];
-      int i1 = m_indices[i+1];
-      int i2 = m_indices[i+2];
+      int i0 = mod.indices[i];
+      int i1 = mod.indices[i+1];
+      int i2 = mod.indices[i+2];
       tri3d clipTri(clipVertices[i0], clipVertices[i1], clipVertices[i2]);
       tri3d viewTri(viewVertices[i0], viewVertices[i1], viewVertices[i2]);
       m_triangleAttribs.push_back({clipTri, color, clipTri, viewTri});
@@ -436,15 +435,10 @@ void camera::raster(const camera::triangleAttrib& attrib) {
 // SF::DRAWABLE IMPLIMENTATION
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 void camera::draw() {
-   // // Add pixel buffer data to the SFML texture so it can be drawn to the SFML window
-   // m_pixelTexture.update(m_pixelBuffer.data());
    // Clear the pixel buffer with the background color before drawing each triangle
    m_pixelBuffer = m_clearBuffer;
    // Clear the z buffer with far depth
    m_zBuffer.assign(m_zBuffer.size(), 1.0f);
-   // Allow for an SFML render texture/window to draw the pixel buffer containing the 3D projections
-   // sf::Sprite tempSpr(m_pixelTexture);
-   // window.draw(tempSpr);
 }
 
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX

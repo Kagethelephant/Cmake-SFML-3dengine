@@ -2,6 +2,56 @@
 
 #include "utils/data.hpp"
 #include "utils/matrix.hpp"
+#include <vector>
+
+
+struct vertex {
+   vec3 pos;
+   vec3 normal;
+   vec2 uv;
+};
+
+/// @brief: Loads vertex data into the triangle buffer from an OBJ file and saves the 
+/// location with a model object 
+/// @param filename: filepath to the OBJ file
+/// @param ccwWinding: changes the winding on the model so the triangle normal points outwards
+class model {
+public:
+   model(const std::string& filename, bool ccwWinding = false);
+
+
+   const std::vector<vertex>&   getVertices() const { return vertices; }
+   const std::vector<uint32_t>& getIndices()  const { return indices;  }
+
+   bool hasTexture = false;
+   bool hasNormal  = false;
+
+   std::vector<float>   verticesRaw; // VBO
+   std::vector<uint32_t> indices;  // EBO
+   std::vector<vertex>   vertices; // VBO
+
+private:
+
+   struct vertexKey {
+      int v;
+      int t;
+      int n;
+
+      // Check if the another key is equal to this one
+      bool operator==(const vertexKey& o) const {
+         return v == o.v && t == o.t && n == o.n;
+      }
+   };
+
+   struct vertexKeyHash {
+      size_t operator()(const vertexKey& k) const {
+         return std::hash<int>()(k.v)
+         ^ (std::hash<int>()(k.t) << 1)
+         ^ (std::hash<int>()(k.n) << 2);
+      }
+   };
+
+};
 
 
 /// @brief: 3D object with storing triangle mesh and the means to render it
@@ -28,12 +78,13 @@ public:
    mat4x4 matScale = matrix_scale(scales[0], scales[1], scales[2]);
 
    unsigned int* model;
+   const class model& verts;
 
    /// @brief: Base color to draw the object (this will be shaded by the camera)
    Color color = Color::White;
 
 
-   object(unsigned int* _model) : model{_model} {};
+   object(const class model& _verts) : verts{_verts} {};
 
 
    void scale(float sx, float sy, float sz);
@@ -46,3 +97,5 @@ private:
 
 
 };
+
+

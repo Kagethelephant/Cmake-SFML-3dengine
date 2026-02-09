@@ -62,13 +62,17 @@ public:
    /// @brief: Draw pixel buffer to the sfml window passed to this object
    void draw();
 
-   /// @brief: Model vertex (really triangles) data locations in the triangle buffer
-   struct model {
-      /// @brief: location of first triangle in triangle buffer
-      unsigned int start;
-      /// @brief: size in triangles of the model
-      unsigned int size;
-   };
+   // /// @brief: Model vertex (really triangles) data locations in the triangle buffer
+   // struct model {
+   //    /// @brief: location of first triangle in triangle buffer
+   //    unsigned int start;
+   //    /// @brief: size in triangles of the model
+   //    unsigned int size;
+   //    /// @brief: location of first triangle in triangle buffer
+   //    unsigned int vertStart;
+   //    /// @brief: size in triangles of the model
+   //    unsigned int vertSize;
+   // };
 
    /// @brief: Pixel array for 32 bit trucolor + alpha (8 bits for r,g,b and alpha) used to raster triangles
    std::vector<std::uint8_t> m_pixelBuffer;
@@ -107,6 +111,8 @@ private:
   
 
    struct triangleAttrib {
+
+      triangleAttrib(tri3d pos, tri3d col, tri3d clip, tri3d frag) : triangle{pos}, color{col}, clipPos{clip}, fragPos{frag} {};
       tri3d triangle;
       tri3d color;
       tri3d clipPos;

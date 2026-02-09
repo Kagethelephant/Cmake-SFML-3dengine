@@ -56,7 +56,7 @@ struct vec2 {
    // @brief: There is not necessarily a 2D cross product but you can use this to determine if a vector points to the left or right of another vector
    float cross(const vec2& v) const { return ((this->c[0] * v.c[1]) - (this->c[1] * v.c[0])); }
    // @brief: Print the vector parameters
-   void print() const {std::cout << "{" << c[0] << ", " << c[1] << ", " << "}" << std::endl;}
+   void print() const {std::cout << "{" << c[0] << ", " << c[1] << "}" << std::endl;}
 
    // Overload functions
    //---------------------------------------------------------------------------------------------
@@ -119,7 +119,7 @@ struct vec3 {
    // @brief: Cross product of 2 vectors that will return the normal vector of the plane created from the 2 vectors
    vec3 cross(const vec3& v) const { return vec3(this->c[1] * v.c[2] - this->c[2] * v.c[1], this->c[2] * v.c[0] - this->c[0] * v.c[2], this->c[0] * v.c[1] - this->c[1] * v.c[0]); }
    // @brief: Print the vector parameters
-   void print() const {std::cout << "{" << c[0] << ", " << c[1] << ", " << c[2] << ", " << "}" << std::endl;}
+   void print() const {std::cout << "{" << c[0] << ", " << c[1] << ", " << c[2] << "}" << std::endl;}
 
    // Operator overloads
    //---------------------------------------------------------------------------------------------
@@ -178,14 +178,14 @@ struct vec4 {
    float& w;
 
    // Constructors (member initializer list)
-   vec4() : c{0.0f, 0.0f, 0.0f, 1.0f}, x{c[0]}, y{c[1]}, z{c[2]}, w{c[3]} {}
-   vec4(float x, float y, float z) : c{x, y, z, 1.0f}, x{c[0]}, y{c[1]}, z{c[2]}, w{c[3]} {}
+   vec4() : c{0.0f, 0.0f, 0.0f, 0.0f}, x{c[0]}, y{c[1]}, z{c[2]}, w{c[3]} {}
+   vec4(float x, float y, float z) : c{x, y, z, 0.0f}, x{c[0]}, y{c[1]}, z{c[2]}, w{c[3]} {}
    vec4(float x, float y, float z, float w) : c{x, y, z, w}, x{c[0]}, y{c[1]}, z{c[2]}, w{c[3]} {}
    // Swizzle constructors
-   vec4(vec2 v2) : c{v2[0], v2[1], 0.0f, 1.0f}, x{c[0]}, y{c[1]}, z{c[2]}, w{c[3]} {}
-   vec4(vec2 v2, float z) : c{v2[0], v2[1], z, 1.0f}, x{c[0]}, y{c[1]}, z{c[2]}, w{c[3]} {}
+   vec4(vec2 v2) : c{v2[0], v2[1], 0.0f, 0.0f}, x{c[0]}, y{c[1]}, z{c[2]}, w{c[3]} {}
+   vec4(vec2 v2, float z) : c{v2[0], v2[1], z, 0.0f}, x{c[0]}, y{c[1]}, z{c[2]}, w{c[3]} {}
    vec4(vec2 v2, float z, float w) : c{v2[0], v2[1], z, w}, x{c[0]}, y{c[1]}, z{c[2]}, w{c[3]} {}
-   vec4(vec3 v3) : c{v3[0], v3[1], v3[2], 1.0f}, x{c[0]}, y{c[1]}, z{c[2]}, w{c[3]} {}
+   vec4(vec3 v3) : c{v3[0], v3[1], v3[2], 0.0f}, x{c[0]}, y{c[1]}, z{c[2]}, w{c[3]} {}
    vec4(vec3 v3, float w) : c{v3[0], v3[1], v3[2], w}, x{c[0]}, y{c[1]}, z{c[2]}, w{c[3]} {}
 
    // Copy constructor and operator

@@ -3,9 +3,11 @@
 uniform vec3 lightPos;
 uniform vec3 lightCol;
 uniform vec3 objCol;
+uniform sampler2D diffuseTex;
 
 in vec3 fragPos;
 in vec2 TexCoord;
+in vec3 vecNorm;
 
 out vec4 FragColor;
 
@@ -22,7 +24,12 @@ void main()
    float diff = max(dot(norm, lightDir), 0.0);
    vec3 diffuse = diff * lightCol;
 
-   vec3 result = (ambient + diffuse) * objCol;
+   // vec3 result = (ambient + diffuse) * objCol;
 
-   FragColor = vec4(result,1.0);
+   vec4 newCol = texture(diffuseTex, TexCoord);
+
+
+   vec4 result = vec4(ambient + diffuse,1.0) * newCol;
+   // FragColor = vec4(result,1.0);
+   FragColor = result;
 }
