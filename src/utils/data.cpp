@@ -1,5 +1,4 @@
 #include "data.hpp"
-#include <SFML/Graphics/Color.hpp>
 
 
 // Define colors
@@ -41,13 +40,3 @@ vec4 hexColorToRGB(Color color) {
 }
 
 
-sf::Color hexColorToSFML(Color color) {
-   vec4 rgbColor;
-   unsigned int hexValue = static_cast<unsigned int>(color);
-   // Extract the R, G, B, and A bytes using bit shifting and masking
-   rgbColor[0] = ((hexValue >> 24) & 0xFF); // Extract the AA byte
-   rgbColor[1] = ((hexValue >> 16) & 0xFF); // Extract the RR byte
-   rgbColor[2] = ((hexValue >> 8) & 0xFF);  // Extract the GG byte
-   rgbColor[3] = ((hexValue) & 0xFF);       // Extract the BB byte
-   return sf::Color(rgbColor[0],rgbColor[1],rgbColor[2],rgbColor[3]);
-}

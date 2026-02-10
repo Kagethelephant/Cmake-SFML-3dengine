@@ -1,8 +1,6 @@
 #pragma once
 
-#include <SFML/Graphics.hpp>
 #include "matrix.hpp"
-#include <SFML/Graphics/Color.hpp>
 #include "utils.hpp"
 
 
@@ -36,5 +34,4 @@ vec4 hexColorToFloat(Color hexValue);
 vec4 hexColorToRGB(Color color);
 
 
-sf::Color hexColorToSFML(Color color);
 

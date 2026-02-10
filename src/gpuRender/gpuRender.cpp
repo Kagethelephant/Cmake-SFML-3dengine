@@ -238,6 +238,9 @@ void gl_vertexObject::render(object& obj){
    // glDisable(GL_CULL_FACE);
    // glEnable(GL_DEPTH_TEST);
    glDrawElements(GL_TRIANGLES,obj.verts.indices.size(), GL_UNSIGNED_INT, 0);
+
+   // delete the texture you created to avoid leaking VRAM
+   glDeleteTextures(1, &tex);
 }
 
 
@@ -259,7 +262,7 @@ void gl_vertexObject::draw() {
 }
 
 
-void gl_vertexObject::draw(const std::vector<u_int8_t> buf) {
+void gl_vertexObject::draw(const std::vector<std::uint8_t> buf) {
 
    glBindTexture(GL_TEXTURE_2D, window.fbo.getTexture());
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);

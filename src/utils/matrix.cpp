@@ -32,7 +32,7 @@ mat4x4 matrix_transform(float x, float y, float z, float u, float v, float w) {
 mat4x4 matrix_project(float fov, float a, float n, float f) {
    // m[1][1] is normally negative but since we are drawing as y = 0 is at the top of the screen
    // we need to invert the y values since y = 0 should be towards the bottom of the screen for most OBJ meshes
-   float fovRadians = fov * (M_PI / 180.0f); // Convert degrees to radians
+   float fovRadians = fov * (3.14159 / 180.0f); // Convert degrees to radians
    float tanHalfFOV = tanf(fovRadians / 2.0f);
 
    float t = tanHalfFOV * n;

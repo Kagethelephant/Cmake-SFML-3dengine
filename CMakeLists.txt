@@ -4,7 +4,7 @@ project(TST LANGUAGES CXX)
 
 # Require C++14
 # Force compiler to adhere to C++ standard
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # create complie_commands.json so nvim can read the cmake include paths
@@ -16,6 +16,8 @@ enable_language(C) # This enables comiling for the glad library written in C
 
 # Add GLFW CMake source location
 add_subdirectory(lib/GLFW)
+# Add GLFW CMake source location
+add_subdirectory(lib/freeType)
 
 # Combine all the source files under SOURCE_FILES variable
 set(SOURCE_FILES
@@ -43,17 +45,12 @@ target_include_directories(${PROJECT_NAME} PRIVATE
    ${CMAKE_SOURCE_DIR}/lib/freeType/include
 )
 
-# Find SFML
-find_package(SFML 3 REQUIRED COMPONENTS Graphics Window System)
-find_package(Freetype REQUIRED)
+# find_package(Freetype REQUIRED)
 
 # Link libraries to the excecutable
 target_link_libraries(${PROJECT_NAME} PRIVATE 
-   SFML::Graphics
-   SFML::Window
-   SFML::System
    glfw
-   Freetype::Freetype
+   freetype
 )
 
 

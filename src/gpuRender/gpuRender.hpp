@@ -81,7 +81,7 @@ public:
    void bindRender();
    void render(object& obj);
    void draw();
-   void draw(const std::vector<u_int8_t> buf);
+   void draw(const std::vector<std::uint8_t> buf);
 
    // Object to store the location of each of the meshes in the vertex data
    struct model {
