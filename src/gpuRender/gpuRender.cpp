@@ -5,14 +5,19 @@
 #include "app/object.hpp"
 #include "shaders/shader.hpp"
 
+#include <glad/glad.h>
+#include <GL/gl.h>
+#include <GLFW/glfw3.h>
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <sys/types.h>
 #include <vector>
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+// #define STB_IMAGE_IMPLEMENTATION
+// #include <stb_image.h>
+
 
 
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -155,28 +160,32 @@ void gl_vertexObject::bindRender(){
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 void gl_vertexObject::render(object& obj){
 
-   int w, h, channels;
-   stbi_set_flip_vertically_on_load(true);
+   // int w, h, channels;
+   // stbi_set_flip_vertically_on_load(true);
 
-   unsigned char* data = stbi_load(
-      "../resources/objects/yoshi/yoshi_grp.png",
-      &w, &h,
-      &channels,
-      0
-   );
+   // unsigned char* data = stbi_load(
+   //    "../resources/objects/yoshi/yoshi_grp.png",
+   //    &w, &h,
+   //    &channels,
+   //    0
+   // );
 
-   if (!data) {
-      throw std::runtime_error("Failed to load texture");
-   }
+   // if (!data) {
+   //    throw std::runtime_error("Failed to load texture");
+   // }
 
+
+
+   // stbi_image_free(data);
+   texture texObj = obj.mod.loadTexture("../resources/objects/yoshi/yoshi_grp.png");
 
    GLuint tex;
    glGenTextures(1, &tex);
    glBindTexture(GL_TEXTURE_2D, tex);
 
-   GLenum format = (channels == 4) ? GL_RGBA : GL_RGB;
+   GLenum format = (texObj.channels == 4) ? GL_RGBA : GL_RGB;
 
-   glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, format, GL_UNSIGNED_BYTE, data);
+   glTexImage2D(GL_TEXTURE_2D, 0, format, texObj.w, texObj.h, 0, format, GL_UNSIGNED_BYTE, texObj.data);
 
    glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -185,13 +194,13 @@ void gl_vertexObject::render(object& obj){
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-   stbi_image_free(data);
+
 
    // Bind Vertex Array Object
    glBindVertexArray(vao);
    // Setup the VBO using the VAO
    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-   glBufferData(GL_ARRAY_BUFFER, obj.verts.verticesRaw.size() * sizeof(GLfloat), obj.verts.verticesRaw.data(), GL_STATIC_DRAW);
+   glBufferData(GL_ARRAY_BUFFER, obj.mod.verticesRaw.size() * sizeof(GLfloat), obj.mod.verticesRaw.data(), GL_STATIC_DRAW);
 
    // positions at location 0
    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
@@ -213,7 +222,7 @@ void gl_vertexObject::render(object& obj){
    // glEnableVertexAttribArray(0);  
    // Setup the EBO using the VAO
    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-   glBufferData(GL_ELEMENT_ARRAY_BUFFER, obj.verts.indices.size() * sizeof(float), obj.verts.indices.data(), GL_STATIC_DRAW);
+   glBufferData(GL_ELEMENT_ARRAY_BUFFER, obj.mod.indices.size() * sizeof(float), obj.mod.indices.data(), GL_STATIC_DRAW);
 
 
 
@@ -237,7 +246,7 @@ void gl_vertexObject::render(object& obj){
    glUniformMatrix4fv(glGetUniformLocation(shaderProgram3D, "transform"),1,GL_FALSE,&obj.matTransform.m[0][0]);
    // glDisable(GL_CULL_FACE);
    // glEnable(GL_DEPTH_TEST);
-   glDrawElements(GL_TRIANGLES,obj.verts.indices.size(), GL_UNSIGNED_INT, 0);
+   glDrawElements(GL_TRIANGLES,obj.mod.indices.size(), GL_UNSIGNED_INT, 0);
 
    // delete the texture you created to avoid leaking VRAM
    glDeleteTextures(1, &tex);

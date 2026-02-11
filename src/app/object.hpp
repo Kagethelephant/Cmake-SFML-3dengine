@@ -3,6 +3,7 @@
 #include "utils/data.hpp"
 #include "utils/matrix.hpp"
 #include <vector>
+#include <unordered_map>
 
 
 struct vertex {
@@ -10,6 +11,21 @@ struct vertex {
    vec3 normal;
    vec2 uv;
 };
+
+
+struct texture {
+   int w;
+   int h;
+   int channels;
+   unsigned char* data;
+};
+
+struct material {
+   std::string name;
+   texture diffuseTex;
+};
+
+
 
 /// @brief: Loads vertex data into the triangle buffer from an OBJ file and saves the 
 /// location with a model object 
@@ -29,6 +45,8 @@ public:
    std::vector<float>   verticesRaw; // VBO
    std::vector<uint32_t> indices;  // EBO
    std::vector<vertex>   vertices; // VBO
+
+   texture loadTexture(const std::string& filename);
 
 private:
 
@@ -50,6 +68,10 @@ private:
          ^ (std::hash<int>()(k.n) << 2);
       }
    };
+
+   void loadMTL(const std::string& path, std::unordered_map<std::string, material>& materials);
+
+   std::string getDirectory(const std::string& path);
 
 };
 
@@ -77,14 +99,13 @@ public:
 
    mat4x4 matScale = matrix_scale(scales[0], scales[1], scales[2]);
 
-   unsigned int* model;
-   const class model& verts;
+   model& mod;
 
    /// @brief: Base color to draw the object (this will be shaded by the camera)
    Color color = Color::White;
 
 
-   object(const class model& _verts) : verts{_verts} {};
+   object(model& _mod) : mod{_mod} {};
 
 
    void scale(float sx, float sy, float sz);

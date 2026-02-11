@@ -120,63 +120,63 @@ camera::camera(gl_window& _window) : window{_window}{
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 void camera::render(const object& object) {
   
-   // Create the direction of the light used to shade our triangles
-   tri3d color(hexColorToRGB(object.color), hexColorToRGB(object.color), hexColorToRGB(object.color));
+   // // Create the direction of the light used to shade our triangles
+   // tri3d color(hexColorToRGB(object.color), hexColorToRGB(object.color), hexColorToRGB(object.color));
 
-   // Fetch model associated with object
-   model mod = object.verts;
+   // // Fetch model associated with object
+   // model mod = object.verts;
 
-   // Model * View * Project matrix
-   mat4x4 vp = m_matView * m_matProject;
-   mat4x4 m = object.matScale * object.matTransform;
+   // // Model * View * Project matrix
+   // mat4x4 vp = m_matView * m_matProject;
+   // mat4x4 m = object.matScale * object.matTransform;
 
-   clipVertices.resize(mod.vertices.size());
-   viewVertices.resize(mod.vertices.size());
+   // clipVertices.resize(mod.vertices.size());
+   // viewVertices.resize(mod.vertices.size());
 
-   // Vertex shader (Model View Projection matrix multiplication)
-   for(int i=0; i<mod.vertices.size(); i ++){
-      vertex index = mod.vertices[i];
-      vec4 vertice = vec4(index.pos, 1.0f) * m;
+   // // Vertex shader (Model View Projection matrix multiplication)
+   // for(int i=0; i<mod.vertices.size(); i ++){
+   //    vertex index = mod.vertices[i];
+   //    vec4 vertice = vec4(index.pos, 1.0f) * m;
 
-      viewVertices[i] = vertice;
-      clipVertices[i] = vertice * vp;
-   }
+   //    viewVertices[i] = vertice;
+   //    clipVertices[i] = vertice * vp;
+   // }
 
 
-   for(int i=0; i<mod.indices.size(); i += 3){
+   // for(int i=0; i<mod.indices.size(); i += 3){
 
-      // Generate triangles from vertices and indices
-      int i0 = mod.indices[i];
-      int i1 = mod.indices[i+1];
-      int i2 = mod.indices[i+2];
-      tri3d clipTri(clipVertices[i0], clipVertices[i1], clipVertices[i2]);
-      tri3d viewTri(viewVertices[i0], viewVertices[i1], viewVertices[i2]);
-      m_triangleAttribs.push_back({clipTri, color, clipTri, viewTri});
-   }
+   //    // Generate triangles from vertices and indices
+   //    int i0 = mod.indices[i];
+   //    int i1 = mod.indices[i+1];
+   //    int i2 = mod.indices[i+2];
+   //    tri3d clipTri(clipVertices[i0], clipVertices[i1], clipVertices[i2]);
+   //    tri3d viewTri(viewVertices[i0], viewVertices[i1], viewVertices[i2]);
+   //    m_triangleAttribs.push_back({clipTri, color, clipTri, viewTri});
+   // }
 
-   // Clip triangles.
-   clipTriangles();
+   // // Clip triangles.
+   // clipTriangles();
 
-   for(int i=0; i< m_triangleAttribs.size(); i++) {
-      camera::triangleAttrib& attrib = m_triangleAttribs[i];
-      tri3d& triangle = attrib.triangle;
+   // for(int i=0; i< m_triangleAttribs.size(); i++) {
+   //    camera::triangleAttrib& attrib = m_triangleAttribs[i];
+   //    tri3d& triangle = attrib.triangle;
 
-      // Clip space to NDC
-      triangle.perspectiveDivide();
+   //    // Clip space to NDC
+   //    triangle.perspectiveDivide();
 
-      for (int i=0; i<3; i++){
-         // Projection results are between -1 and 1. So shift to the positive and scale to fit screen
-         // Y in SFML is +y = down so we need to reverse the y direction
-         triangle.v[i][0] = (triangle.v[i][0] + 1.0f) * 0.5f * m_resolution[0];
-         triangle.v[i][1] = (triangle.v[i][1] + 1.0f) * 0.5f * m_resolution[1];
-         // triangle.v[i][1] = (1.0f - triangle.v[i][1]) * 0.5f * m_resolution[1];
-      }
-      
-      // Do not raster if winding is incorrect (cull back faces)
-      if(!backFaceCulling(triangle)){ raster(attrib);}
-   }
-   // Clear the buffer of triangles for the next itteration
-   m_triangleAttribs.clear();
+   //    for (int i=0; i<3; i++){
+   //       // Projection results are between -1 and 1. So shift to the positive and scale to fit screen
+   //       // Y in SFML is +y = down so we need to reverse the y direction
+   //       triangle.v[i][0] = (triangle.v[i][0] + 1.0f) * 0.5f * m_resolution[0];
+   //       triangle.v[i][1] = (triangle.v[i][1] + 1.0f) * 0.5f * m_resolution[1];
+   //       // triangle.v[i][1] = (1.0f - triangle.v[i][1]) * 0.5f * m_resolution[1];
+   //    }
+   //    
+   //    // Do not raster if winding is incorrect (cull back faces)
+   //    if(!backFaceCulling(triangle)){ raster(attrib);}
+   // }
+   // // Clear the buffer of triangles for the next itteration
+   // m_triangleAttribs.clear();
 }
 
 

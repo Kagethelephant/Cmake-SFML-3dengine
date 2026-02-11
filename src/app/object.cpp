@@ -1,5 +1,9 @@
 #include "object.hpp"
 
+#include <glad/glad.h>
+#include <GL/gl.h>
+#include <GLFW/glfw3.h>
+
 #include <math.h>
 #include "utils/matrix.hpp"
 #include <fstream>
@@ -7,6 +11,8 @@
 #include <iostream>
 #include <unordered_map>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
 
 // UPDATE POSITION
@@ -29,6 +35,65 @@ void object::rotate(float u, float v, float w){
 }
 
 
+// ------------------------- Helper -------------------------
+std::string model::getDirectory(const std::string& path) {
+   size_t pos = path.find_last_of("/\\");
+   if (pos == std::string::npos)
+      return "";
+   return path.substr(0, pos + 1); // include trailing slash
+}
+
+
+// ------------------------- Texture Loader -------------------------
+texture model::loadTexture(const std::string& filename) {
+
+   texture tex;
+   stbi_set_flip_vertically_on_load(true);
+
+   tex.data = stbi_load(filename.c_str(), &tex.w, &tex.h, &tex.channels, 0);
+   if (!tex.data)
+      throw std::runtime_error("Failed to load texture: " + filename);
+
+   GLenum format;
+   if (tex.channels == 1) format = GL_RED;
+   else if (tex.channels == 3) format = GL_RGB;
+   else if (tex.channels == 4) format = GL_RGBA;
+   else {
+      stbi_image_free(tex.data);
+      throw std::runtime_error("Unsupported image channel count: " + filename);
+   }
+
+   return tex;
+}
+
+// ------------------------- MTL Loader -------------------------
+void model::loadMTL(const std::string& path, std::unordered_map<std::string, material>& materials) {
+   std::ifstream file(path);
+   if (!file) throw std::runtime_error("Failed to open MTL: " + path);
+
+   std::string dir = getDirectory(path);
+   material* current = nullptr;
+   std::string line;
+
+   while (std::getline(file, line)) {
+      std::stringstream ss(line);
+      std::string type;
+      ss >> type;
+
+      if (type == "newmtl") {
+         std::string name;
+         ss >> name;
+         materials[name] = {};
+         materials[name].name = name;
+         current = &materials[name];
+      } 
+      else if (type == "map_Kd" && current) {
+         std::string texPath;
+         ss >> texPath;
+         current->diffuseTex = loadTexture(dir + texPath);
+      }
+   }
+}
 
 
 model::model(const std::string& filename, bool ccwWinding) {
