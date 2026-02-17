@@ -18,60 +18,21 @@ int main(int argc, char* argv[])
 {
 
 
-
-   // unsigned int cowModel;
-   // unsigned int potModel;
-   // unsigned int cowModelcpu;
-   // unsigned int potModelcpu;
-
-   // // Create the 3D objects to be rendered
-   // object cow1(&cowModel);
-   // object cow2(&cowModel);
-   // object cow3(&cowModel);
-   // object teapot(&potModel);
-
-   // object cow1cpu(&cowModelcpu);
-   // object cow2cpu(&cowModelcpu);
-   // object cow3cpu(&cowModelcpu);
-   // object teapotcpu(&potModelcpu);
-   // cow1.color = Color::White;
-   // cow2.color = Color::Red;
-   // cow3.color = Color::Blue;
-   // teapot.color = Color::Green;
-   // cow1.move(-12, 0, -10);
-   // cow2.move(0, 0, -10);
-   // cow3.move(12, 0, -10);
-   // teapot.scale(.02,.02,.02);
-   // teapot.move(-12, 0, 0);
-
-   // cow1cpu.color = Color::White;
-   // cow2cpu.color = Color::Red;
-   // cow3cpu.color = Color::Blue;
-   // teapotcpu.color = Color::Green;
-   // cow1cpu.move(-12, 0, -10);
-   // cow2cpu.move(0, 0, -10);
-   // cow3cpu.move(12, 0, -10);
-   // teapotcpu.scale(.02,.02,.02);
-   // teapotcpu.move(-12, 0, 0);
-
    // Global random number generator (global so everything shares the same seed)
    randObj rander(false, 13412234);
-
-
    bool ogl = true;
-
-
 
    // ----------------------------- CREATE WINDOW AND OpenGL CONEXT -------------------------------
    //Create scope here so objects can call destructors on open gl objects before opengl is terminated
    {
 
       model yoshi("../resources/objects/yoshi/yoshi.obj",true);
-      model wooper("../resources/objects/wooper/wooper.obj",true);
+      model Arcanine("../resources/objects/Arcanine/Arcanine.obj",true);
 
       object yoshi1(yoshi);
-      object wooper1(wooper);
-      wooper1.move(-10,0,-10);
+      object arcanine1(Arcanine);
+      arcanine1.move(-10,0,-10);
+      arcanine1.scale(10,10,10);
       yoshi1.move(0,0,-10);
       yoshi1.rotate(0,5,0);
 
@@ -101,9 +62,6 @@ int main(int argc, char* argv[])
 
 
       camera cam(window);
-
-      // cowModelcpu = cam.createModel("../resources/objects/cow.obj", true);
-      // potModelcpu = cam.createModel("../resources/objects/teapot.obj");
 
       bool blocked = false;
       bool enterPreviouslyPressed = false;
@@ -141,10 +99,7 @@ int main(int argc, char* argv[])
          if(!ogl){
 
             cam.render(yoshi1);
-            cam.render(wooper1);
-            // cam.render(cow2cpu);
-            // cam.render(cow3cpu);
-            // cam.render(teapotcpu);
+            cam.render(arcanine1);
             // // Draw the camera 2D projection to the window
             vao.draw(cam.m_pixelBuffer);
             cam.draw();
@@ -153,10 +108,7 @@ int main(int argc, char* argv[])
             vao.bindRender();
 
             vao.render(yoshi1);
-            vao.render(wooper1);
-            // vao.render(cow2);
-            // vao.render(cow3);
-            // vao.render(teapot);
+            vao.render(arcanine1);
          }
 
          text.RenderText(shaderProgramUI,window,"X: " + std::to_string(vao.camPosition[0]), 10, 10);

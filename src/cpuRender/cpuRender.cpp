@@ -11,7 +11,6 @@
 #include "utils/matrix.hpp"
 #include "utils/utils.hpp"
 #include "app/object.hpp"
-#include <fstream>
 
 
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -62,55 +61,7 @@ camera::camera(gl_window& _window) : window{_window}{
    rotate(0, 0, 0);
 }
 
-// unsigned int camera::createModel(std::string filename, bool ccwWinding) {
 
-//    model newModel;
-
-//    newModel.vertStart = m_vertices.size()/3;
-//    newModel.start = m_indices.size();
-//    // Try to open the file
-//    std::ifstream obj(filename);
-//    // Create an array to hold the chars of each line
-//    // cycle through all the lines in the file until we are at the end
-//    while(!obj.eof()) {
-//       // Create a char array to store the line from the file
-//       char line[128];
-//       obj.getline(line,128);
-//       // Pass the line from the file "stream" into the line
-//       std::stringstream stream;
-//       stream << line;
-//       // Check if the line is a vertice or a triangle
-//       char junk;
-//       if(line[0] == 'v') {
-//          // If it is a vertice then pull the xyz values from the string and put it in the vert array
-//          float x,y,z;
-//          stream >> junk >> x >> y >> z;
-//          m_vertices.push_back(x);
-//          m_vertices.push_back(y);
-//          m_vertices.push_back(z);
-//       }
-//       if(line[0] == 'f') {
-//          // If it is a triangle then get the corosponding vertices and load it into the mesh
-//          
-//          // If it is a triangle then get the corosponding vertices and load it into the mesh
-//          int f[3];
-//          if(ccwWinding){ stream >> junk >> f[0] >> f[2] >> f[1]; }
-//          else {          stream >> junk >> f[0] >> f[1] >> f[2]; }
-
-//          m_indices.push_back(f[0]+newModel.vertStart-1);
-//          m_indices.push_back(f[1]+newModel.vertStart-1);
-//          m_indices.push_back(f[2]+newModel.vertStart-1);
-//       }
-//    }
-//    newModel.vertSize = m_vertices.size()/3 - newModel.vertStart;
-//    newModel.size = m_indices.size()-newModel.start;
-//    models.push_back(newModel);
-
-//    clipVertices.resize(m_vertices.size());
-//    viewVertices.resize(m_vertices.size());
-
-//    return models.size()-1;
-// }
 
 
 

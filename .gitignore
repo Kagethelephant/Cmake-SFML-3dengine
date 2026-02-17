@@ -27,7 +27,6 @@ _deps/
 
 # Object files and executables
 *.o
-*.obj
 *.exe
 *.dll
 *.so
