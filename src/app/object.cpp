@@ -10,7 +10,7 @@
 #include <sstream>
 #include <iostream>
 #include <string>
-#include <strstream>
+#include <sstream>
 #include <unordered_map>
 
 #define STB_IMAGE_IMPLEMENTATION

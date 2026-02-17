@@ -386,9 +386,15 @@ void camera::raster(const camera::triangleAttrib& attrib) {
 
                vec2 uv = ((uvOverW0 * alpha + uvOverW1 * beta + uvOverW2 * gamma) * interpW);
 
-               int tx = std::clamp(int(uv.x * (texW - 1)), 0, texW - 1);
-               int ty = std::clamp(int(uv.y * (texH - 1)), 0, texH - 1);
 
+               // Wrap instead of clamp like opengl does by default
+               auto fract = [](float x)
+               { return x - std::floor(x); };
+               float cu = fract(uv.x);
+               float cv = fract(uv.y);
+
+               int tx = (cu >= 1.0f) ? (texW - 1) : (int)std::floor(cu * (float)texW);
+               int ty = (cv >= 1.0f) ? (texH - 1) : (int)std::floor(cv * (float)texH);
 
                int texelIndex = (ty * texW + tx) * texC;
 
