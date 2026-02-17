@@ -120,63 +120,75 @@ camera::camera(gl_window& _window) : window{_window}{
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 void camera::render(const object& object) {
   
-   // // Create the direction of the light used to shade our triangles
-   // tri3d color(hexColorToRGB(object.color), hexColorToRGB(object.color), hexColorToRGB(object.color));
+   // Create the direction of the light used to shade our triangles
+   tri3d color(hexColorToRGB(object.color), hexColorToRGB(object.color), hexColorToRGB(object.color));
 
-   // // Fetch model associated with object
-   // model mod = object.verts;
+   // Fetch model associated with object
+   model mod = object.mod;
 
-   // // Model * View * Project matrix
-   // mat4x4 vp = m_matView * m_matProject;
-   // mat4x4 m = object.matScale * object.matTransform;
+   // Model * View * Project matrix
+   mat4x4 vp = m_matView * m_matProject;
+   mat4x4 m = object.matScale * object.matTransform;
 
-   // clipVertices.resize(mod.vertices.size());
-   // viewVertices.resize(mod.vertices.size());
+   clipVertices.resize(mod.vertices.size());
+   viewVertices.resize(mod.vertices.size());
+   uvVertices.resize(mod.vertices.size());
 
-   // // Vertex shader (Model View Projection matrix multiplication)
-   // for(int i=0; i<mod.vertices.size(); i ++){
-   //    vertex index = mod.vertices[i];
-   //    vec4 vertice = vec4(index.pos, 1.0f) * m;
+   // Vertex shader (Model View Projection matrix multiplication)
+   for(int i=0; i<mod.vertices.size(); i ++){
+      vertex index = mod.vertices[i];
+      vec4 vertice = index.pos * m;
+      vec2 uv = index.uv;
 
-   //    viewVertices[i] = vertice;
-   //    clipVertices[i] = vertice * vp;
-   // }
+      viewVertices[i] = vertice;
+      clipVertices[i] = vertice * vp;
+      uvVertices[i] = uv;
+   }
 
+   for (subMesh mesh : mod.subMeshes) {
+      
+      texW = mesh.tex.w;
+      texH = mesh.tex.h;
+      texC = mesh.tex.channels;
+      texD = mesh.tex.data;
 
-   // for(int i=0; i<mod.indices.size(); i += 3){
+      for(int i=0; i< mesh.indices.size(); i += 3){
 
-   //    // Generate triangles from vertices and indices
-   //    int i0 = mod.indices[i];
-   //    int i1 = mod.indices[i+1];
-   //    int i2 = mod.indices[i+2];
-   //    tri3d clipTri(clipVertices[i0], clipVertices[i1], clipVertices[i2]);
-   //    tri3d viewTri(viewVertices[i0], viewVertices[i1], viewVertices[i2]);
-   //    m_triangleAttribs.push_back({clipTri, color, clipTri, viewTri});
-   // }
+         // Generate triangles from vertices and indices
+         int i0 = mesh.indices[i];
+         int i1 = mesh.indices[i+1];
+         int i2 = mesh.indices[i+2];
+         tri3d clipTri(clipVertices[i0], clipVertices[i1], clipVertices[i2]);
+         tri3d viewTri(viewVertices[i0], viewVertices[i1], viewVertices[i2]);
+         tri2d uvTri(uvVertices[i0], uvVertices[i1], uvVertices[i2]);
 
-   // // Clip triangles.
-   // clipTriangles();
+         m_triangleAttribs.push_back({clipTri, color, clipTri, viewTri, uvTri});
+      }
 
-   // for(int i=0; i< m_triangleAttribs.size(); i++) {
-   //    camera::triangleAttrib& attrib = m_triangleAttribs[i];
-   //    tri3d& triangle = attrib.triangle;
+      // Clip triangles.
+      clipTriangles();
 
-   //    // Clip space to NDC
-   //    triangle.perspectiveDivide();
+      for(int i=0; i< m_triangleAttribs.size(); i++) {
+         camera::triangleAttrib& attrib = m_triangleAttribs[i];
+         tri3d& triangle = attrib.triangle;
 
-   //    for (int i=0; i<3; i++){
-   //       // Projection results are between -1 and 1. So shift to the positive and scale to fit screen
-   //       // Y in SFML is +y = down so we need to reverse the y direction
-   //       triangle.v[i][0] = (triangle.v[i][0] + 1.0f) * 0.5f * m_resolution[0];
-   //       triangle.v[i][1] = (triangle.v[i][1] + 1.0f) * 0.5f * m_resolution[1];
-   //       // triangle.v[i][1] = (1.0f - triangle.v[i][1]) * 0.5f * m_resolution[1];
-   //    }
-   //    
-   //    // Do not raster if winding is incorrect (cull back faces)
-   //    if(!backFaceCulling(triangle)){ raster(attrib);}
-   // }
-   // // Clear the buffer of triangles for the next itteration
-   // m_triangleAttribs.clear();
+         // Clip space to NDC
+         triangle.perspectiveDivide();
+
+         for (int i=0; i<3; i++){
+            // Projection results are between -1 and 1. So shift to the positive and scale to fit screen
+            // Y in SFML is +y = down so we need to reverse the y direction
+            triangle.v[i][0] = (triangle.v[i][0] + 1.0f) * 0.5f * m_resolution[0];
+            triangle.v[i][1] = (triangle.v[i][1] + 1.0f) * 0.5f * m_resolution[1];
+            // triangle.v[i][1] = (1.0f - triangle.v[i][1]) * 0.5f * m_resolution[1];
+         }
+
+         // Do not raster if winding is incorrect (cull back faces)
+         if(!backFaceCulling(triangle)){ raster(attrib);}
+      }
+      // Clear the buffer of triangles for the next itteration
+      m_triangleAttribs.clear();
+   }
 }
 
 
@@ -195,6 +207,7 @@ void camera::clipTriangles() {
    int next, last;
    float t1, t2;
    vec4 p1, p2;
+   vec2 p21, p22;
 
    for (vec4& plane : m_planes) {
       for(triangleAttrib& attrib : m_triangleAttribs) {
@@ -202,6 +215,7 @@ void camera::clipTriangles() {
          tri3d& t = attrib.triangle;
          tri3d& c = attrib.color;
          tri3d& f = attrib.fragPos;
+         tri2d& uv = attrib.uv;
          // For consiseness check what points are out of the current plane ahead of time
          bool clipped[3] = {pointOutOfPlane(t.v[0], plane), pointOutOfPlane(t.v[1], plane), pointOutOfPlane(t.v[2], plane)};
          // If all of the points are not clipped by this plane then pass along the triangle to the next step
@@ -235,9 +249,14 @@ void camera::clipTriangles() {
                   p1 = f.v[i] + (f.v[last] - f.v[i]) * t1;
                   p2 = f.v[next] + (f.v[last] - f.v[next]) * t2;
                   tri3d frag1(p1,p2,f.v[last]);
+
+                  // New screen space coords lerped for new points
+                  p21 = uv.v[i] + (uv.v[last] - uv.v[i]) * t1;
+                  p22 = uv.v[next] + (uv.v[last] - uv.v[next]) * t2;
+                  tri2d uv1(p21,p22,uv.v[last]);
                   // Make a new triangle with the 2 new points and the one unclipped point
                   // emplace_back avoids making another copy like push_back
-                  splitBuffer.push_back({tri1,color1,tri1, frag1});
+                  splitBuffer.push_back({tri1,color1,tri1, frag1, uv1});
                   break;
                }
                // If there is only one point and it is the current point
@@ -264,8 +283,14 @@ void camera::clipTriangles() {
                   tri3d frag1(p1,p2,f.v[next]);
                   tri3d frag2(p1,f.v[next],f.v[last]);
 
-                  splitBuffer.push_back({tri1,color1,tri1, frag1});
-                  splitBuffer.push_back({tri2,color2,tri2, frag2});
+                  // New screen space coords lerped for new points
+                  p21 = uv.v[i] + (uv.v[last] - uv.v[i]) * t1;
+                  p22 = uv.v[i] + (uv.v[next] - uv.v[i]) * t2;
+                  tri2d uv1(p21,p22,uv.v[next]);
+                  tri2d uv2(p21,uv.v[next],uv.v[last]);
+
+                  splitBuffer.push_back({tri1,color1,tri1, frag1, uv1});
+                  splitBuffer.push_back({tri2,color2,tri2, frag2, uv2});
                   break;
                }
             }
@@ -312,6 +337,10 @@ void camera::raster(const camera::triangleAttrib& attrib) {
    vec4 colOverW0 = attrib.color.v[0] * invW0;
    vec4 colOverW1 = attrib.color.v[1] * invW1;
    vec4 colOverW2 = attrib.color.v[2] * invW2;
+   // Calculate the fragPos / w for perspective correction
+   vec2 uvOverW0 = attrib.uv.v[0] * invW0;
+   vec2 uvOverW1 = attrib.uv.v[1] * invW1;
+   vec2 uvOverW2 = attrib.uv.v[2] * invW2;
 
    // Get the coordinates of the rectangle that will cover the triangle (clamped to the buffer size)
    int xmax = std::min(std::max(std::max(tri.v[0][0], tri.v[1][0]), tri.v[2][0]), m_resolution[0] - 1.0f);
@@ -404,11 +433,39 @@ void camera::raster(const camera::triangleAttrib& attrib) {
                // Get interpolated color
                vec4 interpColor = ((colOverW0 * alpha + colOverW1 * beta + colOverW2 * gamma) * interpW);
 
+               vec2 uv = ((uvOverW0 * alpha + uvOverW1 * beta + uvOverW2 * gamma) * interpW);
+
+               int tx = std::clamp(int(uv.x * (texW - 1)), 0, texW - 1);
+               int ty = std::clamp(int(uv.y * (texH - 1)), 0, texH - 1);
+
+
+               int texelIndex = (ty * texW + tx) * texC;
+
+               float r, g, b, a = 1.0f;
+
+               if (texC == 1) {
+                  r = g = b = texD[texelIndex] / 255.0f;
+               }
+               else if (texC == 3) {
+                  r = texD[texelIndex + 0];
+                  g = texD[texelIndex + 1];
+                  b = texD[texelIndex + 2];
+               }
+               else if (texC == 4) {
+                  r = texD[texelIndex + 0];
+                  g = texD[texelIndex + 1];
+                  b = texD[texelIndex + 2];
+                  a = texD[texelIndex + 3];
+               }
+
+               vec4 texColor(r, g, b, a);
+
+
                // Calculate diffuse lighting
                vec3 lightDir = (lightPos - fragPos).normal();
                float diffuse = std::max(norm.dot(lightDir), 0.0f);
                // Calculate color by multiplying object color by ambient + diffuse lighting respectively
-               vec4 result = interpColor * vec4((lightCol * 0.2f + lightCol * diffuse),1.0f);
+               vec4 result = texColor * vec4((lightCol * 0.2f + lightCol * diffuse),1.0f);
 
                // Put pixel with clamped color components to match 32-bit color
                m_pixelBuffer[index*4] =     std::clamp(result[0], 0.0f, 255.0f);

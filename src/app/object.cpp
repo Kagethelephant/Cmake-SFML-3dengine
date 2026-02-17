@@ -9,6 +9,8 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <string>
+#include <strstream>
 #include <unordered_map>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -71,25 +73,31 @@ void model::loadMTL(const std::string& path, std::unordered_map<std::string, mat
    std::ifstream file(path);
    if (!file) throw std::runtime_error("Failed to open MTL: " + path);
 
+   // Get the directory of the file to find the textures
    std::string dir = getDirectory(path);
    material* current = nullptr;
    std::string line;
 
+   // itterate through the entire mtl file
    while (std::getline(file, line)) {
       std::stringstream ss(line);
       std::string type;
       ss >> type;
 
+      // Load the name of the material into the map
+      // This works because the "newmtl" will come before the "map_Kd" so current will be set before "map_Kd"
       if (type == "newmtl") {
          std::string name;
          ss >> name;
-         materials[name] = {};
-         materials[name].name = name;
+         materials[name] = {}; // Creates another element in the map if it does not exist
+         materials[name].name = name; // Load name into the name po
          current = &materials[name];
       } 
+      // Load the texture into the material map
       else if (type == "map_Kd" && current) {
          std::string texPath;
          ss >> texPath;
+         // Load texture from the path
          current->diffuseTex = loadTexture(dir + texPath);
       }
    }
@@ -104,13 +112,18 @@ model::model(const std::string& filename, bool ccwWinding) {
       throw std::runtime_error("Failed to open OBJ file");
    }
 
+   std::string dir = getDirectory(filename);
+
    // Raw OBJ attribute streams
    std::vector<vec3> objPositions;
    std::vector<vec3> objNormals;
    std::vector<vec2> objTexcoords;
 
    // (v,t,n) → unified vertex index hashtable 
+   // This is the key, the value, and the hash callback function to generate the hash key
    std::unordered_map<vertexKey, uint32_t, vertexKeyHash> vertexCache;
+
+   subMesh* currentSubmesh;
 
    std::string line;
    while (std::getline(obj, line)) {
@@ -146,10 +159,34 @@ model::model(const std::string& filename, bool ccwWinding) {
          objNormals.push_back(n);
       }
 
+      else if (type == "mtllib") {
+         std::string mtlfile;
+         stream >> mtlfile;
+         loadMTL(dir + mtlfile, materialMap);
+      }
+
+      else if (type == "usemtl") {
+         std::string mtlName;
+         stream >> mtlName;
+         material mtl = materialMap[mtlName];
+         subMesh newSubmesh;
+         newSubmesh.tex = mtl.diffuseTex;
+         subMeshes.push_back(newSubmesh);
+      }
+
       // -------------------------------------------------
       // FACE (triangles, quads, ngons)
       // -------------------------------------------------
       else if (type == "f") {
+         
+         if(subMeshes.size() == 0){
+            subMesh newSubmesh;
+            newSubmesh.textured = false;
+            subMeshes.push_back(newSubmesh);
+         }
+         
+         // Get the top submesh in the submesh array
+         subMesh& currentMesh = subMeshes.back();
 
          // Temporary storage for one polygon face
          std::vector<int> vIdx;
@@ -215,12 +252,12 @@ model::model(const std::string& filename, bool ccwWinding) {
                // vertexCache.find() will return vertexCache.end() if it is not found
                // If it is found than add the already existing vertex index to indices
                if (it != vertexCache.end()) {
-                  indices.push_back(it->second);
+                  currentMesh.indices.push_back(it->second);
                } 
                else {
                   // If it does not exist create a new vertex
                   vertex vertOut;
-                  vertOut.pos = objPositions[key.v];
+                  vertOut.pos = vec4(objPositions[key.v],1.0f);
                   // Some OBJ files omit texcoords or normals
 
                   vertOut.uv     = (key.t >= 0) ? objTexcoords[key.t] : vec2(0,0);
@@ -229,7 +266,7 @@ model::model(const std::string& filename, bool ccwWinding) {
                   uint32_t newIndex = static_cast<uint32_t>(vertices.size());
                   vertices.push_back(vertOut);
                   vertexCache[key] = newIndex;
-                  indices.push_back(newIndex);
+                  currentMesh.indices.push_back(newIndex);
                }
             }
          }

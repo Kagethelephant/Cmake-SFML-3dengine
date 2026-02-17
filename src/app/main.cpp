@@ -67,7 +67,11 @@ int main(int argc, char* argv[])
    {
 
       model yoshi("../resources/objects/yoshi/yoshi.obj",true);
+      model wooper("../resources/objects/wooper/wooper.obj",true);
+
       object yoshi1(yoshi);
+      object wooper1(wooper);
+      wooper1.move(-10,0,-10);
       yoshi1.move(0,0,-10);
       yoshi1.rotate(0,5,0);
 
@@ -137,6 +141,7 @@ int main(int argc, char* argv[])
          if(!ogl){
 
             cam.render(yoshi1);
+            cam.render(wooper1);
             // cam.render(cow2cpu);
             // cam.render(cow3cpu);
             // cam.render(teapotcpu);
@@ -148,6 +153,7 @@ int main(int argc, char* argv[])
             vao.bindRender();
 
             vao.render(yoshi1);
+            vao.render(wooper1);
             // vao.render(cow2);
             // vao.render(cow3);
             // vao.render(teapot);

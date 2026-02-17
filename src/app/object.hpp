@@ -7,7 +7,7 @@
 
 
 struct vertex {
-   vec3 pos;
+   vec4 pos;
    vec3 normal;
    vec2 uv;
 };
@@ -27,6 +27,15 @@ struct material {
 
 
 
+struct subMesh {
+
+   std::vector<uint32_t> indices;     // EBO
+   bool textured = true;
+   texture tex;
+};
+
+
+
 /// @brief: Loads vertex data into the triangle buffer from an OBJ file and saves the 
 /// location with a model object 
 /// @param filename: filepath to the OBJ file
@@ -36,17 +45,19 @@ public:
    model(const std::string& filename, bool ccwWinding = false);
 
 
-   const std::vector<vertex>&   getVertices() const { return vertices; }
-   const std::vector<uint32_t>& getIndices()  const { return indices;  }
 
    bool hasTexture = false;
    bool hasNormal  = false;
 
    std::vector<float>   verticesRaw; // VBO
-   std::vector<uint32_t> indices;  // EBO
    std::vector<vertex>   vertices; // VBO
+   
 
    texture loadTexture(const std::string& filename);
+
+   std::unordered_map<std::string, material> materialMap;
+
+   std::vector<subMesh> subMeshes;
 
 private:
 

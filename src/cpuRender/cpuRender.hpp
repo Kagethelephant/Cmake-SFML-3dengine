@@ -6,6 +6,64 @@
 #include "app/object.hpp"
 
 
+
+
+
+/// @brief: Container for 3 3D vectors with functions for drawing to a 2D pixel array.
+/// drawing is done with scanline filling and bresenham line function. This is intended for 
+/// educational purposes so it is inefficient and lacks advanced features like z-buffers
+/// @param _v0: Vector 0 (vec3)
+/// @param _v1: Vector 1 (vec3)
+/// @param _v2: Vector 2 (vec3)
+/// @param parent: Pointer to a parent objec3d object
+struct tri2d {
+
+public:
+
+   vec2 v[3];
+
+   tri2d() : v{vec2(),vec2(),vec2()}{};
+   tri2d(vec2 v0, vec2 v1, vec2 v2) : v{v0,v1,v2}{};
+
+   // @brief: Print the vector parameters
+   void print() const {v[0].print(); v[1].print(); v[2].print();}
+
+private:
+
+};
+
+
+/// @brief: Container for 3 3D vectors with functions for drawing to a 2D pixel array.
+/// drawing is done with scanline filling and bresenham line function. This is intended for 
+/// educational purposes so it is inefficient and lacks advanced features like z-buffers
+/// @param _v0: Vector 0 (vec3)
+/// @param _v1: Vector 1 (vec3)
+/// @param _v2: Vector 2 (vec3)
+/// @param parent: Pointer to a parent objec3d object
+struct tri3d {
+
+public:
+
+   vec4 v[3];
+
+   tri3d() : v{vec4(),vec4(),vec4()}{};
+   tri3d(vec4 v0, vec4 v1, vec4 v2) : v{v0,v1,v2}{};
+
+   // @brief: Generates a vector normal to the triangles face starting from the triangles 0 point
+   vec4 normal() const {return ((v[1] - v[0]).cross(v[2] - v[0])).normal();; }
+   // @brief: Devide by the w value (viewspace z value) after projection to give perspective, making far away objects look smaller
+   void perspectiveDivide() {v[0].perspectiveDivide(); v[1].perspectiveDivide(); v[2].perspectiveDivide();}
+   // @brief: Print the vector parameters
+   void print() const {v[0].print(); v[1].print(); v[2].print();}
+
+   // Operator overloads for multiplying a whole triagle by a matrix (just multiplies the underlying vectors)
+   tri3d operator * (const mat4x4& m) const { return tri3d(this->v[0] * m, this->v[1] * m, this->v[2] * m); }
+   void operator *= (const mat4x4& m) { this->v[0] *= m; this->v[1] *= m; this->v[2] *= m; }
+
+private:
+
+};
+
 enum class ClipPlane {
     Left,
     Right,
@@ -62,17 +120,6 @@ public:
    /// @brief: Draw pixel buffer to the sfml window passed to this object
    void draw();
 
-   // /// @brief: Model vertex (really triangles) data locations in the triangle buffer
-   // struct model {
-   //    /// @brief: location of first triangle in triangle buffer
-   //    unsigned int start;
-   //    /// @brief: size in triangles of the model
-   //    unsigned int size;
-   //    /// @brief: location of first triangle in triangle buffer
-   //    unsigned int vertStart;
-   //    /// @brief: size in triangles of the model
-   //    unsigned int vertSize;
-   // };
 
    /// @brief: Pixel array for 32 bit trucolor + alpha (8 bits for r,g,b and alpha) used to raster triangles
    std::vector<std::uint8_t> m_pixelBuffer;
@@ -87,6 +134,11 @@ public:
    unsigned int createModel (const std::string filename, const bool ccwWinding = false);
 
 private:
+
+   int texW;
+   int texH;
+   int texC;
+   unsigned char* texD;
 
    /// @brief: Aspect ratio of the window
    float m_aspectRatio;     
@@ -112,9 +164,10 @@ private:
 
    struct triangleAttrib {
 
-      triangleAttrib(tri3d pos, tri3d col, tri3d clip, tri3d frag) : triangle{pos}, color{col}, clipPos{clip}, fragPos{frag} {};
+      triangleAttrib(tri3d pos, tri3d col, tri3d clip, tri3d frag, tri2d tex) : triangle{pos}, color{col}, clipPos{clip}, fragPos{frag}, uv{tex} {};
       tri3d triangle;
       tri3d color;
+      tri2d uv;
       tri3d clipPos;
       tri3d fragPos;
    };
@@ -137,6 +190,8 @@ private:
    std::vector<vec4> viewVertices;
 
    std::vector<vec4> clipVertices;
+
+   std::vector<vec2> uvVertices;
 
    /// @brief: Scanline triangle fill algorithm. This is a common method of rasterization although it is very inefficient
    /// when ran on the CPU as we are doing here. steps in pipeline: Rasterization, Fragment Shader

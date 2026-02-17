@@ -160,41 +160,6 @@ void gl_vertexObject::bindRender(){
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 void gl_vertexObject::render(object& obj){
 
-   // int w, h, channels;
-   // stbi_set_flip_vertically_on_load(true);
-
-   // unsigned char* data = stbi_load(
-   //    "../resources/objects/yoshi/yoshi_grp.png",
-   //    &w, &h,
-   //    &channels,
-   //    0
-   // );
-
-   // if (!data) {
-   //    throw std::runtime_error("Failed to load texture");
-   // }
-
-
-
-   // stbi_image_free(data);
-   texture texObj = obj.mod.loadTexture("../resources/objects/yoshi/yoshi_grp.png");
-
-   GLuint tex;
-   glGenTextures(1, &tex);
-   glBindTexture(GL_TEXTURE_2D, tex);
-
-   GLenum format = (texObj.channels == 4) ? GL_RGBA : GL_RGB;
-
-   glTexImage2D(GL_TEXTURE_2D, 0, format, texObj.w, texObj.h, 0, format, GL_UNSIGNED_BYTE, texObj.data);
-
-   glGenerateMipmap(GL_TEXTURE_2D);
-
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-
 
    // Bind Vertex Array Object
    glBindVertexArray(vao);
@@ -214,26 +179,6 @@ void gl_vertexObject::render(object& obj){
    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
    glEnableVertexAttribArray(2);
 
-
-   // // Set up the attributes for the vertices (how is the data aranged)
-   // // 1) Shader layout location, 2) Qty of vert attributes, 3) Size of attribute, 4) normaliize btwn -1 to 1, 5)span btwn verts in bytes, 6) start of buffer
-   // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void*)0);
-   // // This tells GL to use the vertex attributes defined above (it does not do this by default)
-   // glEnableVertexAttribArray(0);  
-   // Setup the EBO using the VAO
-   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-   glBufferData(GL_ELEMENT_ARRAY_BUFFER, obj.mod.indices.size() * sizeof(float), obj.mod.indices.data(), GL_STATIC_DRAW);
-
-
-
-
-   glActiveTexture(GL_TEXTURE0);
-   glBindTexture(GL_TEXTURE_2D, tex);
-   glUniform1i(glGetUniformLocation(shaderProgram3D, "diffuseTex"), 0);
-
-
-
-
    vec4 color = hexColorToFloat(obj.color);
    // update the uniform color
    glUniformMatrix4fv(glGetUniformLocation(shaderProgram3D, "view"),1,GL_FALSE,&mat_view.m[0][0]);
@@ -246,10 +191,47 @@ void gl_vertexObject::render(object& obj){
    glUniformMatrix4fv(glGetUniformLocation(shaderProgram3D, "transform"),1,GL_FALSE,&obj.matTransform.m[0][0]);
    // glDisable(GL_CULL_FACE);
    // glEnable(GL_DEPTH_TEST);
-   glDrawElements(GL_TRIANGLES,obj.mod.indices.size(), GL_UNSIGNED_INT, 0);
 
-   // delete the texture you created to avoid leaking VRAM
-   glDeleteTextures(1, &tex);
+
+
+   for (subMesh mesh : obj.mod.subMeshes) {
+
+      // stbi_image_free(data);
+      texture texObj = mesh.tex;
+
+      GLuint tex;
+      glGenTextures(1, &tex);
+      glBindTexture(GL_TEXTURE_2D, tex);
+
+      GLenum format = (texObj.channels == 4) ? GL_RGBA : GL_RGB;
+
+      glTexImage2D(GL_TEXTURE_2D, 0, format, texObj.w, texObj.h, 0, format, GL_UNSIGNED_BYTE, texObj.data);
+
+      glGenerateMipmap(GL_TEXTURE_2D);
+
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      // // Set up the attributes for the vertices (how is the data aranged)
+      // // 1) Shader layout location, 2) Qty of vert attributes, 3) Size of attribute, 4) normaliize btwn -1 to 1, 5)span btwn verts in bytes, 6) start of buffer
+      // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void*)0);
+      // // This tells GL to use the vertex attributes defined above (it does not do this by default)
+      // glEnableVertexAttribArray(0);  
+      // Setup the EBO using the VAO
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+      glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size() * sizeof(float), mesh.indices.data(), GL_STATIC_DRAW);
+
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, tex);
+      glUniform1i(glGetUniformLocation(shaderProgram3D, "diffuseTex"), 0);
+
+
+      glDrawElements(GL_TRIANGLES,mesh.indices.size(), GL_UNSIGNED_INT, 0);
+
+      // delete the texture you created to avoid leaking VRAM
+      glDeleteTextures(1, &tex);
+   }
 }
 
 

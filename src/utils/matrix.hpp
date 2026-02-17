@@ -257,36 +257,6 @@ struct vec4 {
 };
 
 
-/// @brief: Container for 3 3D vectors with functions for drawing to a 2D pixel array.
-/// drawing is done with scanline filling and bresenham line function. This is intended for 
-/// educational purposes so it is inefficient and lacks advanced features like z-buffers
-/// @param _v0: Vector 0 (vec3)
-/// @param _v1: Vector 1 (vec3)
-/// @param _v2: Vector 2 (vec3)
-/// @param parent: Pointer to a parent objec3d object
-struct tri3d {
-
-public:
-
-   vec4 v[3];
-
-   tri3d() : v{vec4(),vec4(),vec4()}{};
-   tri3d(vec4 v0, vec4 v1, vec4 v2) : v{v0,v1,v2}{};
-
-   // @brief: Generates a vector normal to the triangles face starting from the triangles 0 point
-   vec4 normal() const {return ((v[1] - v[0]).cross(v[2] - v[0])).normal();; }
-   // @brief: Devide by the w value (viewspace z value) after projection to give perspective, making far away objects look smaller
-   void perspectiveDivide() {v[0].perspectiveDivide(); v[1].perspectiveDivide(); v[2].perspectiveDivide();}
-   // @brief: Print the vector parameters
-   void print() const {v[0].print(); v[1].print(); v[2].print();}
-
-   // Operator overloads for multiplying a whole triagle by a matrix (just multiplies the underlying vectors)
-   tri3d operator * (const mat4x4& m) const { return tri3d(this->v[0] * m, this->v[1] * m, this->v[2] * m); }
-   void operator *= (const mat4x4& m) { this->v[0] *= m; this->v[1] *= m; this->v[2] *= m; }
-
-private:
-
-};
 
 
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
