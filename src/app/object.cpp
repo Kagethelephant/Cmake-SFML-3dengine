@@ -8,6 +8,7 @@
 #include "utils/matrix.hpp"
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -47,14 +48,15 @@ std::string model::getDirectory(const std::string& path) {
 
 
 // ------------------------- Texture Loader -------------------------
-texture model::loadTexture(const std::string& filename) {
-
+texture model::loadTexture(const std::string& filepath) {
+   std::string correctedPath = filepath;
+   std::replace(correctedPath.begin(), correctedPath.end(), '\\', '/');
    texture tex;
    stbi_set_flip_vertically_on_load(true);
 
-   tex.data = stbi_load(filename.c_str(), &tex.w, &tex.h, &tex.channels, 0);
+   tex.data = stbi_load(correctedPath.c_str(), &tex.w, &tex.h, &tex.channels, 0);
    if (!tex.data)
-      throw std::runtime_error("Failed to load texture: " + filename);
+      throw std::runtime_error("Failed to load texture: " + correctedPath);
 
    GLenum format;
    if (tex.channels == 1) format = GL_RED;
@@ -62,7 +64,7 @@ texture model::loadTexture(const std::string& filename) {
    else if (tex.channels == 4) format = GL_RGBA;
    else {
       stbi_image_free(tex.data);
-      throw std::runtime_error("Unsupported image channel count: " + filename);
+      throw std::runtime_error("Unsupported image channel count: " + correctedPath);
    }
 
    return tex;
