@@ -4,6 +4,7 @@
 #include "window.hpp"
 #include "app/object.hpp"
 
+#include <cstddef>
 #include <glad/glad.h>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
@@ -65,9 +66,22 @@ public:
    void move(float x, float y, float z);
    void rotate(float u, float v, float w);
 
-   GLuint vao;
-   GLuint vbo;
-   GLuint ebo;
+   struct gpuSubMesh{
+      GLuint tex;
+      GLuint ebo;
+      std::size_t indiceCount;
+   };
+
+   struct gpuMesh {
+      gpuMesh(const object& o) : obj{o} {}
+      const object& obj;
+      GLuint vao;
+      GLuint vbo;
+      std::vector<gpuSubMesh> subMeshes;
+   };
+
+   std::vector<gpuMesh> meshes;
+
 
    gl_window& window;
 
@@ -78,8 +92,8 @@ public:
    std::vector<GLuint> indices; 
   
 
-   void bindRender();
-   void render(object& obj);
+   void render();
+   void bindObject(const object& obj);
    void draw();
    void draw(const std::vector<std::uint8_t> buf);
 

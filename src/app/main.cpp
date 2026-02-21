@@ -17,7 +17,6 @@
 int main(int argc, char* argv[])
 {
 
-
    // Global random number generator (global so everything shares the same seed)
    randObj rander(false, 13412234);
    bool ogl = true;
@@ -25,7 +24,6 @@ int main(int argc, char* argv[])
    // ----------------------------- CREATE WINDOW AND OpenGL CONEXT -------------------------------
    //Create scope here so objects can call destructors on open gl objects before opengl is terminated
    {
-
       model yoshi("../resources/objects/yoshi/yoshi.obj",true);
       model Arcanine("../resources/objects/Arcanine/Arcanine.obj",true);
 
@@ -40,15 +38,14 @@ int main(int argc, char* argv[])
 
       gl_vertexObject vao(window);
 
-      // cowModel = vao.createModel("../resources/objects/cow.obj");
-      // potModel = vao.createModel("../resources/objects/teapot.obj");
-      
-
-
       textEngine text;
       text.loadFont("../resources/font/small_pixel.ttf");
 
       GLuint shaderProgramUI = createShaderProgram("../src/shaders/text_vertex.glsl", "../src/shaders/text_fragment.glsl");
+
+
+      vao.bindObject(yoshi1);
+      vao.bindObject(arcanine1);
 
       double lastTime = glfwGetTime();
       int frameCount = 0;
@@ -105,10 +102,9 @@ int main(int argc, char* argv[])
             cam.draw();
          }
          else {
-            vao.bindRender();
+            // vao.bindRender();
+            vao.render();
 
-            vao.render(yoshi1);
-            vao.render(arcanine1);
          }
 
          text.RenderText(shaderProgramUI,window,"X: " + std::to_string(vao.camPosition[0]), 10, 10);
