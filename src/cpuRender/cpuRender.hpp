@@ -7,71 +7,33 @@
 
 
 
-
-
-/// @brief: Container for 3 3D vectors with functions for drawing to a 2D pixel array.
-/// drawing is done with scanline filling and bresenham line function. This is intended for 
-/// educational purposes so it is inefficient and lacks advanced features like z-buffers
-/// @param _v0: Vector 0 (vec3)
-/// @param _v1: Vector 1 (vec3)
-/// @param _v2: Vector 2 (vec3)
-/// @param parent: Pointer to a parent objec3d object
-struct tri2d {
+struct prim {
 
 public:
 
-   vec2 v[3];
-
-   tri2d() : v{vec2(),vec2(),vec2()}{};
-   tri2d(vec2 v0, vec2 v1, vec2 v2) : v{v0,v1,v2}{};
-
-   // @brief: Print the vector parameters
-   void print() const {v[0].print(); v[1].print(); v[2].print();}
-
-private:
-
-};
+   vertex v[3];
 
 
-/// @brief: Container for 3 3D vectors with functions for drawing to a 2D pixel array.
-/// drawing is done with scanline filling and bresenham line function. This is intended for 
-/// educational purposes so it is inefficient and lacks advanced features like z-buffers
-/// @param _v0: Vector 0 (vec3)
-/// @param _v1: Vector 1 (vec3)
-/// @param _v2: Vector 2 (vec3)
-/// @param parent: Pointer to a parent objec3d object
-struct tri3d {
-
-public:
-
-   vec4 v[3];
-
-   tri3d() : v{vec4(),vec4(),vec4()}{};
-   tri3d(vec4 v0, vec4 v1, vec4 v2) : v{v0,v1,v2}{};
+   prim() : v{vertex(),vertex(),vertex()}{};
+   prim(vertex v0, vertex v1, vertex v2) : v{v0,v1,v2}{};
 
    // @brief: Generates a vector normal to the triangles face starting from the triangles 0 point
-   vec4 normal() const {return ((v[1] - v[0]).cross(v[2] - v[0])).normal();; }
+   vec4 normal() const {return ((v[1].fragPos - v[0].fragPos).cross(v[2].fragPos - v[0].fragPos)).normal();; }
    // @brief: Devide by the w value (viewspace z value) after projection to give perspective, making far away objects look smaller
-   void perspectiveDivide() {v[0].perspectiveDivide(); v[1].perspectiveDivide(); v[2].perspectiveDivide();}
+   void perspectiveDivide() {v[0].pos.perspectiveDivide(); v[1].pos.perspectiveDivide(); v[2].pos.perspectiveDivide();}
    // @brief: Print the vector parameters
-   void print() const {v[0].print(); v[1].print(); v[2].print();}
+   void print() const {v[0].pos.print(); v[1].pos.print(); v[2].pos.print();}
 
    // Operator overloads for multiplying a whole triagle by a matrix (just multiplies the underlying vectors)
-   tri3d operator * (const mat4x4& m) const { return tri3d(this->v[0] * m, this->v[1] * m, this->v[2] * m); }
+   prim operator * (const mat4x4& m) const {return prim(this->v[0] * m, this->v[1] * m, this->v[2] * m);}
    void operator *= (const mat4x4& m) { this->v[0] *= m; this->v[1] *= m; this->v[2] *= m; }
 
 private:
 
 };
 
-enum class ClipPlane {
-    Left,
-    Right,
-    Bottom,
-    Top,
-    Near,
-    Far
-};
+
+
 
 /// @brief: Takes mesh data from 3D objects, projects the 3D polygons to a 2D view in the 
 /// form of a pixel buffer to be drawn by and SFML window.
@@ -145,10 +107,6 @@ private:
    /// @brief: Resolution of the window 
    vec2 m_resolution;
 
-   //OPENGL MIRRORED ITEMS
-   std::vector<float> vertices;
-   std::vector<unsigned int> indices;
-   //OPENGL MIRRORED ITEMS
 
    /// @brief: Makes an object rotate to point direction
    mat4x4 m_matPointAt; 
@@ -160,44 +118,22 @@ private:
    /// @brief: virtual planes that represent the edge of the view frustum in 3d space
    vec4 m_planes[6];
    float far;
-  
 
-   struct triangleAttrib {
-
-      triangleAttrib(tri3d pos, tri3d col, tri3d clip, tri3d frag, tri2d tex) : triangle{pos}, color{col}, clipPos{clip}, fragPos{frag}, uv{tex} {};
-      tri3d triangle;
-      tri3d color;
-      tri2d uv;
-      tri3d clipPos;
-      tri3d fragPos;
-   };
-   /// @brief: Stores triangle attributes (in this case just color, in openGL this would include normal, color, UV coords)
-   std::vector<triangleAttrib> m_triangleAttribs;
-
-   /// @brief: Stores triangles in 3D space from loaded objects to be drawn
-   std::vector<unsigned int> m_indices;
-   /// @brief: Stores triangles in 3D space from loaded objects to be drawn
-   std::vector<float> m_vertices;
-
-   // /// @brief: Texture to draw the pixelBuffer to so it can be drawn to an SFML window
-   // sf::Texture m_pixelTexture;
    /// @brief: Buffer to clear the pixelBuffer with a background color
    std::vector<std::uint8_t> m_clearBuffer;
    /// @brief: Buffer to store the lowest z position of each pixel to decide whether we should draw over it
    std::vector<float> m_zBuffer;
 
 
-   std::vector<vec4> viewVertices;
+   std::vector<vertex> vertAttribs;
 
-   std::vector<vec4> clipVertices;
-
-   std::vector<vec2> uvVertices;
+   std::vector<prim> primatives;
 
    /// @brief: Scanline triangle fill algorithm. This is a common method of rasterization although it is very inefficient
    /// when ran on the CPU as we are doing here. steps in pipeline: Rasterization, Fragment Shader
    /// @param tri: Pixel array for 32 bit trucolor + alpha (8 bits for r,g,b and alpha)
    /// @param res: The resolution of the window
-   void raster(const camera::triangleAttrib& attrib);
+   void raster(const prim& p);
    
    /// @brief: In-place clipping of triangles in m_triangleAttribs against all 6 planes 
    /// planes in clip space (after projection, before perspective division)
@@ -205,7 +141,7 @@ private:
 
    /// @brief: Checks the given triangle for winding in screen space
    /// @param tri: triangle to check for culling
-   bool backFaceCulling(const tri3d& tri);
+   bool backFaceCulling(const prim& tri);
 
    /// @brief: Checks if a point is on one side of a plane
    /// @param point: Point in 3d space

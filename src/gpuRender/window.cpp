@@ -5,7 +5,6 @@
 #include <GLFW/glfw3.h>
 #include <math.h>
 #include <iostream>
-#include <vector>
 
 
 gl_window::gl_window(int _height){

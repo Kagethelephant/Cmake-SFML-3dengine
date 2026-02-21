@@ -7,9 +7,61 @@
 
 
 struct vertex {
+
    vec4 pos;
+   vec4 clipPos;
+   vec4 fragPos;
+   vec3 color;
    vec3 normal;
    vec2 uv;
+
+   float& x;
+   float& y;
+   float& z;
+   float& w;
+
+   // Constructors (member initializer list)
+   vertex() : pos{0,0,0,1}, x{pos.x}, y{pos.y}, z{pos.z}, w{pos.w}{}
+   vertex(float _x, float _y, float _z) : pos{_x,_y,_z}, x{pos.x}, y{pos.y}, z{pos.z}, w{pos.w} {}
+
+
+   // Copy constructor and operator
+   vertex(const vertex& other) : 
+      pos{other.pos}, 
+      clipPos{other.clipPos}, 
+      fragPos{other.fragPos}, 
+      normal{other.normal}, 
+      uv{other.uv}, 
+      x{pos.x}, 
+      y{pos.y}, 
+      z{pos.x}, 
+      w{pos.w} {}
+
+   vertex& operator = (const vertex& other){
+      if (this != &other){
+         pos = other.pos;
+         clipPos = other.clipPos;
+         fragPos = other.fragPos;
+         normal = other.normal;
+         uv = other.uv;
+      }  
+      return *this;
+   }
+   vertex operator * (const mat4x4& m) const{ vertex v = *this; v.pos *= m; return v;}
+   void operator *= (const mat4x4& m) { this->pos *= m; this->pos *= m; this->pos *= m; }
+
+   // Member functions
+   //---------------------------------------------------------------------------------------------
+   /// @brief: returns the magnitude of the vector
+   vertex lerp(const vertex& v2, const float& t) const { 
+      vertex v1 = *this; 
+      v1.pos = v1.pos + (v2.pos - v1.pos) * t;
+      v1.clipPos = v1.clipPos + (v2.clipPos - v1.clipPos) * t;
+      v1.fragPos = v1.fragPos + (v2.fragPos - v1.fragPos) * t;
+      v1.normal = v1.normal + (v2.normal - v1.normal) * t;
+      v1.uv = v1.uv + (v2.uv - v1.uv) * t;
+      return v1;
+   }
 };
 
 
