@@ -27,6 +27,9 @@ int main(int argc, char* argv[])
       model yoshi("../resources/objects/yoshi/yoshi.obj",true);
       model Arcanine("../resources/objects/Arcanine/Arcanine.obj",true);
 
+      light light1 = createLight(vec3(15,5,5),vec3(0.9,0.3,0.3));
+      light light2 = createLight(vec3(-15,5,5),vec3(0.3,0.3,0.9));
+
       object yoshi1(yoshi);
       object arcanine1(Arcanine);
       arcanine1.move(-10,0,-10);
@@ -37,6 +40,8 @@ int main(int argc, char* argv[])
       gl_window window(400);
 
       gl_vertexObject vao(window);
+      vao.addLight(light1);
+      vao.addLight(light2);
 
       textEngine text;
       text.loadFont("../resources/font/small_pixel.ttf");
@@ -59,6 +64,8 @@ int main(int argc, char* argv[])
 
 
       camera cam(window);
+      cam.addLight(light1);
+      cam.addLight(light2);
 
       bool blocked = false;
       bool enterPreviouslyPressed = false;

@@ -17,6 +17,12 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+light createLight(const vec3& pos, const vec3& col){
+   light newLight;
+   newLight.position = pos;
+   newLight.color = col;
+   return newLight;
+}
 
 // UPDATE POSITION
 //---------------------------------------------------------------------------------------------

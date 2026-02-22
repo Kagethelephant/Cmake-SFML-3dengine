@@ -6,6 +6,8 @@
 #include <unordered_map>
 
 
+constexpr unsigned int MAX_LIGHTS = 32;
+
 struct vertex {
 
    vec4 pos;
@@ -85,6 +87,13 @@ struct subMesh {
    bool textured = true;
    texture tex;
 };
+
+struct light {
+   vec3 position;
+   vec3 color;
+};
+
+light createLight(const vec3& pos, const vec3& col = vec3(255,255,255));
 
 
 

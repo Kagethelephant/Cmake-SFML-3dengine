@@ -33,7 +33,6 @@ camera::camera(gl_window& _window) : window{_window}{
    m_planes[4] = vec4( 0, 0, 1, 1);  // Near
    m_planes[5] = vec4( 0, 0, -1, 1); // Far
 
-   
    // Create the projection matrix that will be used to project 3D points to a 2D view
    m_matProject = matrix_project(fov,aspectRatio,n,far);  
 
@@ -101,7 +100,6 @@ void camera::render(const object& object) {
          int i1 = mesh.indices[i+1];
          int i2 = mesh.indices[i+2];
          primatives.emplace_back(vertAttribs[i0],vertAttribs[i1],vertAttribs[i2]);
-
       }
 
       // Clip triangles.
@@ -204,7 +202,7 @@ void camera::raster(const prim& pr) {
    // between points. This is the trickiest part of the pipeline
 
    // Transform the light into viewspace
-   lightPosView = (lightPos * m_matView);
+   // lightPosView = (lightPos * m_matView);
 
    vertex v0 = pr.v[0];
    vertex v1 = pr.v[1];
@@ -352,13 +350,17 @@ void camera::raster(const prim& pr) {
                }
 
                vec4 texColor(r, g, b, a);
-
-
-               // Calculate diffuse lighting
-               vec3 lightDir = (lightPos - fragPos).normal();
-               float diffuse = std::max(norm.dot(lightDir), 0.0f);
+               
+               vec3 lightSum = vec3(0,0,0);
+               for (light l : lights){
+                  // Calculate diffuse lighting
+                  vec3 lightDir = (l.position - fragPos).normal();
+                  float diffuse = std::max(norm.dot(lightDir), 0.0f);
+                  vec3 ambient = l.color * 0.2f;
+                  lightSum += (l.color * diffuse) + ambient;
+               }
                // Calculate color by multiplying object color by ambient + diffuse lighting respectively
-               vec4 result = texColor * vec4((lightCol * 0.2f + lightCol * diffuse),1.0f);
+               vec4 result = texColor * vec4(lightSum,1.0f);
 
                // Put pixel with clamped color components to match 32-bit color
                m_pixelBuffer[index*4] =     std::clamp(result[0], 0.0f, 255.0f);

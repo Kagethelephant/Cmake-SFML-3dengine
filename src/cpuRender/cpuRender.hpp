@@ -49,11 +49,11 @@ public:
    /// @brief: Direction the camera is pointing in the form of a vector
    vec3 camDirection;
 
-   /// @brief: Light position in world space (only supports one light)
-   vec3 lightPos = vec3(0,0,0);
-   vec3 lightPosView;
-   /// @brief: Light color that is multiplied by the color of the object it is illuminating
-   vec3 lightCol = vec3(1,1,1);
+   std::vector<light> lights;
+
+   void addLight(const light& newLight){
+      lights.push_back(newLight);
+   }
 
    /// @brief: Reference to the sfml window that we will render to
    gl_window& window;

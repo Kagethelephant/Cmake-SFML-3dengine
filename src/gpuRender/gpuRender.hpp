@@ -82,7 +82,11 @@ public:
 
    std::vector<gpuMesh> meshes;
 
+   std::vector<light> lights;
 
+   void addLight(const light& newLight){
+      lights.push_back(newLight);
+   }
    gl_window& window;
 
    GLuint UIvao;

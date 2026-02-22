@@ -165,6 +165,21 @@ void gl_vertexObject::render(){
    glCullFace(GL_FRONT);
    glEnable(GL_DEPTH_TEST);
 
+   int lightCount = std::min(MAX_LIGHTS, (unsigned int)lights.size());
+
+   float lightPosBuffer[MAX_LIGHTS * 3];
+   float lightColBuffer[MAX_LIGHTS * 3];
+
+   for(int i = 0; i<lightCount; i ++){
+      lightPosBuffer[i*3  ] = lights[i].position.x;
+      lightPosBuffer[i*3+1] = lights[i].position.y;
+      lightPosBuffer[i*3+2] = lights[i].position.z;
+
+      lightColBuffer[i*3  ] = lights[i].color.x;
+      lightColBuffer[i*3+1] = lights[i].color.y;
+      lightColBuffer[i*3+2] = lights[i].color.z;
+   }
+
    for (const gpuMesh& mesh : meshes){
       
       const object& obj = mesh.obj;
@@ -174,7 +189,6 @@ void gl_vertexObject::render(){
 
       vec4 color = hexColorToFloat(obj.color);
 
-
       // Setup the VBO using the VAO
       glBindVertexArray(vao);
       glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -182,8 +196,12 @@ void gl_vertexObject::render(){
       // update the uniform color
       glUniformMatrix4fv(glGetUniformLocation(shaderProgram3D, "view"),1,GL_FALSE,&mat_view.m[0][0]);
       glUniformMatrix4fv(glGetUniformLocation(shaderProgram3D, "project"),1,GL_FALSE,&mat_project.m[0][0]);
-      glUniform3fv(glGetUniformLocation(shaderProgram3D, "light"),1,&lightPos[0]);
-      glUniform3fv(glGetUniformLocation(shaderProgram3D, "lightCol"),1,&lightCol[0]);
+
+      glUniform1i(glGetUniformLocation(shaderProgram3D, "lightCount"),lightCount);
+      glUniform3fv(glGetUniformLocation(shaderProgram3D, "lightPos"),lightCount,&lightPosBuffer[0]);
+      glUniform3fv(glGetUniformLocation(shaderProgram3D, "lightCol"),lightCount,&lightColBuffer[0]);
+      // glUniform3fv(glGetUniformLocation(shaderProgram3D, "light"),1,&lightPos[0]);
+      // glUniform3fv(glGetUniformLocation(shaderProgram3D, "lightCol"),1,&lightCol[0]);
 
       glUniform3fv(glGetUniformLocation(shaderProgram3D, "objCol"),1,&color[0]);
       glUniformMatrix4fv(glGetUniformLocation(shaderProgram3D, "scale"),1,GL_FALSE,&obj.matScale.m[0][0]);
