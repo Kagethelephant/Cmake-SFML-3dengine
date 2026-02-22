@@ -1,6 +1,8 @@
 #pragma once
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <vector>
+#include <cstdint>
 
 
 
@@ -45,23 +47,33 @@ private:
 
 
 
-class gl_window {
+class window {
 
 public:
 
-   gl_window(int _height);
+   window(int _height);
 
-   GLFWwindow* window;
+   GLFWwindow* win;
 
    FixedFBO fbo;
    int fboWidth, fboHeight;
    int offsetX, offsetY;
+
    int windowWidth, windowHeight;
    float windowAspect;
    float targetAspect;
 
-   bool resizePending = false;
+   GLuint UIvao;
+   GLuint UIvbo;
 
+   /// @brief: Shader program to render 2D quads with textures
+   GLuint shaderProgramUI;
+
+   std::vector<float> quadVertices;
+   void draw();
+   void draw(const std::vector<std::uint8_t> buf);
+
+   bool resizePending = false;
 
    void resize();
 };

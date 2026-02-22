@@ -38,7 +38,7 @@ public:
       vec2 bearing;
       GLuint advance;
    };
-   void RenderText(GLuint shaderProgram, gl_window& window, std::string text, float x, float y);
+   void RenderText(GLuint shaderProgram, window& window, std::string text, float x, float y);
 
    std::map<char, character> characters;
    float quad[6][4];

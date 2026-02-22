@@ -24,11 +24,14 @@ int main(int argc, char* argv[])
    // ----------------------------- CREATE WINDOW AND OpenGL CONEXT -------------------------------
    //Create scope here so objects can call destructors on open gl objects before opengl is terminated
    {
+      window gl_window(400);
+      camera cam(gl_window);
+
       model yoshi("../resources/objects/yoshi/yoshi.obj",true);
       model Arcanine("../resources/objects/Arcanine/Arcanine.obj",true);
 
-      light light1 = createLight(vec3(15,5,5),vec3(0.9,0.3,0.3));
-      light light2 = createLight(vec3(-15,5,5),vec3(0.3,0.3,0.9));
+      light light1 = createLight(vec3(15,5,5),vec3(0.6,0.3,0.3));
+      light light2 = createLight(vec3(-15,5,5),vec3(0.3,0.3,0.6));
 
       object yoshi1(yoshi);
       object arcanine1(Arcanine);
@@ -37,11 +40,10 @@ int main(int argc, char* argv[])
       yoshi1.move(0,0,-10);
       yoshi1.rotate(0,5,0);
 
-      gl_window window(400);
 
-      gl_vertexObject vao(window);
-      vao.addLight(light1);
-      vao.addLight(light2);
+      gpuRenderObject gpuRend(cam);
+      gpuRend.addLight(light1);
+      gpuRend.addLight(light2);
 
       textEngine text;
       text.loadFont("../resources/font/small_pixel.ttf");
@@ -49,8 +51,8 @@ int main(int argc, char* argv[])
       GLuint shaderProgramUI = createShaderProgram("../src/shaders/text_vertex.glsl", "../src/shaders/text_fragment.glsl");
 
 
-      vao.bindObject(yoshi1);
-      vao.bindObject(arcanine1);
+      gpuRend.bindObject(yoshi1);
+      gpuRend.bindObject(arcanine1);
 
       double lastTime = glfwGetTime();
       int frameCount = 0;
@@ -63,19 +65,19 @@ int main(int argc, char* argv[])
       double rotation = 3.0f;
 
 
-      camera cam(window);
-      cam.addLight(light1);
-      cam.addLight(light2);
+      cpuRenderObject cpuRend(cam);
+      cpuRend.addLight(light1);
+      cpuRend.addLight(light2);
 
       bool blocked = false;
       bool enterPreviouslyPressed = false;
       // ------------------------------ MAIN WINDOW LOOP ---------------------------------
       // Main loop for the window
-      while(!glfwWindowShouldClose(window.window)){
+      while(!glfwWindowShouldClose(gl_window.win)){
          // Get keyboard inputs
-         if (glfwGetKey(window.window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {glfwSetWindowShouldClose(window.window, true);}
+         if (glfwGetKey(gl_window.win, GLFW_KEY_ESCAPE) == GLFW_PRESS) {glfwSetWindowShouldClose(gl_window.win, true);}
 
-         bool enterPressed = glfwGetKey(window.window, GLFW_KEY_ENTER) == GLFW_PRESS;
+         bool enterPressed = glfwGetKey(gl_window.win, GLFW_KEY_ENTER) == GLFW_PRESS;
          if (enterPressed && !enterPreviouslyPressed) {ogl = !ogl;}
          enterPreviouslyPressed = enterPressed;
 
@@ -94,45 +96,45 @@ int main(int argc, char* argv[])
          }
 
 
-         if (glfwGetKey(window.window, GLFW_KEY_S) == GLFW_PRESS) {vao.move(0, 0, -movement);    cam.move(0, 0, -movement);}
-         if (glfwGetKey(window.window, GLFW_KEY_W) == GLFW_PRESS) {vao.move(0, 0, movement);     cam.move(0, 0, movement);}
-         if (glfwGetKey(window.window, GLFW_KEY_A) == GLFW_PRESS) {vao.rotate(0, -rotate, 0); cam.rotate(0, -rotate, 0);}
-         if (glfwGetKey(window.window, GLFW_KEY_D) == GLFW_PRESS) {vao.rotate(0, rotate, 0);  cam.rotate(0, rotate, 0);}
+         if (glfwGetKey(gl_window.win, GLFW_KEY_S) == GLFW_PRESS) {cam.move(0, 0, -movement);}
+         if (glfwGetKey(gl_window.win, GLFW_KEY_W) == GLFW_PRESS) {cam.move(0, 0,  movement);}
+         if (glfwGetKey(gl_window.win, GLFW_KEY_A) == GLFW_PRESS) {cam.rotate(0,  -rotate, 0);}
+         if (glfwGetKey(gl_window.win, GLFW_KEY_D) == GLFW_PRESS) {cam.rotate(0,   rotate, 0);}
 
 
          if(!ogl){
 
-            cam.render(yoshi1);
-            cam.render(arcanine1);
+            cpuRend.render(yoshi1);
+            cpuRend.render(arcanine1);
             // // Draw the camera 2D projection to the window
-            vao.draw(cam.m_pixelBuffer);
-            cam.draw();
+            gl_window.draw(cpuRend.m_pixelBuffer);
+            cpuRend.draw();
          }
          else {
             // vao.bindRender();
-            vao.render();
+            gpuRend.render();
 
          }
 
-         text.RenderText(shaderProgramUI,window,"X: " + std::to_string(vao.camPosition[0]), 10, 10);
-         text.RenderText(shaderProgramUI,window,"Y: " + std::to_string(vao.camPosition[1]), 10, 20);
-         text.RenderText(shaderProgramUI,window,"Z: " + std::to_string(vao.camPosition[2]), 10, 30);
-         text.RenderText(shaderProgramUI,window,"FPS: " + std::to_string(fps), 10, 40);
+         text.RenderText(shaderProgramUI,gl_window,"X: " + std::to_string(cam.position[0]), 10, 10);
+         text.RenderText(shaderProgramUI,gl_window,"Y: " + std::to_string(cam.position[1]), 10, 20);
+         text.RenderText(shaderProgramUI,gl_window,"Z: " + std::to_string(cam.position[2]), 10, 30);
+         text.RenderText(shaderProgramUI,gl_window,"FPS: " + std::to_string(fps), 10, 40);
 
-         if(ogl)text.RenderText(shaderProgramUI,window,"GPU", window.fboWidth/2.0f, 10);
-         else text.RenderText(shaderProgramUI,window,"CPU", window.fboWidth/2.0f, 10);
+         if(ogl)text.RenderText(shaderProgramUI,gl_window,"GPU", gl_window.fboWidth/2.0f, 10);
+         else text.RenderText(shaderProgramUI,gl_window,"CPU", gl_window.fboWidth/2.0f, 10);
          // text.RenderText(shaderProgramUI,vao.fbo.fbo,"Hello", 10, 10, window.width, window.height);
 
-         vao.draw();
+         gl_window.draw();
 
-         glfwSwapBuffers(window.window);
+         glfwSwapBuffers(gl_window.win);
          glfwPollEvents();
 
-         window.resize();
+         gl_window.resize();
       }
       // text.cleanup();
-      glfwDestroyWindow(window.window);
-      glfwSetWindowShouldClose(window.window, true);
+      glfwDestroyWindow(gl_window.win);
+      glfwSetWindowShouldClose(gl_window.win, true);
       glfwMakeContextCurrent(nullptr);
    }
    // Clear all of the GLFW assets

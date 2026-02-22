@@ -2,6 +2,7 @@
 
 #include "utils/data.hpp"
 #include "utils/matrix.hpp"
+#include <gpuRender/window.hpp>
 #include <vector>
 #include <unordered_map>
 
@@ -92,6 +93,42 @@ struct light {
    vec3 position;
    vec3 color;
 };
+
+
+
+class camera {
+public:
+   camera(window& _win) : gl_window(_win) {
+      move(0,0,0);
+      rotate(0,0,0);
+   }
+
+   vec3 position = vec3(0,0,0);
+   vec3 rotation = vec3(0,0,0);
+   vec3 direction = vec3(0,0,-1);
+
+   mat4x4 mat_view;
+
+   window& gl_window;
+
+   // /// @brief: Moves camera by given values (relative) movement is 
+   // /// based on the direction of the camera ( z moves forward/back, x moves sideways)
+   // /// @param x: Move sideways (normal to up and pointDirection of camera)
+   // /// @param y: Move in the up direction ( normal to the forward and right of the camera)
+   // /// @param x: Move in the direction of camera pointDirection
+   void move(float x, float y, float z);
+
+   // /// @brief: Rotates camera by given values (relative) movement is 
+   // /// based on the direction of the camera ( z moves forward/back, x moves sideways)
+   // /// @param u: Rotate around the right direction of the camera
+   // /// @param v: Rotate around the up direction of the camera
+   // /// @param w: Rotate around the pointDirection of the camera
+   void rotate(float u, float v, float w);
+
+private:
+
+};
+
 
 light createLight(const vec3& pos, const vec3& col = vec3(255,255,255));
 

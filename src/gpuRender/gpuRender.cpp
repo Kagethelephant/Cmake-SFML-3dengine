@@ -10,9 +10,6 @@
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
 #include <string>
 #include <sys/types.h>
 #include <vector>
@@ -21,74 +18,24 @@
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // INTITIALIZE THE RENDERER
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-gl_vertexObject::gl_vertexObject(gl_window& _window) : window{_window}{
+gpuRenderObject::gpuRenderObject(camera& _cam) : cam{_cam}, gl_window{_cam.gl_window}{
    // This is the VAO that is used to bind the VBO
-   width = window.fboWidth;
-   height = window.fboHeight;
+   width = gl_window.fboWidth;
+   height = gl_window.fboHeight;
 
-   mat_project = matrix_project(70.0f, window.targetAspect, 0.1f, 1000.0f);
-   quadVertices = {
-      -1.0f,  1.0f,  0.0f,  1.0f, // x, y, u, v
-      -1.0f, -1.0f,  0.0f,  0.0f,
-       1.0f, -1.0f,  1.0f,  0.0f,
-
-      -1.0f,  1.0f,  0.0f,  1.0f,
-       1.0f, -1.0f,  1.0f,  0.0f,
-       1.0f,  1.0f,  1.0f,  1.0f
-   };
+   mat_project = matrix_project(70.0f, gl_window.targetAspect, 0.1f, 1000.0f);
 
    shaderProgram3D = createShaderProgram("../src/shaders/3d_vertex.glsl", "../src/shaders/3d_fragment.glsl");
-   shaderProgramUI = createShaderProgram("../src/shaders/ui_vertex.glsl", "../src/shaders/ui_fragment.glsl");
 
-   move(0,0,0);
-   rotate(0,0,0);
-
-   // Create the VBO for the quad we will draw our screen to
-   glGenVertexArrays(1, &UIvao);  
-   glGenBuffers(1, &UIvbo);
-   glBindVertexArray(UIvao);
-   // Setup the VBO using the VAO
-   glBindBuffer(GL_ARRAY_BUFFER, UIvbo);
-   glBufferData(GL_ARRAY_BUFFER, quadVertices.size() * sizeof(GLfloat), quadVertices.data(), GL_STATIC_DRAW);
-   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)0);
-   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)(2*sizeof(GLfloat)));
-   // This tells GL to use the vertex attributes defined above (it does not do this by default)
-   glEnableVertexAttribArray(0);  
-   glEnableVertexAttribArray(1);  
 }
-
-
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// MOVE AND ROTATE CAMERA
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void gl_vertexObject::move(float x, float y, float z) {
-   
-   vec3 up = vec3(0,1,0) * matrix_transform(0, 0, 0, camRotation[0], camRotation[1], camRotation[2]);
-   camPosition += (camDirection.cross(up) * x);
-   camPosition += (camDirection * z);
-   camPosition[1] += y;
-   mat_view = matrix_view(matrix_pointAt(camPosition, camDirection, up));
-}
-
-
-void gl_vertexObject::rotate(float u, float v, float w) {
-   
-   camRotation += vec3(u, v, w);
-   vec3 up = vec3(0,1,0) * matrix_transform(0, 0, 0, camRotation[0], camRotation[1], camRotation[2]);
-   camDirection = (vec3(0,0,-1) * matrix_transform(0, 0, 0, camRotation[0], camRotation[1], camRotation[2])).normal();
-   mat_view = matrix_view(matrix_pointAt(camPosition, camDirection, up));
-}
-
-
 
 
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // SETUP VAO FOR RENDERING
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-void gl_vertexObject::bindObject(const object& obj){
+void gpuRenderObject::bindObject(const object& obj){
   
-   std::cout << "new Object" << std::endl;
    gpuMesh gpuObject(obj);
    GLuint& vao = gpuObject.vao;
    GLuint& vbo = gpuObject.vbo;
@@ -117,9 +64,6 @@ void gl_vertexObject::bindObject(const object& obj){
 
 
    for (const subMesh& mesh : obj.mod.subMeshes) {
-      
-
-      std::cout << "new Mesh" << std::endl;
       gpuSubMesh gpuSub;
       GLuint& ebo = gpuSub.ebo;
       GLuint& tex = gpuSub.tex;
@@ -153,10 +97,10 @@ void gl_vertexObject::bindObject(const object& obj){
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // DRAW MODELS AT LOCATIONS DICTATED BY OBJECTS
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void gl_vertexObject::render(){
+void gpuRenderObject::render(){
 
    vec4 bgColor = hexColorToFloat(Color::Black);
-   window.fbo.bind();
+   gl_window.fbo.bind();
    glUseProgram(shaderProgram3D);
    glClearColor(bgColor[0],bgColor[1],bgColor[2],bgColor[3]);
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -194,14 +138,12 @@ void gl_vertexObject::render(){
       glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
       // update the uniform color
-      glUniformMatrix4fv(glGetUniformLocation(shaderProgram3D, "view"),1,GL_FALSE,&mat_view.m[0][0]);
+      glUniformMatrix4fv(glGetUniformLocation(shaderProgram3D, "view"),1,GL_FALSE,&cam.mat_view.m[0][0]);
       glUniformMatrix4fv(glGetUniformLocation(shaderProgram3D, "project"),1,GL_FALSE,&mat_project.m[0][0]);
 
       glUniform1i(glGetUniformLocation(shaderProgram3D, "lightCount"),lightCount);
       glUniform3fv(glGetUniformLocation(shaderProgram3D, "lightPos"),lightCount,&lightPosBuffer[0]);
       glUniform3fv(glGetUniformLocation(shaderProgram3D, "lightCol"),lightCount,&lightColBuffer[0]);
-      // glUniform3fv(glGetUniformLocation(shaderProgram3D, "light"),1,&lightPos[0]);
-      // glUniform3fv(glGetUniformLocation(shaderProgram3D, "lightCol"),1,&lightCol[0]);
 
       glUniform3fv(glGetUniformLocation(shaderProgram3D, "objCol"),1,&color[0]);
       glUniformMatrix4fv(glGetUniformLocation(shaderProgram3D, "scale"),1,GL_FALSE,&obj.matScale.m[0][0]);
@@ -228,27 +170,3 @@ void gl_vertexObject::render(){
    glDisable(GL_DEPTH_TEST);
 }
 
-
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// DRAW THE RENDER TEXTURE TO THE GLFW BUFFER
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void gl_vertexObject::draw() {
-
-   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-   glViewport(0, 0, window.windowWidth, window.windowHeight);
-   glUseProgram(shaderProgramUI);
-   glBindVertexArray(UIvao);
-
-   glActiveTexture(GL_TEXTURE0);
-   glBindTexture(GL_TEXTURE_2D, window.fbo.getTexture());
-   glUniform1i(glGetUniformLocation(shaderProgramUI, "screenTexture"), 0);
-   glDrawArrays(GL_TRIANGLES, 0, 6);
-}
-
-
-void gl_vertexObject::draw(const std::vector<std::uint8_t> buf) {
-
-   glBindTexture(GL_TEXTURE_2D, window.fbo.getTexture());
-   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-   glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buf.data());
-}

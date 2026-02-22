@@ -17,10 +17,10 @@
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // CONSTRUCTOR
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-camera::camera(gl_window& _window) : window{_window}{
+cpuRenderObject::cpuRenderObject(camera& _cam) : cam{_cam}, gl_window{_cam.gl_window}{
 
    // Calculate the planes that make up the frustum (box that represents the field of view)
-   m_resolution = vec2(window.fboWidth,window.fboHeight);
+   m_resolution = vec2(gl_window.fboWidth,gl_window.fboHeight);
    float fov = 70;
    float aspectRatio = (float)m_resolution[0]/(float)m_resolution[1];
    float n = 0.1f;
@@ -54,8 +54,6 @@ camera::camera(gl_window& _window) : window{_window}{
       }
    }
    m_pixelBuffer = m_clearBuffer;
-   move(0,0,0);
-   rotate(0, 0, 0);
 }
 
 
@@ -66,13 +64,13 @@ camera::camera(gl_window& _window) : window{_window}{
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // TRIANGLE PROJECTION
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void camera::render(const object& object) {
+void cpuRenderObject::render(const object& object) {
   
    // Fetch model associated with object
    model mod = object.mod;
 
    // Model * View * Project matrix
-   mat4x4 vp = m_matView * m_matProject;
+   mat4x4 vp = cam.mat_view * m_matProject;
    mat4x4 m = object.matScale * object.matTransform;
 
    vertAttribs.resize(mod.vertices.size());
@@ -128,7 +126,7 @@ void camera::render(const object& object) {
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // TRIANGLE CLIPPING
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void camera::clipTriangles() {
+void cpuRenderObject::clipTriangles() {
    
    // Create buffer to hold triangles that need to go through the split function and 
    // a buffer of triangles that have already been through the split function
@@ -197,7 +195,7 @@ void camera::clipTriangles() {
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // FILL TRIANGLE
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void camera::raster(const prim& pr) {
+void cpuRenderObject::raster(const prim& pr) {
    // Bounding box triangle filling method with barycentric coordinates to interpolate 
    // between points. This is the trickiest part of the pipeline
 
@@ -386,7 +384,7 @@ void camera::raster(const prim& pr) {
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // SF::DRAWABLE IMPLIMENTATION
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void camera::draw() {
+void cpuRenderObject::draw() {
    // Clear the pixel buffer with the background color before drawing each triangle
    m_pixelBuffer = m_clearBuffer;
    // Clear the z buffer with far depth
@@ -396,20 +394,20 @@ void camera::draw() {
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // UTILITY FUNCTIONS
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-bool camera::pointOutOfPlane(const vec4& p, const vec4& plane){
+bool cpuRenderObject::pointOutOfPlane(const vec4& p, const vec4& plane){
    // plane.xyz = normal, plane.w = D
    return plane.dot(p) < 0.0f;
 }
 
-float camera::planeIntersect(const vec4& a, const vec4& b, const vec4& plane) {
+float cpuRenderObject::planeIntersect(const vec4& a, const vec4& b, const vec4& plane) {
    return plane.dot(a) / (plane.dot(a) - plane.dot(b));
 }
 
-float camera::edgeFunction(const vec2& a, const vec2& b, const vec2& p){
+float cpuRenderObject::edgeFunction(const vec2& a, const vec2& b, const vec2& p){
     return (p[0] - a[0]) * (b[1] - a[1]) - (p[1] - a[1]) * (b[0] - a[0]);
 }
 
-bool camera::backFaceCulling(const prim& tri) {
+bool cpuRenderObject::backFaceCulling(const prim& tri) {
     // Use only X/Y in screen space.
     const vec2& a = tri.v[0].pos.xy();
     const vec2& b = tri.v[1].pos.xy();
@@ -419,26 +417,3 @@ bool camera::backFaceCulling(const prim& tri) {
     // Area will return negative if the triangle has CCW winding
     return area > 0.0f;
 }
-
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// MOVE AND ROTATE CAMERA
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void camera::move(float x, float y, float z) {
-   
-   vec3 up = vec3(0,1,0) * matrix_transform(0, 0, 0, camRotation[0], camRotation[1], camRotation[2]);
-   camPosition += (camDirection.cross(up) * x);
-   camPosition += (camDirection * z);
-   camPosition[1] += y;
-   m_matView = matrix_view(matrix_pointAt(camPosition, camDirection, up));
-}
-
-
-void camera::rotate(float u, float v, float w) {
-   
-   camRotation += vec3(u, v, w);
-   vec3 up = vec3(0,1,0) * matrix_transform(0, 0, 0, camRotation[0], camRotation[1], camRotation[2]);
-   camDirection = (vec3(0,0,-1) * matrix_transform(0, 0, 0, camRotation[0], camRotation[1], camRotation[2])).normal();
-   m_matView = matrix_view(matrix_pointAt(camPosition, camDirection, up));
-}
-
-

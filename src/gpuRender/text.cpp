@@ -94,7 +94,7 @@ void textEngine::loadFont(const char *filePath){
 }
 
 
-void textEngine::RenderText(GLuint shaderProgram, gl_window& window, std::string text, float x, float y){
+void textEngine::RenderText(GLuint shaderProgram, window& window, std::string text, float x, float y){
 
    glEnable(GL_BLEND);
    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

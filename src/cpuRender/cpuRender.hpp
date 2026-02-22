@@ -38,16 +38,10 @@ private:
 /// @brief: Takes mesh data from 3D objects, projects the 3D polygons to a 2D view in the 
 /// form of a pixel buffer to be drawn by and SFML window.
 /// @param res: Reference to the window to be rendered to. Used to find resolution and SFML render target
-class camera {
+class cpuRenderObject {
 
 public:
    
-   /// @brief: Position of the camera in 3D space
-   vec3 camPosition = vec3(0,0,0);
-   /// @brief: Direction that the camera is pointing in degrees about the rotational axis (updates direction)
-   vec3 camRotation = vec3(0,0,0);
-   /// @brief: Direction the camera is pointing in the form of a vector
-   vec3 camDirection;
 
    std::vector<light> lights;
 
@@ -56,23 +50,11 @@ public:
    }
 
    /// @brief: Reference to the sfml window that we will render to
-   gl_window& window;
+   window& gl_window;
+   camera& cam;
 
-   camera(gl_window& _window);
+   cpuRenderObject(camera& _cam);
 
-   /// @brief: Moves camera by given values (relative) movement is 
-   /// based on the direction of the camera ( z moves forward/back, x moves sideways)
-   /// @param x: Move sideways (normal to up and pointDirection of camera)
-   /// @param y: Move in the up direction ( normal to the forward and right of the camera)
-   /// @param x: Move in the direction of camera pointDirection
-   void move(float x, float y, float z);
-
-   /// @brief: Rotates camera by given values (relative) movement is 
-   /// based on the direction of the camera ( z moves forward/back, x moves sideways)
-   /// @param u: Rotate around the right direction of the camera
-   /// @param v: Rotate around the up direction of the camera
-   /// @param w: Rotate around the pointDirection of the camera
-   void rotate(float u, float v, float w);
 
    /// @brief: Render 3D vertex data given information from 3D object. This is where most of the
    /// 3D graphics pipeline is excecuted: vertex shader, vertex post processing (triangle clipping)
@@ -108,10 +90,10 @@ private:
    vec2 m_resolution;
 
 
-   /// @brief: Makes an object rotate to point direction
-   mat4x4 m_matPointAt; 
-   /// @brief: Moves objects to position as if the origin was pointed a different direction
-   mat4x4 m_matView; 
+   // /// @brief: Makes an object rotate to point direction
+   // mat4x4 m_matPointAt; 
+   // /// @brief: Moves objects to position as if the origin was pointed a different direction
+   // mat4x4 m_matView; 
    /// @brief: Projects 3D points onto a 2D view
    mat4x4 m_matProject;
 

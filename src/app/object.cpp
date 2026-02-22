@@ -24,6 +24,28 @@ light createLight(const vec3& pos, const vec3& col){
    return newLight;
 }
 
+
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// MOVE AND ROTATE CAMERA
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+void camera::move(float x, float y, float z) {
+   
+   vec3 up = vec3(0,1,0) * matrix_transform(0, 0, 0, rotation[0], rotation[1], rotation[2]);
+   position += (direction.cross(up) * x);
+   position += (direction * z);
+   position[1] += y;
+   mat_view = matrix_view(matrix_pointAt(position, direction, up));
+}
+
+
+void camera::rotate(float u, float v, float w) {
+   
+   rotation += vec3(u, v, w);
+   vec3 up = vec3(0,1,0) * matrix_transform(0, 0, 0, rotation[0], rotation[1], rotation[2]);
+   direction = (vec3(0,0,-1) * matrix_transform(0, 0, 0, rotation[0], rotation[1],rotation[2])).normal();
+   mat_view = matrix_view(matrix_pointAt(position, direction, up));
+}
+
 // UPDATE POSITION
 //---------------------------------------------------------------------------------------------
 void object::scale(float sx, float sy, float sz){
