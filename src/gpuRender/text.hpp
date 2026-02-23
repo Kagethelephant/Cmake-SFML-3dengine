@@ -1,5 +1,6 @@
 #pragma once
 
+#include "utils/data.hpp"
 #include "window.hpp"
 #include <glad/glad.h>
 #include <GL/gl.h>
@@ -13,19 +14,21 @@
 
 
 
-class textEngine {
+class textRenderObject {
 
 public:
-   textEngine();
-   ~textEngine();
+   textRenderObject(window& _win);
+   ~textRenderObject();
 
 
    FT_Library library;
 
-   vec3 color;
-
    GLuint vao;
    GLuint vbo;
+
+   window& gl_window;
+
+   GLuint shaderProgramText;
 
    std::vector<FT_Face> fontFaces;
 
@@ -38,7 +41,7 @@ public:
       vec2 bearing;
       GLuint advance;
    };
-   void RenderText(GLuint shaderProgram, window& window, std::string text, float x, float y);
+   void RenderText(std::string text, float x, float y, Color col = Color::White);
 
    std::map<char, character> characters;
    float quad[6][4];

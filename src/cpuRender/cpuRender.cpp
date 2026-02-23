@@ -7,6 +7,7 @@
 #include <strings.h>
 #include <vector>
 #include <math.h>
+#include "gpuRender/RAIIWrapper.hpp"
 #include "utils/data.hpp"
 #include "utils/matrix.hpp"
 #include "utils/utils.hpp"
@@ -56,69 +57,71 @@ cpuRenderObject::cpuRenderObject(camera& _cam) : cam{_cam}, gl_window{_cam.gl_wi
    m_pixelBuffer = m_clearBuffer;
 }
 
-
-
-
-
+void cpuRenderObject::bindObject(const object& obj) {
+   objects.push_back(obj);
+}
 
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // TRIANGLE PROJECTION
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void cpuRenderObject::render(const object& object) {
-  
-   // Fetch model associated with object
-   model mod = object.mod;
+void cpuRenderObject::render() {
+ 
+   for (object& obj : objects){
 
-   // Model * View * Project matrix
-   mat4x4 vp = cam.mat_view * m_matProject;
-   mat4x4 m = object.matScale * object.matTransform;
+      // Fetch model associated with object
+      model mod = obj.mod;
+      // Model * View * Project matrix
+      mat4x4 vp = cam.mat_view * m_matProject;
+      mat4x4 m = obj.matScale * obj.matTransform;
 
-   vertAttribs.resize(mod.vertices.size());
+      vertAttribs.resize(mod.vertices.size());
 
-   // Vertex shader (Model View Projection matrix multiplication)
-   for(int i=0; i<mod.vertices.size(); i ++){
-      vertex newVert = mod.vertices[i];
-      newVert.fragPos = newVert.pos * m;
-      newVert.pos *= (m * vp);
-      newVert.clipPos = newVert.pos;
-      vertAttribs[i] = newVert;
-   }
-
-   for (subMesh mesh : mod.subMeshes) {
-      
-      texW = mesh.tex.w;
-      texH = mesh.tex.h;
-      texC = mesh.tex.channels;
-      texD = mesh.tex.data;
-
-      for(int i=0; i< mesh.indices.size(); i += 3){
-
-         // Generate triangles from vertices and indices
-         int i0 = mesh.indices[i];
-         int i1 = mesh.indices[i+1];
-         int i2 = mesh.indices[i+2];
-         primatives.emplace_back(vertAttribs[i0],vertAttribs[i1],vertAttribs[i2]);
+      // Vertex shader (Model View Projection matrix multiplication)
+      for(int i=0; i<mod.vertices.size(); i ++){
+         vertex newVert = mod.vertices[i];
+         newVert.fragPos = newVert.pos * m;
+         newVert.pos *= (m * vp);
+         newVert.clipPos = newVert.pos;
+         vertAttribs[i] = newVert;
       }
 
-      // Clip triangles.
-      clipTriangles();
+      for (subMesh mesh : mod.subMeshes) {
 
-      for(int i=0; i< primatives.size(); i++) {
-         prim& p = primatives[i];
-         p.perspectiveDivide();
-         
+         texRef = mesh.tex;
+         for(int i=0; i< mesh.indices.size(); i += 3){
 
-         for (int i=0; i<3; i++){
-            // Projection results are between -1 and 1. So shift to the positive and scale to fit screen
-            p.v[i].pos.x = (p.v[i].pos.x + 1.0f) * 0.5f * m_resolution.x;
-            p.v[i].pos.y = (p.v[i].pos.y + 1.0f) * 0.5f * m_resolution.y;
+            // Generate triangles from vertices and indices
+            int i0 = mesh.indices[i];
+            int i1 = mesh.indices[i+1];
+            int i2 = mesh.indices[i+2];
+            primatives.emplace_back(vertAttribs[i0],vertAttribs[i1],vertAttribs[i2]);
          }
+         // Clip triangles.
+         clipTriangles();
 
-         // Do not raster if winding is incorrect (cull back faces)
-         if(!backFaceCulling(p)){ raster(p);}
+         for(int i=0; i< primatives.size(); i++) {
+            prim& p = primatives[i];
+            p.perspectiveDivide();
+
+            for (int i=0; i<3; i++){
+               // Projection results are between -1 and 1. So shift to the positive and scale to fit screen
+               p.v[i].pos.x = (p.v[i].pos.x + 1.0f) * 0.5f * m_resolution.x;
+               p.v[i].pos.y = (p.v[i].pos.y + 1.0f) * 0.5f * m_resolution.y;
+            }
+            // Do not raster if winding is incorrect (cull back faces)
+            if(!backFaceCulling(p)){ raster(p);}
+         }
+         primatives.clear();
       }
-      primatives.clear();
    }
+
+   GLScopedTexture2D tempTexture(gl_window.colorTex);
+   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+   glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, gl_window.fboWidth, gl_window.fboHeight, GL_RGBA, GL_UNSIGNED_BYTE, m_pixelBuffer.data());
+   // Clear the pixel buffer with the background color before drawing each triangle
+   m_pixelBuffer = m_clearBuffer;
+   // Clear the z buffer with far depth
+   m_zBuffer.assign(m_zBuffer.size(), 1.0f);
 }
 
 
@@ -187,6 +190,7 @@ void cpuRenderObject::clipTriangles() {
       primatives.swap(splitBuffer);
       splitBuffer.clear();
    }
+
 }
 
 
@@ -198,14 +202,9 @@ void cpuRenderObject::clipTriangles() {
 void cpuRenderObject::raster(const prim& pr) {
    // Bounding box triangle filling method with barycentric coordinates to interpolate 
    // between points. This is the trickiest part of the pipeline
-
-   // Transform the light into viewspace
-   // lightPosView = (lightPos * m_matView);
-
    vertex v0 = pr.v[0];
    vertex v1 = pr.v[1];
    vertex v2 = pr.v[2];
-
    // Screen-space positions
    vec2 p0(v0.x, v0.y);
    vec2 p1(v1.x, v1.y);
@@ -325,28 +324,27 @@ void cpuRenderObject::raster(const prim& pr) {
                float cu = fract(uv.x);
                float cv = fract(uv.y);
 
-               int tx = (cu >= 1.0f) ? (texW - 1) : (int)std::floor(cu * (float)texW);
-               int ty = (cv >= 1.0f) ? (texH - 1) : (int)std::floor(cv * (float)texH);
+               int tx = (cu >= 1.0f) ? (texRef.w - 1) : (int)std::floor(cu * (float)texRef.w);
+               int ty = (cv >= 1.0f) ? (texRef.h - 1) : (int)std::floor(cv * (float)texRef.h);
 
-               int texelIndex = (ty * texW + tx) * texC;
+               int texelIndex = (ty * texRef.w + tx) * texRef.channels;
 
                float r, g, b, a = 1.0f;
 
-               if (texC == 1) {
-                  r = g = b = texD[texelIndex] / 255.0f;
+               if (texRef.channels == 1) {
+                  r = g = b = texRef.data[texelIndex] / 255.0f;
                }
-               else if (texC == 3) {
-                  r = texD[texelIndex + 0];
-                  g = texD[texelIndex + 1];
-                  b = texD[texelIndex + 2];
+               else if (texRef.channels == 3) {
+                  r = texRef.data[texelIndex + 0];
+                  g = texRef.data[texelIndex + 1];
+                  b = texRef.data[texelIndex + 2];
                }
-               else if (texC == 4) {
-                  r = texD[texelIndex + 0];
-                  g = texD[texelIndex + 1];
-                  b = texD[texelIndex + 2];
-                  a = texD[texelIndex + 3];
+               else if (texRef.channels == 4) {
+                  r = texRef.data[texelIndex + 0];
+                  g = texRef.data[texelIndex + 1];
+                  b = texRef.data[texelIndex + 2];
+                  a = texRef.data[texelIndex + 3];
                }
-
                vec4 texColor(r, g, b, a);
                
                vec3 lightSum = vec3(0,0,0);
@@ -381,15 +379,6 @@ void cpuRenderObject::raster(const prim& pr) {
 }
 
 
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// SF::DRAWABLE IMPLIMENTATION
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void cpuRenderObject::draw() {
-   // Clear the pixel buffer with the background color before drawing each triangle
-   m_pixelBuffer = m_clearBuffer;
-   // Clear the z buffer with far depth
-   m_zBuffer.assign(m_zBuffer.size(), 1.0f);
-}
 
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // UTILITY FUNCTIONS

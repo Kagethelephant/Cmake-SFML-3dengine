@@ -1,4 +1,5 @@
 #include "text.hpp"
+#include "RAIIWrapper.hpp"
 #include "utils/data.hpp"
 #include "window.hpp"
 #include <ft2build.h>
@@ -7,41 +8,35 @@
 #include FT_FREETYPE_H
 #include "utils/matrix.hpp"
 
-textEngine::textEngine(){
+textRenderObject::textRenderObject(window& _win) : gl_window{_win} {
 
    if (FT_Init_FreeType(&library))
    {
       std::cout << "Could not init FreeType" << std::endl;
    }
 
-   color = hexColorToFloat(Color::White).xyz();
+   shaderProgramText = createShaderProgram("../src/shaders/text_vertex.glsl", "../src/shaders/text_fragment.glsl");
 
    glGenVertexArrays(1, &vao);
    glGenBuffers(1, &vbo);
 
-   glBindVertexArray(vao);
-   glBindBuffer(GL_ARRAY_BUFFER, vbo);
+   GLScopedVAO tempVAO(vao);
+   GLScopedVBO tempVBO(vbo);
    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
 
    glEnableVertexAttribArray(0);
    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
    glEnableVertexAttribArray(1);
    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-
-   glBindBuffer(GL_ARRAY_BUFFER, 0);
-   glBindVertexArray(0);
-
 }
 
-textEngine::~textEngine(){
+textRenderObject::~textRenderObject(){
    for (FT_Face face : fontFaces){
       FT_Done_Face(face);
    }
-
    for (auto& [c, ch] : characters){
        glDeleteTextures(1, &ch.textureID);
    }
-
    characters.clear();
    fontFaces.clear();
 
@@ -49,10 +44,9 @@ textEngine::~textEngine(){
    glDeleteVertexArrays(1, &vao);
 
    FT_Done_FreeType(library);
-
 }
 
-void textEngine::loadFont(const char *filePath){
+void textRenderObject::loadFont(const char *filePath){
 
    FT_Face face;
    if (FT_New_Face(library, filePath, 0, &face))
@@ -73,7 +67,7 @@ void textEngine::loadFont(const char *filePath){
 
       GLuint texture;
       glGenTextures(1, &texture);
-      glBindTexture(GL_TEXTURE_2D, texture);
+      GLScopedTexture2D tempTexture(texture);
 
       glTexImage2D(GL_TEXTURE_2D,0,GL_RED,face->glyph->bitmap.width,face->glyph->bitmap.rows,0,GL_RED,GL_UNSIGNED_BYTE,face->glyph->bitmap.buffer);
 
@@ -94,35 +88,39 @@ void textEngine::loadFont(const char *filePath){
 }
 
 
-void textEngine::RenderText(GLuint shaderProgram, window& window, std::string text, float x, float y){
+void textRenderObject::RenderText(std::string text, float x, float y, Color col){
 
-   glEnable(GL_BLEND);
-   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+   vec3 color = hexColorToFloat(col).xyz();
 
-   glUseProgram(shaderProgram);
-   glUniform1i(glGetUniformLocation(shaderProgram, "text"), 0);
+   GLScopedFBO temFBO(gl_window.fbo);
+   GLScopedViewport tempViewPort(0, 0, gl_window.fboWidth, gl_window.fboHeight);
+   GLScopedProgram tempProgram(shaderProgramText);
+   GLScopedVAO tempVAO(vao);
 
-   int shaderColor = glGetUniformLocation(shaderProgram, "textColor");
+   GLScopedCapability tempBlendEnable(GL_BLEND, true);
+   GLScopedBlendFunc tempBlendMode(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+   glUniform1i(glGetUniformLocation(shaderProgramText, "text"), 0);
+
+   int shaderColor = glGetUniformLocation(shaderProgramText, "textColor");
    glUniform3fv(shaderColor,1,&color[0]);
 
-   window.fbo.bind();
-   glActiveTexture(GL_TEXTURE0);
-   glBindVertexArray(vao);
+   GLScopedActiveTexture tempActiveTex(GL_TEXTURE0);
 
    for (char c : text)
    {
       character ch = characters[c];
 
       float xpos = x + ch.bearing[0];
-      float ypos = window.fboHeight - y - ch.bearing[1];
+      float ypos = gl_window.fboHeight - y - ch.bearing[1];
 
       float w = ch.size[0];
       float h = ch.size[1];
 
-      float xmin = (2*(xpos)/window.fboWidth) -1;
-      float xmax = (2*(xpos+w)/window.fboWidth) -1;
-      float ymin = (2*(ypos)/window.fboHeight) -1;
-      float ymax = (2*(ypos+h)/window.fboHeight) -1;
+      float xmin = (2*(xpos  )/gl_window.fboWidth ) -1;
+      float xmax = (2*(xpos+w)/gl_window.fboWidth ) -1;
+      float ymin = (2*(ypos  )/gl_window.fboHeight) -1;
+      float ymax = (2*(ypos+h)/gl_window.fboHeight) -1;
 
       vertices = {
          xmin, ymax,   0.0f, 0.0f,
@@ -134,17 +132,12 @@ void textEngine::RenderText(GLuint shaderProgram, window& window, std::string te
          xmax, ymax,   1.0f, 0.0f
       };
 
-        glBindTexture(GL_TEXTURE_2D, ch.textureID);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        GLScopedTexture2D tempTexture(ch.textureID);
+        GLScopedVBO tempVBO(vbo);
         glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size()* sizeof(GLfloat), vertices.data());
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
 
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
       x += (ch.advance >> 6); // Convert from 1/64 pixels
    }
-
-   glDisable(GL_BLEND);
-   glBindVertexArray(0);
-   glBindTexture(GL_TEXTURE_2D, 0);
 }

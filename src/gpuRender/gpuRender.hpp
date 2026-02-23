@@ -15,16 +15,6 @@
 
 
 
-
-
-// Forward declaration of object for use in vertex object
-struct object;
-
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// RENDERER
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-
 /// @brief: Loads and renders the meshes to the screen
 /// @param _width: Width of the rendering view (not always the same as window)
 /// @param _height: Height of the rendering view (not always the same as window)
@@ -78,23 +68,11 @@ public:
    window& gl_window;
    camera& cam;
 
-
    std::vector<GLfloat> vertices; 
    std::vector<GLuint> indices; 
   
-
    void render();
    void bindObject(const object& obj);
-
-   // Object to store the location of each of the meshes in the vertex data
-   struct model {
-      GLuint start;
-      GLuint end;
-   };
-
-   std::vector<model> models;
-
-   unsigned int createModel (std::string filename);
 
 private:
 

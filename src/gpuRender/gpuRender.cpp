@@ -1,4 +1,5 @@
 #include "gpuRender.hpp"
+#include "RAIIWrapper.hpp"
 #include "utils/data.hpp"
 #include "utils/matrix.hpp"
 #include "window.hpp"
@@ -26,7 +27,6 @@ gpuRenderObject::gpuRenderObject(camera& _cam) : cam{_cam}, gl_window{_cam.gl_wi
    mat_project = matrix_project(70.0f, gl_window.targetAspect, 0.1f, 1000.0f);
 
    shaderProgram3D = createShaderProgram("../src/shaders/3d_vertex.glsl", "../src/shaders/3d_fragment.glsl");
-
 }
 
 
@@ -40,24 +40,19 @@ void gpuRenderObject::bindObject(const object& obj){
    GLuint& vao = gpuObject.vao;
    GLuint& vbo = gpuObject.vbo;
 
-
    glGenBuffers(1, &vbo);
    glGenVertexArrays(1, &vao);  
-   // Bind Vertex Array Object
-   glBindVertexArray(vao);
    // Setup the VBO using the VAO
-   glBindBuffer(GL_ARRAY_BUFFER, vbo);
+   GLScopedVAO tempVAO(vao);
+   GLScopedVBO tempVBO(vbo);
    glBufferData(GL_ARRAY_BUFFER, obj.mod.verticesRaw.size() * sizeof(GLfloat), obj.mod.verticesRaw.data(), GL_STATIC_DRAW);
-
    // 1) Shader layout location, 2) Qty of vert attributes, 3) Size of attribute, 4) normaliize btwn -1 to 1, 5)span btwn verts in bytes, 6) start of buffer
    // positions at location 0
    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
    glEnableVertexAttribArray(0);
-
    // normals at location 1
    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
    glEnableVertexAttribArray(1);
-
    // UVs at location 2
    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
    glEnableVertexAttribArray(2);
@@ -73,11 +68,11 @@ void gpuRenderObject::bindObject(const object& obj){
       glGenBuffers(1, &gpuSub.ebo);
       glGenTextures(1, &gpuSub.tex);
 
-      glBindTexture(GL_TEXTURE_2D, tex);
 
       texture texObj = mesh.tex;
       GLenum format = (texObj.channels == 4) ? GL_RGBA : GL_RGB;
 
+      GLScopedTexture2D tempTex(tex);
       glTexImage2D(GL_TEXTURE_2D, 0, format, texObj.w, texObj.h, 0, format, GL_UNSIGNED_BYTE, texObj.data);
       glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -86,7 +81,7 @@ void gpuRenderObject::bindObject(const object& obj){
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+      GLScopedEBO tempEBO(ebo);
       glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size() * sizeof(uint32_t), mesh.indices.data(), GL_STATIC_DRAW);
 
       gpuObject.subMeshes.push_back(gpuSub);
@@ -100,14 +95,15 @@ void gpuRenderObject::bindObject(const object& obj){
 void gpuRenderObject::render(){
 
    vec4 bgColor = hexColorToFloat(Color::Black);
-   gl_window.fbo.bind();
-   glUseProgram(shaderProgram3D);
+   GLScopedFBO tempFBO(gl_window.fbo);
+   GLScopedViewport tempViewPort(0, 0, gl_window.fboWidth, gl_window.fboHeight);
+   GLScopedProgram tempProgram(shaderProgram3D);
    glClearColor(bgColor[0],bgColor[1],bgColor[2],bgColor[3]);
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-   glEnable(GL_CULL_FACE);
-   glCullFace(GL_FRONT);
-   glEnable(GL_DEPTH_TEST);
+   GLScopedCapability tempCullEnable(GL_CULL_FACE,true);
+   GLScopedCullFace tempCullMode(GL_FRONT);
+   GLScopedCapability tempDepthEnable(GL_DEPTH_TEST, true);
 
    int lightCount = std::min(MAX_LIGHTS, (unsigned int)lights.size());
 
@@ -130,12 +126,11 @@ void gpuRenderObject::render(){
       const GLuint& vao = mesh.vao;
       const GLuint& vbo = mesh.vbo;
 
-
       vec4 color = hexColorToFloat(obj.color);
 
       // Setup the VBO using the VAO
-      glBindVertexArray(vao);
-      glBindBuffer(GL_ARRAY_BUFFER, vbo);
+      GLScopedVAO tempVAO(vao);
+      GLScopedVBO tempVBO(vbo);
 
       // update the uniform color
       glUniformMatrix4fv(glGetUniformLocation(shaderProgram3D, "view"),1,GL_FALSE,&cam.mat_view.m[0][0]);
@@ -149,24 +144,21 @@ void gpuRenderObject::render(){
       glUniformMatrix4fv(glGetUniformLocation(shaderProgram3D, "scale"),1,GL_FALSE,&obj.matScale.m[0][0]);
       glUniformMatrix4fv(glGetUniformLocation(shaderProgram3D, "transform"),1,GL_FALSE,&obj.matTransform.m[0][0]);
       
+      // Activate this texture here so we dont have to do it for every sub mesh
+      GLScopedActiveTexture tempActiveTex(GL_TEXTURE0);
 
       for (const gpuSubMesh& sub : mesh.subMeshes) {
 
          const GLuint& ebo = sub.ebo;
          const GLuint& tex = sub.tex;
 
-         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-
-         glActiveTexture(GL_TEXTURE0);
-         glBindTexture(GL_TEXTURE_2D, tex);
+         GLScopedEBO tempEBO(ebo);
+         GLScopedTexture2D tempTexture(tex);
          glUniform1i(glGetUniformLocation(shaderProgram3D, "diffuseTex"), 0);
 
          glDrawElements(GL_TRIANGLES,sub.indiceCount, GL_UNSIGNED_INT, 0);
       }
 
    }
-   glDisable(GL_CULL_FACE);
-   glCullFace(GL_BACK);
-   glDisable(GL_DEPTH_TEST);
 }
 

@@ -41,7 +41,6 @@ private:
 class cpuRenderObject {
 
 public:
-   
 
    std::vector<light> lights;
 
@@ -55,34 +54,25 @@ public:
 
    cpuRenderObject(camera& _cam);
 
+   void bindObject(const object& obj);
+
 
    /// @brief: Render 3D vertex data given information from 3D object. This is where most of the
    /// 3D graphics pipeline is excecuted: vertex shader, vertex post processing (triangle clipping)
    /// @param object: Object that provides position, orientation, scale, color and model index information
-   void render(const object& object);
-
-   /// @brief: Draw pixel buffer to the sfml window passed to this object
-   void draw();
+   void render();
 
 
    /// @brief: Pixel array for 32 bit trucolor + alpha (8 bits for r,g,b and alpha) used to raster triangles
    std::vector<std::uint8_t> m_pixelBuffer;
    /// @brief: An array of the models stored in the triangle buffer
-   std::vector<model> models;
+   std::vector<object> objects;
 
-   /// @brief: Loads vertex data into the triangle buffer from an OBJ file and saves the 
-   /// location with a model object 
-   /// @param filename: filepath to the OBJ file
-   /// @param ccwWinding: changes the winding on the model so the triangle normal points outwards
-   /// @return: uint location of the model in the models array
-   unsigned int createModel (const std::string filename, const bool ccwWinding = false);
 
 private:
 
-   int texW;
-   int texH;
-   int texC;
-   unsigned char* texD;
+
+   texture texRef;
 
    /// @brief: Aspect ratio of the window
    float m_aspectRatio;     

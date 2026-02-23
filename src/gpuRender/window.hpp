@@ -2,76 +2,84 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <vector>
-#include <cstdint>
+
+// // window.hpp additions
+// #include <unordered_map>
+
+// class window {
+// public:
+//     GLFWwindow* win;
+//     
+//     // Track previous key states
+//     std::unordered_map<int, int> prevKeyState;
+
+//     enum class KeyMode { Pressed, PressedOnce, Released };
+
+//     bool checkKey(int key, KeyMode mode = KeyMode::Pressed);
+// };
 
 
+//// window.cpp additions
 
+// bool window::checkKey(int key, KeyMode mode){
+//     int current = glfwGetKey(win, key);
+//     int previous = prevKeyState[key];
 
+//     bool result = false;
+//     switch(mode){
+//         case KeyMode::Pressed:
+//             result = (current == GLFW_PRESS);
+//             break;
+//         case KeyMode::PressedOnce:
+//             result = (current == GLFW_PRESS && previous != GLFW_PRESS);
+//             break;
+//         case KeyMode::Released:
+//             result = (current == GLFW_RELEASE && previous == GLFW_PRESS);
+//             break;
+//     }
 
-class FixedFBO {
-public:
-   FixedFBO() : fbo(0), colorTex(0), depth(0) {}
-   // FixedFBO(int fboWidth, int fboHeight);
-   ~FixedFBO();
-
-   
-   FixedFBO(const FixedFBO&) = delete;
-   FixedFBO& operator=(const FixedFBO&) = delete;
-
-
-   void init(int fboWidth, int fboHeight, int fboX = 0, int fboY = 0);
-
-   void resize(int fboWidth, int fboHeight, int fboX = 0, int fboY = 0);
-
-   void bind();
-   static void unbind();
-
-   GLuint getTexture() const { return colorTex; }
-   int getWidth()  const { return width; }
-   int getHeight() const { return height; }
-
-private:
-   void create();
-   void destroy();
-
-   GLuint fbo = 0;
-   GLuint colorTex = 0;
-   GLuint depth = 0;
-
-   int width = 0;
-   int height = 0;
-   int x = 0;
-   int y = 0;
-};
-
-
-
+//     // update previous state for next frame
+//     prevKeyState[key] = current;
+//     return result;
+// }
 
 class window {
 
 public:
 
    window(int _height);
+   ~window();
 
    GLFWwindow* win;
 
-   FixedFBO fbo;
+   // FixedFBO fbo;
    int fboWidth, fboHeight;
-   int offsetX, offsetY;
 
    int windowWidth, windowHeight;
    float windowAspect;
    float targetAspect;
 
+
+   GLuint fbo = 0;
+   GLuint colorTex = 0;
+   GLuint depth = 0;
+
    GLuint UIvao;
    GLuint UIvbo;
+
+
+   double lastTime = glfwGetTime();
+   double frameTime;
+   double currentTime;
+   int frameCount = 0;
+   int fps;
 
    /// @brief: Shader program to render 2D quads with textures
    GLuint shaderProgramUI;
 
    std::vector<float> quadVertices;
-   void draw();
-   void draw(const std::vector<std::uint8_t> buf);
+   void frameUpdate();
+   // void bindFBO();
 
    bool resizePending = false;
 
