@@ -1,12 +1,12 @@
 #include "cpuRender.hpp"
-
-#include <gpuRender/window.hpp>
-#include <iostream>
+// Standard Libraries
 #include <algorithm>
 #include <cstdint>
 #include <strings.h>
 #include <vector>
 #include <math.h>
+// Program Headers
+#include "gpuRender/window.hpp"
 #include "gpuRender/RAIIWrapper.hpp"
 #include "utils/data.hpp"
 #include "utils/matrix.hpp"
@@ -66,7 +66,7 @@ void cpuRenderObject::bindObject(const object& obj) {
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 void cpuRenderObject::render() {
  
-   for (object& obj : objects){
+   for (const object& obj : objects){
 
       // Fetch model associated with object
       model mod = obj.mod;
@@ -85,7 +85,7 @@ void cpuRenderObject::render() {
          vertAttribs[i] = newVert;
       }
 
-      for (subMesh mesh : mod.subMeshes) {
+      for (const auto& mesh : mod.subMeshes) {
 
          texRef = mesh.tex;
          for(int i=0; i< mesh.indices.size(); i += 3){
@@ -100,7 +100,7 @@ void cpuRenderObject::render() {
          clipTriangles();
 
          for(int i=0; i< primatives.size(); i++) {
-            prim& p = primatives[i];
+            triangle3d& p = primatives[i];
             p.perspectiveDivide();
 
             for (int i=0; i<3; i++){
@@ -133,7 +133,7 @@ void cpuRenderObject::clipTriangles() {
    
    // Create buffer to hold triangles that need to go through the split function and 
    // a buffer of triangles that have already been through the split function
-   std::vector<prim> splitBuffer;
+   std::vector<triangle3d> splitBuffer;
    splitBuffer.reserve(primatives.size() * 2);
 
    // Cycle through each plane and each triangle so we can clip them against each plane
@@ -142,7 +142,7 @@ void cpuRenderObject::clipTriangles() {
    vertex p1, p2;
 
    for (vec4& plane : m_planes) {
-      for(prim& t : primatives) {
+      for(triangle3d& t : primatives) {
 
          // For consiseness check what points are out of the current plane ahead of time
          bool clipped[3] = {pointOutOfPlane(t.v[0].pos, plane), pointOutOfPlane(t.v[1].pos, plane), pointOutOfPlane(t.v[2].pos, plane)};
@@ -199,7 +199,7 @@ void cpuRenderObject::clipTriangles() {
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // FILL TRIANGLE
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void cpuRenderObject::raster(const prim& pr) {
+void cpuRenderObject::raster(const triangle3d& pr) {
    // Bounding box triangle filling method with barycentric coordinates to interpolate 
    // between points. This is the trickiest part of the pipeline
    vertex v0 = pr.v[0];
@@ -265,7 +265,7 @@ void cpuRenderObject::raster(const prim& pr) {
    vec3 dFdy_fragPos = (v0.fragPos * dAlpha.y + v1.fragPos * dBeta.y + v2.fragPos * dGamma.y).xyz();
    // Since these vectors are tangent to the surface of the triangle
    // we can calculate the normal from these with the cross product
-   vec3 norm = dFdy_fragPos.cross(dFdx_fragPos).normal();
+   vec3 norm = dFdx_fragPos.cross(dFdy_fragPos).normal();
 
    
    // Signed twice-area of the triangle, used to normalize edge functions
@@ -396,7 +396,7 @@ float cpuRenderObject::edgeFunction(const vec2& a, const vec2& b, const vec2& p)
     return (p[0] - a[0]) * (b[1] - a[1]) - (p[1] - a[1]) * (b[0] - a[0]);
 }
 
-bool cpuRenderObject::backFaceCulling(const prim& tri) {
+bool cpuRenderObject::backFaceCulling(const triangle3d& tri) {
     // Use only X/Y in screen space.
     const vec2& a = tri.v[0].pos.xy();
     const vec2& b = tri.v[1].pos.xy();
@@ -404,5 +404,5 @@ bool cpuRenderObject::backFaceCulling(const prim& tri) {
     // Compute signed area (2D cross product)
     float area = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
     // Area will return negative if the triangle has CCW winding
-    return area > 0.0f;
+    return area < 0.0f;
 }

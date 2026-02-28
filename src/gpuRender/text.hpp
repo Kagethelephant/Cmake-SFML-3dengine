@@ -1,16 +1,19 @@
 #pragma once
-
-#include "utils/data.hpp"
-#include "window.hpp"
+// OpenGl Library
 #include <glad/glad.h>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
-#include <ft2build.h>
+// Standard Libraries
 #include <vector>
-#include FT_FREETYPE_H
-#include "utils/matrix.hpp"
 #include <map>
+// Program Headers
+#include "utils/data.hpp"
+#include "window.hpp"
 #include <shaders/shader.hpp>
+#include "utils/matrix.hpp"
+// Freetype Library
+#include <ft2build.h>
+#include FT_FREETYPE_H
 
 
 

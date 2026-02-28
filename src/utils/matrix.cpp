@@ -67,7 +67,7 @@ mat4x4 matrix_pointAt(vec3 pos, vec3 target, vec3 up) {
 
 
 mat4x4 matrix_view(mat4x4 m) {
-   //This is basically creating the inverse of the input matrix
+   //This is basically creating the inverse of the input point at matrix
    mat4x4 m2;
    m2.m[0][0] = m.m[0][0]; m2.m[0][1] = m.m[1][0]; m2.m[0][2] = m.m[2][0]; m2.m[0][3] = 0.0f;
    m2.m[1][0] = m.m[0][1]; m2.m[1][1] = m.m[1][1]; m2.m[1][2] = m.m[2][1]; m2.m[1][3] = 0.0f;

@@ -1,34 +1,24 @@
 #include "object.hpp"
-
+// OpenGL
 #include <glad/glad.h>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
-
+// Standard Libraries
 #include <math.h>
 #include "utils/matrix.hpp"
 #include <fstream>
 #include <sstream>
 #include <algorithm>
-#include <iostream>
 #include <string>
-#include <sstream>
 #include <unordered_map>
-
+// STB_Image
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
-
-light createLight(const vec3& pos, const vec3& col){
-   light newLight;
-   newLight.position = pos;
-   newLight.color = col;
-   return newLight;
-}
-
 
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // MOVE AND ROTATE CAMERA
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void camera::move(float x, float y, float z) {
+void camera::move(const float& x, const float& y, const float& z) {
    
    vec3 up = vec3(0,1,0) * matrix_transform(0, 0, 0, rotation[0], rotation[1], rotation[2]);
    position += (direction.cross(up) * x);
@@ -38,7 +28,7 @@ void camera::move(float x, float y, float z) {
 }
 
 
-void camera::rotate(float u, float v, float w) {
+void camera::rotate(const float& u, const float& v, const float& w) {
    
    rotation += vec3(u, v, w);
    vec3 up = vec3(0,1,0) * matrix_transform(0, 0, 0, rotation[0], rotation[1], rotation[2]);
@@ -46,8 +36,9 @@ void camera::rotate(float u, float v, float w) {
    mat_view = matrix_view(matrix_pointAt(position, direction, up));
 }
 
-// UPDATE POSITION
-//---------------------------------------------------------------------------------------------
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// MOVE AND ROTATE OBJECT
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 void object::scale(float sx, float sy, float sz){
    scales = vec3(sx,sy,sz);
    matScale = matrix_scale(scales[0], scales[1], scales[2]);
@@ -66,74 +57,11 @@ void object::rotate(float u, float v, float w){
 }
 
 
-// ------------------------- Helper -------------------------
-std::string model::getDirectory(const std::string& path) {
-   size_t pos = path.find_last_of("/\\");
-   if (pos == std::string::npos)
-      return "";
-   return path.substr(0, pos + 1); // include trailing slash
-}
 
 
-// ------------------------- Texture Loader -------------------------
-texture model::loadTexture(const std::string& filepath) {
-   std::string correctedPath = filepath;
-   std::replace(correctedPath.begin(), correctedPath.end(), '\\', '/');
-   texture tex;
-   stbi_set_flip_vertically_on_load(true);
-
-   tex.data = stbi_load(correctedPath.c_str(), &tex.w, &tex.h, &tex.channels, 0);
-   if (!tex.data)
-      throw std::runtime_error("Failed to load texture: " + correctedPath);
-
-   GLenum format;
-   if (tex.channels == 1) format = GL_RED;
-   else if (tex.channels == 3) format = GL_RGB;
-   else if (tex.channels == 4) format = GL_RGBA;
-   else {
-      stbi_image_free(tex.data);
-      throw std::runtime_error("Unsupported image channel count: " + correctedPath);
-   }
-
-   return tex;
-}
-
-// ------------------------- MTL Loader -------------------------
-void model::loadMTL(const std::string& path, std::unordered_map<std::string, material>& materials) {
-   std::ifstream file(path);
-   if (!file) throw std::runtime_error("Failed to open MTL: " + path);
-
-   // Get the directory of the file to find the textures
-   std::string dir = getDirectory(path);
-   material* current = nullptr;
-   std::string line;
-
-   // itterate through the entire mtl file
-   while (std::getline(file, line)) {
-      std::stringstream ss(line);
-      std::string type;
-      ss >> type;
-
-      // Load the name of the material into the map
-      // This works because the "newmtl" will come before the "map_Kd" so current will be set before "map_Kd"
-      if (type == "newmtl") {
-         std::string name;
-         ss >> name;
-         materials[name] = {}; // Creates another element in the map if it does not exist
-         materials[name].name = name; // Load name into the name po
-         current = &materials[name];
-      } 
-      // Load the texture into the material map
-      else if (type == "map_Kd" && current) {
-         std::string texPath;
-         ss >> texPath;
-         // Load texture from the path
-         current->diffuseTex = loadTexture(dir + texPath);
-      }
-   }
-}
-
-
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// LOAD OBJ MODEL
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 model::model(const std::string& filename, bool ccwWinding) {
 
    // Open the obj file
@@ -162,7 +90,6 @@ model::model(const std::string& filename, bool ccwWinding) {
       std::string type;
       stream >> type;
 
-      // -------------------------------------------------
       // POSITION
       // -------------------------------------------------
       if (type == "v") {
@@ -170,8 +97,6 @@ model::model(const std::string& filename, bool ccwWinding) {
          stream >> p.x >> p.y >> p.z;
          objPositions.push_back(p);
       }
-
-      // -------------------------------------------------
       // TEXCOORD
       // -------------------------------------------------
       else if (type == "vt") {
@@ -179,8 +104,6 @@ model::model(const std::string& filename, bool ccwWinding) {
          stream >> uv.x >> uv.y;
          objTexcoords.push_back(uv);
       }
-
-      // -------------------------------------------------
       // NORMAL
       // -------------------------------------------------
       else if (type == "vn") {
@@ -188,13 +111,15 @@ model::model(const std::string& filename, bool ccwWinding) {
          stream >> n.x >> n.y >> n.z;
          objNormals.push_back(n);
       }
-
+      // MTL FILE
+      // -------------------------------------------------
       else if (type == "mtllib") {
          std::string mtlfile;
          stream >> mtlfile;
          loadMTL(dir + mtlfile, materialMap);
       }
-
+      // MTL MATERIAL
+      // -------------------------------------------------
       else if (type == "usemtl") {
          std::string mtlName;
          stream >> mtlName;
@@ -204,7 +129,6 @@ model::model(const std::string& filename, bool ccwWinding) {
          subMeshes.push_back(newSubmesh);
       }
 
-      // -------------------------------------------------
       // FACE (triangles, quads, ngons)
       // -------------------------------------------------
       else if (type == "f") {
@@ -237,19 +161,13 @@ model::model(const std::string& filename, bool ccwWinding) {
 
             // Checks that there is a second slash and there is something btwn first and second slash
             // std::string::npos is what find() reterns when character is not found
-            if (p1 != std::string::npos){
                // Get the texture value (adjusted to 0 based indexing)
-               t = std::stoi(vert.substr(p1 + 1, p2 - p1 - 1)) - 1;
-            }
-            else{
-               t = -1;
-            }
+            if (p1 != std::string::npos) t = std::stoi(vert.substr(p1 + 1, p2 - p1 - 1)) - 1;
+            else t = -1;
 
             // checks that there is a second slash and grabs normal value after it
-            if (p2 != std::string::npos)
-               n = std::stoi(vert.substr(p2 + 1)) - 1;
-            else
-               n = -1;
+            if (p2 != std::string::npos) n = std::stoi(vert.substr(p2 + 1)) - 1;
+            else n = -1;
 
             // Add values to the vertice buffers
             vIdx.push_back(v);
@@ -281,9 +199,7 @@ model::model(const std::string& filename, bool ccwWinding) {
                auto it = vertexCache.find(key);
                // vertexCache.find() will return vertexCache.end() if it is not found
                // If it is found than add the already existing vertex index to indices
-               if (it != vertexCache.end()) {
-                  currentMesh.indices.push_back(it->second);
-               } 
+               if (it != vertexCache.end()) currentMesh.indices.push_back(it->second);
                else {
                   // If it does not exist create a new vertex
                   vertex vertOut;
@@ -305,6 +221,7 @@ model::model(const std::string& filename, bool ccwWinding) {
 
    verticesRaw.reserve(vertices.size() * 8); // 3 pos + 3 normal + 2 uv = 8 floats per vertex
 
+   // Push all vertice data back to a raw vertice array to send to GPU
    for (const auto& vert : vertices) {
       // pos
       verticesRaw.push_back(vert.pos.c[0]);
@@ -317,5 +234,76 @@ model::model(const std::string& filename, bool ccwWinding) {
       // uv
       verticesRaw.push_back(vert.uv.c[0]);
       verticesRaw.push_back(vert.uv.c[1]);
+   }
+}
+
+
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// HELPERS
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// ------------------------- Get File Directory Path -------------------------
+std::string model::getDirectory(const std::string& path) {
+   size_t pos = path.find_last_of("/\\");
+   if (pos == std::string::npos)
+      return "";
+   return path.substr(0, pos + 1); // include trailing slash
+}
+
+
+// ------------------------- Load Texture File -------------------------
+model::texture model::loadTexture(const std::string& filepath) {
+   std::string correctedPath = filepath;
+   std::replace(correctedPath.begin(), correctedPath.end(), '\\', '/');
+   texture tex;
+   stbi_set_flip_vertically_on_load(true);
+
+   tex.data = stbi_load(correctedPath.c_str(), &tex.w, &tex.h, &tex.channels, 0);
+   if (!tex.data)
+      throw std::runtime_error("Failed to load texture: " + correctedPath);
+
+   GLenum format;
+   if (tex.channels == 1) format = GL_RED;
+   else if (tex.channels == 3) format = GL_RGB;
+   else if (tex.channels == 4) format = GL_RGBA;
+   else {
+      stbi_image_free(tex.data);
+      throw std::runtime_error("Unsupported image channel count: " + correctedPath);
+   }
+
+   return tex;
+}
+
+// ------------------------- Load MTL File -------------------------
+void model::loadMTL(const std::string& path, std::unordered_map<std::string, material>& materials) {
+   std::ifstream file(path);
+   if (!file) throw std::runtime_error("Failed to open MTL: " + path);
+
+   // Get the directory of the file to find the textures
+   std::string dir = getDirectory(path);
+   material* current = nullptr;
+   std::string line;
+
+   // itterate through the entire mtl file
+   while (std::getline(file, line)) {
+      std::stringstream ss(line);
+      std::string type;
+      ss >> type;
+
+      // Load the name of the material into the map
+      // This works because the "newmtl" will come before the "map_Kd" so current will be set before "map_Kd"
+      if (type == "newmtl") {
+         std::string name;
+         ss >> name;
+         materials[name] = {}; // Creates another element in the map if it does not exist
+         materials[name].name = name; // Load name into the name po
+         current = &materials[name];
+      } 
+      // Load the texture into the material map
+      else if (type == "map_Kd" && current) {
+         std::string texPath;
+         ss >> texPath;
+         // Load texture from the path
+         current->diffuseTex = loadTexture(dir + texPath);
+      }
    }
 }

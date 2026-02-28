@@ -16,7 +16,6 @@
 
 int main(int argc, char* argv[])
 {
-
    // INITIALIZE GLFW
    // -----------------------------------------------------------------------------------
    glfwInit();
@@ -37,8 +36,8 @@ int main(int argc, char* argv[])
       camera cam(gl_window);
 
       // Define model data and create instances of those models (objects)
-      model yoshi("../resources/objects/yoshi/yoshi.obj",true);
-      model Arcanine("../resources/objects/Arcanine/Arcanine.obj",true);
+      model yoshi("../resources/objects/yoshi/yoshi.obj");
+      model Arcanine("../resources/objects/Arcanine/Arcanine.obj");
 
       object yoshi1(yoshi);
       object arcanine1(Arcanine);
@@ -47,8 +46,8 @@ int main(int argc, char* argv[])
       yoshi1.move(0,0,-10);
       yoshi1.rotate(0,5,0);
 
-      light light1 = createLight(vec3(15,5,5),vec3(0.6,0.3,0.3));
-      light light2 = createLight(vec3(-15,5,5),vec3(0.3,0.3,0.6));
+      light light1(vec3(15,5,5),vec3(0.6,0.3,0.3));
+      light light2(vec3(-15,5,5),vec3(0.3,0.3,0.6));
 
       // Create the rendering objects for the CPU and GPU
       gpuRenderObject gpuRend(cam);
@@ -74,43 +73,41 @@ int main(int argc, char* argv[])
       double speed = 10.0f;
       double rotation = 3.0f;
 
-      bool blocked = false;
-      bool enterPreviouslyPressed = false;
       // ------------------------------ MAIN WINDOW LOOP ---------------------------------
       // Main loop for the window
       while(!glfwWindowShouldClose(gl_window.win)){
+
          // Get keyboard inputs
-         if (glfwGetKey(gl_window.win, GLFW_KEY_ESCAPE) == GLFW_PRESS) {glfwSetWindowShouldClose(gl_window.win, true);}
+         if (gl_window.checkKey(GLFW_KEY_ESCAPE)) {glfwSetWindowShouldClose(gl_window.win, true);}
+         if (gl_window.checkKey(GLFW_KEY_ENTER, window::KeyMode::PressedOnce)) {ogl = !ogl;}
+         if (gl_window.checkKey(GLFW_KEY_S)) {cam.move(0, 0, -movement);}
+         if (gl_window.checkKey(GLFW_KEY_W)) {cam.move(0, 0, movement);}
+         if (gl_window.checkKey(GLFW_KEY_A)) {cam.rotate(0, -rotate, 0);}
+         if (gl_window.checkKey(GLFW_KEY_D)) {cam.rotate(0, rotate, 0);}
 
-         bool enterPressed = glfwGetKey(gl_window.win, GLFW_KEY_ENTER) == GLFW_PRESS;
-         if (enterPressed && !enterPreviouslyPressed) {ogl = !ogl;}
-         enterPreviouslyPressed = enterPressed;
-
-         if (glfwGetKey(gl_window.win, GLFW_KEY_S) == GLFW_PRESS) {cam.move(0, 0, -movement);}
-         if (glfwGetKey(gl_window.win, GLFW_KEY_W) == GLFW_PRESS) {cam.move(0, 0, movement);}
-         if (glfwGetKey(gl_window.win, GLFW_KEY_A) == GLFW_PRESS) {cam.rotate(0, -rotate, 0);}
-         if (glfwGetKey(gl_window.win, GLFW_KEY_D) == GLFW_PRESS) {cam.rotate(0, rotate, 0);}
-
-         int fps = gl_window.fps;
-
+         // Multiply the speed of movement and rotation by the amount of time the last frame took
+         // This will make it so very high and low frame rates will move relitively the same in real time
          movement = speed * gl_window.frameTime;
          rotate = rotation * gl_window.frameTime;
 
-         // Render 3D objects
+         // Render 3D objects with the GPU
          if(ogl){ 
             gpuRend.render();
             text.RenderText("GPU", gl_window.fboWidth/2.0f, 10,Color::Green);
          }
+         // Render 3D objects with the CPU
          else { 
             cpuRend.render();
             text.RenderText("CPU", gl_window.fboWidth/2.0f, 10, Color::Blue);
          }
-         text.RenderText("FPS: " + std::to_string(fps), 10, 10);
 
+         // Print the FPS of the window
+         text.RenderText("FPS: " + std::to_string(gl_window.fps), 10, 10);
+
+         // Updating the frame renders the FBO to the screen and checks for events, etc.
          gl_window.frameUpdate();
       }
    }
-
    // Shutdown GLFW
    glfwTerminate();
 

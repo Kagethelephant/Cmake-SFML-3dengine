@@ -7,30 +7,6 @@
 
 
 
-struct prim {
-
-public:
-
-   vertex v[3];
-
-
-   prim() : v{vertex(),vertex(),vertex()}{};
-   prim(vertex v0, vertex v1, vertex v2) : v{v0,v1,v2}{};
-
-   // @brief: Generates a vector normal to the triangles face starting from the triangles 0 point
-   vec4 normal() const {return ((v[1].fragPos - v[0].fragPos).cross(v[2].fragPos - v[0].fragPos)).normal();; }
-   // @brief: Devide by the w value (viewspace z value) after projection to give perspective, making far away objects look smaller
-   void perspectiveDivide() {v[0].pos.perspectiveDivide(); v[1].pos.perspectiveDivide(); v[2].pos.perspectiveDivide();}
-   // @brief: Print the vector parameters
-   void print() const {v[0].pos.print(); v[1].pos.print(); v[2].pos.print();}
-
-   // Operator overloads for multiplying a whole triagle by a matrix (just multiplies the underlying vectors)
-   prim operator * (const mat4x4& m) const {return prim(this->v[0] * m, this->v[1] * m, this->v[2] * m);}
-   void operator *= (const mat4x4& m) { this->v[0] *= m; this->v[1] *= m; this->v[2] *= m; }
-
-private:
-
-};
 
 
 
@@ -71,8 +47,26 @@ public:
 
 private:
 
+   struct triangle3d {
 
-   texture texRef;
+      vertex v[3];
+
+      triangle3d() : v{vertex(),vertex(),vertex()}{};
+      triangle3d(vertex v0, vertex v1, vertex v2) : v{v0,v1,v2}{};
+
+      // @brief: Generates a vector normal to the triangles face starting from the triangles 0 point
+      vec4 normal() const {return ((v[1].fragPos - v[0].fragPos).cross(v[2].fragPos - v[0].fragPos)).normal();; }
+      // @brief: Devide by the w value (viewspace z value) after projection to give perspective, making far away objects look smaller
+      void perspectiveDivide() {v[0].pos.perspectiveDivide(); v[1].pos.perspectiveDivide(); v[2].pos.perspectiveDivide();}
+      // @brief: Print the vector parameters
+      void print() const {v[0].pos.print(); v[1].pos.print(); v[2].pos.print();}
+
+      // Operator overloads for multiplying a whole triagle by a matrix (just multiplies the underlying vectors)
+      triangle3d operator * (const mat4x4& m) const {return triangle3d(this->v[0] * m, this->v[1] * m, this->v[2] * m);}
+      void operator *= (const mat4x4& m) { this->v[0] *= m; this->v[1] *= m; this->v[2] *= m; }
+   };
+
+   model::texture texRef;
 
    /// @brief: Aspect ratio of the window
    float m_aspectRatio;     
@@ -99,13 +93,13 @@ private:
 
    std::vector<vertex> vertAttribs;
 
-   std::vector<prim> primatives;
+   std::vector<triangle3d> primatives;
 
    /// @brief: Scanline triangle fill algorithm. This is a common method of rasterization although it is very inefficient
    /// when ran on the CPU as we are doing here. steps in pipeline: Rasterization, Fragment Shader
    /// @param tri: Pixel array for 32 bit trucolor + alpha (8 bits for r,g,b and alpha)
    /// @param res: The resolution of the window
-   void raster(const prim& p);
+   void raster(const triangle3d& p);
    
    /// @brief: In-place clipping of triangles in m_triangleAttribs against all 6 planes 
    /// planes in clip space (after projection, before perspective division)
@@ -113,7 +107,7 @@ private:
 
    /// @brief: Checks the given triangle for winding in screen space
    /// @param tri: triangle to check for culling
-   bool backFaceCulling(const prim& tri);
+   bool backFaceCulling(const triangle3d& tri);
 
    /// @brief: Checks if a point is on one side of a plane
    /// @param point: Point in 3d space

@@ -23,6 +23,8 @@ window::window(int _height){
    targetAspect = float(windowWidth) / float(windowHeight);  // initial estimate
    fboWidth = int(fboHeight * targetAspect);
 
+
+
    // SETUP GLFW
    // -----------------------------------------------------------------------------------
    // Create a GLFW window
@@ -133,6 +135,29 @@ void window::resize(){
       resizePending = false;
    }
 }
+
+bool window::checkKey(int key, KeyMode mode){
+    int current = glfwGetKey(win, key);
+    int previous = prevKeyState[key];
+
+    bool result = false;
+    switch(mode){
+        case KeyMode::Pressed:
+            result = (current == GLFW_PRESS);
+            break;
+        case KeyMode::PressedOnce:
+            result = (current == GLFW_PRESS && previous != GLFW_PRESS);
+            break;
+        case KeyMode::Released:
+            result = (current == GLFW_RELEASE && previous == GLFW_PRESS);
+            break;
+    }
+
+    // update previous state for next frame
+    prevKeyState[key] = current;
+    return result;
+}
+
 
 void window::frameUpdate(){
 

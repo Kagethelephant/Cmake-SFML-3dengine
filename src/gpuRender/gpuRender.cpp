@@ -58,7 +58,7 @@ void gpuRenderObject::bindObject(const object& obj){
    glEnableVertexAttribArray(2);
 
 
-   for (const subMesh& mesh : obj.mod.subMeshes) {
+   for (const auto& mesh : obj.mod.subMeshes) {
       gpuSubMesh gpuSub;
       GLuint& ebo = gpuSub.ebo;
       GLuint& tex = gpuSub.tex;
@@ -69,11 +69,10 @@ void gpuRenderObject::bindObject(const object& obj){
       glGenTextures(1, &gpuSub.tex);
 
 
-      texture texObj = mesh.tex;
-      GLenum format = (texObj.channels == 4) ? GL_RGBA : GL_RGB;
+      GLenum format = (mesh.tex.channels == 4) ? GL_RGBA : GL_RGB;
 
       GLScopedTexture2D tempTex(tex);
-      glTexImage2D(GL_TEXTURE_2D, 0, format, texObj.w, texObj.h, 0, format, GL_UNSIGNED_BYTE, texObj.data);
+      glTexImage2D(GL_TEXTURE_2D, 0, format, mesh.tex.w, mesh.tex.h, 0, format, GL_UNSIGNED_BYTE, mesh.tex.data);
       glGenerateMipmap(GL_TEXTURE_2D);
 
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -102,7 +101,7 @@ void gpuRenderObject::render(){
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
    GLScopedCapability tempCullEnable(GL_CULL_FACE,true);
-   GLScopedCullFace tempCullMode(GL_FRONT);
+   GLScopedCullFace tempCullMode(GL_BACK);
    GLScopedCapability tempDepthEnable(GL_DEPTH_TEST, true);
 
    int lightCount = std::min(MAX_LIGHTS, (unsigned int)lights.size());

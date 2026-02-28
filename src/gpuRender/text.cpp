@@ -1,12 +1,17 @@
 #include "text.hpp"
+// Standard Libraries
+#include <iostream>
+// Program headers
+#include <utility>
+#include "window.hpp"
 #include "RAIIWrapper.hpp"
 #include "utils/data.hpp"
-#include "window.hpp"
-#include <ft2build.h>
-#include <iostream>
-#include <utility>
-#include FT_FREETYPE_H
 #include "utils/matrix.hpp"
+// FreeType Library
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
+
 
 textRenderObject::textRenderObject(window& _win) : gl_window{_win} {
 
