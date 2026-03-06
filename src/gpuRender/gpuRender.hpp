@@ -45,6 +45,7 @@ public:
 
 
    struct gpuSubMesh{
+      bool textured;
       GLuint tex;
       GLuint ebo;
       std::size_t indiceCount;

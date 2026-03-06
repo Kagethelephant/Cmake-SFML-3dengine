@@ -85,9 +85,12 @@ void cpuRenderObject::render() {
          vertAttribs[i] = newVert;
       }
 
+      colRef = hexColorToRGB(obj.color);
+
       for (const auto& mesh : mod.subMeshes) {
 
          texRef = mesh.tex;
+         hasTexRef = mesh.textured;
          for(int i=0; i< mesh.indices.size(); i += 3){
 
             // Generate triangles from vertices and indices
@@ -194,184 +197,160 @@ void cpuRenderObject::clipTriangles() {
 }
 
 
-
-
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // FILL TRIANGLE
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 void cpuRenderObject::raster(const triangle3d& pr) {
    // Bounding box triangle filling method with barycentric coordinates to interpolate 
    // between points. This is the trickiest part of the pipeline
-   vertex v0 = pr.v[0];
-   vertex v1 = pr.v[1];
-   vertex v2 = pr.v[2];
+   const vertex& v0 = pr.v[0];
+   const vertex& v1 = pr.v[1];
+   const vertex& v2 = pr.v[2];
    // Screen-space positions
-   vec2 p0(v0.x, v0.y);
-   vec2 p1(v1.x, v1.y);
-   vec2 p2(v2.x, v2.y);
-   // Calculate the inverse W value for interpolation on attributes
-   float invW0 = 1/v0.clipPos.w;
-   float invW1 = 1/v1.clipPos.w;
-   float invW2 = 1/v2.clipPos.w;
-   // Calculate the NDC space Z value corrected with W for interpolation
+   float invW0 = 1.0f / v0.clipPos.w;
+   float invW1 = 1.0f / v1.clipPos.w;
+   float invW2 = 1.0f / v2.clipPos.w;
+
    float ndcZ0 = v0.clipPos.z * invW0;
    float ndcZ1 = v1.clipPos.z * invW1;
    float ndcZ2 = v2.clipPos.z * invW2;
-   // Calculate the fragPos / w for perspective correction
+
    vec4 fragOverW0 = v0.fragPos * invW0;
-   vec4 fragOverW1 = v0.fragPos * invW1;
-   vec4 fragOverW2 = v0.fragPos * invW2;
-   // Calculate the fragPos / w for perspective correction
+   vec4 fragOverW1 = v1.fragPos * invW1;
+   vec4 fragOverW2 = v2.fragPos * invW2;
+
    vec2 uvOverW0 = v0.uv * invW0;
    vec2 uvOverW1 = v1.uv * invW1;
    vec2 uvOverW2 = v2.uv * invW2;
 
-   // Get the coordinates of the rectangle that will cover the triangle (clamped to the buffer size)
-   int xmax = std::min(std::max(std::max(v0.pos.x, v1.pos.x), v2.pos.x), m_resolution[0] - 1.0f);
-   int xmin = std::max(std::min(std::min(v0.pos.x, v1.pos.x), v2.pos.x), 1.0f);
-   int ymax = std::min(std::max(std::max(v0.pos.y, v1.pos.y), v2.pos.y), m_resolution[1] - 1.0f);
-   int ymin = std::max(std::min(std::min(v0.pos.y, v1.pos.y), v2.pos.y), 1.0f);
+   int xmin = std::max((int)std::min({ v0.pos.x, v1.pos.x, v2.pos.x }), 1);
+   int xmax = std::min((int)std::max({ v0.pos.x, v1.pos.x, v2.pos.x }), (int)m_resolution.x - 1);
+   int ymin = std::max((int)std::min({ v0.pos.y, v1.pos.y, v2.pos.y }), 1);
+   int ymax = std::min((int)std::max({ v0.pos.y, v1.pos.y, v2.pos.y }), (int)m_resolution.y - 1);
+
+   vec2 p0(v0.pos.x, v0.pos.y);
+   vec2 p1(v1.pos.x, v1.pos.y);
+   vec2 p2(v2.pos.x, v2.pos.y);
 
 
-   // For point p on a triangle: P = a*A + β*B + γ*C
-   // A, B and C representing the points on triangle and alpha(a), beta(β) and 
-   // gamma(γ) representing weight of areas on triangle subdivided into 3 parts using p
-   // we also have the constraint: a + β + γ = 1 or (a = 1 - β - γ)
-   // So with substitution:        P = (1−β−γ)A + βB + γC 
-   // Rearange to get:             P − A = β(B−A) + γ(C−A) or AP = βAB + γAC
+   // --- Edge function setup
 
-   // Screen-space edge vectors originating from vertex A
-   vec2 AB = (v1.pos - v0.pos).xy(); // B - A
-   vec2 AC = (v2.pos - v0.pos).xy(); // C - A
-   // Precompute dot products of edge vectors
-   float AB_AB = AB.dot(AB); 
-   float AC_AC = AC.dot(AC);
-   float AB_AC = AB.dot(AC);
-   // Gram matrix system obtained by dotting AP = βAB + γAC with AB and AC:
-   // [ AB⋅AB  AB⋅AC ] [ β ] = [ AP⋅AB ]
-   // [ AB⋅AC  AC⋅AC ] [ γ ]   [ AP⋅AC ]
-   // Determinant of the Gram matrix
-   float determ = AB_AB * AC_AC - AB_AC * AB_AC;
-   float invDet = 1.0f / determ;
-   // Rows of the inverse Gram matrix below form linear maps that convert
-   // screen-space (x,y) movement into barycentric coordinate changes.
-   // [ AC⋅AC -AB⋅AC]                                           
-   // [-AB⋅AC  AB⋅AC]
-   vec2 dBeta(  AC_AC * invDet, -AB_AC * invDet);
-   vec2 dGamma(-AB_AC * invDet,  AB_AB * invDet);
-   vec2 dAlpha = vec2(0,0) - dBeta - dGamma;
-   // Compute ∂fragPos/∂x and ∂fragPos/∂y using barycentric derivatives
-   vec3 dFdx_fragPos = (v0.fragPos * dAlpha.x + v1.fragPos * dBeta.x + v2.fragPos * dGamma.x).xyz();
-   vec3 dFdy_fragPos = (v0.fragPos * dAlpha.y + v1.fragPos * dBeta.y + v2.fragPos * dGamma.y).xyz();
-   // Since these vectors are tangent to the surface of the triangle
-   // we can calculate the normal from these with the cross product
-   vec3 norm = dFdx_fragPos.cross(dFdy_fragPos).normal();
-
-   
-   // Signed twice-area of the triangle, used to normalize edge functions
    float area = edgeFunction(p0, p1, p2);
    if (area == 0.0f) return;
    float invArea = 1.0f / area;
-   // Partial derivatives of each edge function with respect to screen-space x and y.
-   // These are constant across the triangle and allow incremental evaluation.
-   float alpha_dx = (p2[1] - p1[1]) * invArea;
-   float alpha_dy = (p1[0] - p2[0]) * invArea;
-   float beta_dx =  (p0[1] - p2[1]) * invArea;
-   float beta_dy =  (p2[0] - p0[0]) * invArea;
-   float gamma_dx = (p1[1] - p0[1]) * invArea;
-   float gamma_dy = (p0[0] - p1[0]) * invArea;
-   // +0.5.f is consistant with opengl pixel-center rules
-   vec2 p(xmin + 0.5f, ymin + 0.5f);
-   // Initial edge function values for the first pixel
-   float alpha_row = edgeFunction(p1, p2, p) * invArea;
-   float beta_row = edgeFunction(p2, p0, p) * invArea;
-   float gamma_row = edgeFunction(p0, p1, p) * invArea;
 
-   // Allocate memory for value calculated in inner loop
-   float alpha, beta, gamma, interpz,interpW, baryz;
-   // Itterate through each pixel in that rectangle
-   for (int y=ymin; y<=ymax; y++){
-      // Edge function values at the start of the current scanline
+   float alpha_dx = (p2.y - p1.y) * invArea;
+   float alpha_dy = (p1.x - p2.x) * invArea;
+   float beta_dx  = (p0.y - p2.y) * invArea;
+   float beta_dy  = (p2.x - p0.x) * invArea;
+   float gamma_dx = (p1.y - p0.y) * invArea;
+   float gamma_dy = (p0.x - p1.x) * invArea;
+
+   // Initial barycentrics at first pixel center
+   vec2 start(xmin + 0.5f, ymin + 0.5f);
+   float alpha_row = edgeFunction(p1, p2, start) * invArea;
+   float beta_row  = edgeFunction(p2, p0, start) * invArea;
+   float gamma_row = edgeFunction(p0, p1, start) * invArea;
+
+   // --- Approximate geometric normal from screen-space derivatives
+
+   vec2 AB = (v1.pos - v0.pos).xy();
+   vec2 AC = (v2.pos - v0.pos).xy();
+
+   float AB_AB = AB.dot(AB);
+   float AC_AC = AC.dot(AC);
+   float AB_AC = AB.dot(AC);
+   float invDet = 1.0f / (AB_AB * AC_AC - AB_AC * AB_AC);
+
+   vec2 dBeta ( AC_AC * invDet, -AB_AC * invDet);
+   vec2 dGamma(-AB_AC * invDet,  AB_AB * invDet);
+   vec2 dAlpha = (dBeta + dGamma) * -1.0f;
+
+   vec3 dFdx = (v0.fragPos * dAlpha.x + v1.fragPos * dBeta.x + v2.fragPos * dGamma.x).xyz();
+   vec3 dFdy = (v0.fragPos * dAlpha.y + v1.fragPos * dBeta.y + v2.fragPos * dGamma.y).xyz();
+   vec3 normal = dFdx.cross(dFdy).normal();
+
+   // ======================================================================================
+   // Raster loop
+   // ======================================================================================
+
+   for (int y = ymin; y <= ymax; ++y)
+   {
       float alpha = alpha_row;
       float beta  = beta_row;
       float gamma = gamma_row;
 
-      for (int x=xmin; x<=xmax; x++){
-         // Pixel is inside the triangle if all edge functions are non-negative
-         if (alpha >= 0 && beta >= 0 && gamma >= 0) {
+      for (int x = xmin; x <= xmax; ++x)
+      {
+         if (alpha >= 0.0f && beta >= 0.0f && gamma >= 0.0f)
+         {
+            float depth = (alpha * ndcZ0 + beta  * ndcZ1 + gamma * ndcZ2) * 0.5f + 0.5f;
 
-            // Find interpolated NDC z value with barycentric formula
-            interpz = alpha * ndcZ0 + beta * ndcZ1 + gamma * ndcZ2; 
-            baryz = interpz * 0.5f + 0.5f; // Convert NDC to depth buffer value [0 - 1]
+            int index = x + y * m_resolution.x;
 
-            // Get the position of the pixel in the z-buffer and only draw a pixel if the pixel should be on top
-            // y is window-space (bottom-left)
-            int index = x + y * m_resolution[0];
-            if (baryz <= m_zBuffer[index]){
+            if (depth <= m_zBuffer[index])
+            {
+               // Perspective-correct attribute reconstruction
+               float invW = 1.0f / (alpha * invW0 + beta  * invW1 + gamma * invW2);
 
-               // Find interpolated W value for perspective correction on attributes (not x,y,z)
-               interpW = 1 / (alpha * invW0 + beta * invW1 + gamma * invW2); 
-               
-               // Get interpolated position in screenspace for lightDir calculation
-               vec3 fragPos = ((fragOverW0 * alpha + fragOverW1 * beta + fragOverW2 * gamma) * interpW).xyz();
+               vec3 fragPos = (fragOverW0 * alpha + fragOverW1 * beta + fragOverW2 * gamma).xyz() * invW;
 
-               vec2 uv = ((uvOverW0 * alpha + uvOverW1 * beta + uvOverW2 * gamma) * interpW);
+               float r = 1, g = 1, b = 1, a = 1;
 
+               if (hasTexRef) {
 
-               // Wrap instead of clamp like opengl does by default
-               auto fract = [](float x)
-               { return x - std::floor(x); };
-               float cu = fract(uv.x);
-               float cv = fract(uv.y);
+                  vec2 uv = (uvOverW0 * alpha + uvOverW1 * beta + uvOverW2 * gamma) * invW;
 
-               int tx = (cu >= 1.0f) ? (texRef.w - 1) : (int)std::floor(cu * (float)texRef.w);
-               int ty = (cv >= 1.0f) ? (texRef.h - 1) : (int)std::floor(cv * (float)texRef.h);
+                  // Texture wrap
+                  uv.x -= std::floor(uv.x);
+                  uv.y -= std::floor(uv.y);
 
-               int texelIndex = (ty * texRef.w + tx) * texRef.channels;
+                  int tx = (int)(uv.x * texRef.w);
+                  int ty = (int)(uv.y * texRef.h);
+                  int texel = (ty * texRef.w + tx) * texRef.channels;
 
-               float r, g, b, a = 1.0f;
-
-               if (texRef.channels == 1) {
-                  r = g = b = texRef.data[texelIndex] / 255.0f;
+                  if (texRef.channels >= 3) {
+                     r = texRef.data[texel + 0];
+                     g = texRef.data[texel + 1];
+                     b = texRef.data[texel + 2];
+                     if (texRef.channels == 4)
+                        a = texRef.data[texel + 3];
+                  }
+                  else { // grayscale
+                     r = g = b = texRef.data[texel] / 255.0f;
+                  }
                }
-               else if (texRef.channels == 3) {
-                  r = texRef.data[texelIndex + 0];
-                  g = texRef.data[texelIndex + 1];
-                  b = texRef.data[texelIndex + 2];
+               else {
+                  r = (std::uint8_t)colRef.x;
+                  g = (std::uint8_t)colRef.y;
+                  b = (std::uint8_t)colRef.z;
+                  a = (std::uint8_t)colRef.w;
                }
-               else if (texRef.channels == 4) {
-                  r = texRef.data[texelIndex + 0];
-                  g = texRef.data[texelIndex + 1];
-                  b = texRef.data[texelIndex + 2];
-                  a = texRef.data[texelIndex + 3];
-               }
+
                vec4 texColor(r, g, b, a);
-               
-               vec3 lightSum = vec3(0,0,0);
-               for (light l : lights){
-                  // Calculate diffuse lighting
-                  vec3 lightDir = (l.position - fragPos).normal();
-                  float diffuse = std::max(norm.dot(lightDir), 0.0f);
-                  vec3 ambient = l.color * 0.2f;
-                  lightSum += (l.color * diffuse) + ambient;
-               }
-               // Calculate color by multiplying object color by ambient + diffuse lighting respectively
-               vec4 result = texColor * vec4(lightSum,1.0f);
 
-               // Put pixel with clamped color components to match 32-bit color
-               m_pixelBuffer[index*4] =     std::clamp(result[0], 0.0f, 255.0f);
-               m_pixelBuffer[index*4 + 1] = std::clamp(result[1], 0.0f, 255.0f); 
-               m_pixelBuffer[index*4 + 2] = std::clamp(result[2], 0.0f, 255.0f); 
-               m_pixelBuffer[index*4 + 3] = std::clamp(result[3], 0.0f, 255.0f); 
-               m_zBuffer[index] = baryz; 
+               // Diffuse + constant ambient
+               vec3 lighting(0,0,0);
+
+               for (const light& l : lights){
+                  vec3 L = (l.position - fragPos).normal();
+                  float diff = std::max(normal.dot(L), 0.0f);
+                  lighting += l.color * (diff + 0.2f);
+               }
+
+               vec4 result = texColor * vec4(lighting, 1.0f);
+               m_pixelBuffer[index*4 + 0] = std::clamp(result[0], 0.0f, 255.0f);
+               m_pixelBuffer[index*4 + 1] = std::clamp(result[1], 0.0f, 255.0f);
+               m_pixelBuffer[index*4 + 2] = std::clamp(result[2], 0.0f, 255.0f);
+               m_pixelBuffer[index*4 + 3] = std::clamp(result[3], 0.0f, 255.0f);
+
+               m_zBuffer[index] = depth;
             }
          }
-         // Move along the edge for the given x position using dx
          alpha += alpha_dx;
          beta  += beta_dx;
          gamma += gamma_dx;
       }
-      // Move along the edge for the given y position using dy
       alpha_row += alpha_dy;
       beta_row  += beta_dy;
       gamma_row += gamma_dy;
@@ -381,7 +360,7 @@ void cpuRenderObject::raster(const triangle3d& pr) {
 
 
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// UTILITY FUNCTIONS
+// HELPER FUNCTIONS
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 bool cpuRenderObject::pointOutOfPlane(const vec4& p, const vec4& plane){
    // plane.xyz = normal, plane.w = D

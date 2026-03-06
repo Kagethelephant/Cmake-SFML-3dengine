@@ -6,6 +6,7 @@
 #include "app/object.hpp"
 #include "shaders/shader.hpp"
 
+#include <algorithm>
 #include <cstdint>
 #include <glad/glad.h>
 #include <GL/gl.h>
@@ -48,20 +49,19 @@ void gpuRenderObject::bindObject(const object& obj){
    glBufferData(GL_ARRAY_BUFFER, obj.mod.verticesRaw.size() * sizeof(GLfloat), obj.mod.verticesRaw.data(), GL_STATIC_DRAW);
    // 1) Shader layout location, 2) Qty of vert attributes, 3) Size of attribute, 4) normaliize btwn -1 to 1, 5)span btwn verts in bytes, 6) start of buffer
    // positions at location 0
-   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
    glEnableVertexAttribArray(0);
-   // normals at location 1
-   glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+   // UVs at location 1
+   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
    glEnableVertexAttribArray(1);
-   // UVs at location 2
-   glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-   glEnableVertexAttribArray(2);
 
 
    for (const auto& mesh : obj.mod.subMeshes) {
       gpuSubMesh gpuSub;
       GLuint& ebo = gpuSub.ebo;
       GLuint& tex = gpuSub.tex;
+
+      gpuSub.textured = mesh.textured;
 
       gpuSub.indiceCount = mesh.indices.size();
 
@@ -131,6 +131,7 @@ void gpuRenderObject::render(){
       GLScopedVAO tempVAO(vao);
       GLScopedVBO tempVBO(vbo);
 
+
       // update the uniform color
       glUniformMatrix4fv(glGetUniformLocation(shaderProgram3D, "view"),1,GL_FALSE,&cam.mat_view.m[0][0]);
       glUniformMatrix4fv(glGetUniformLocation(shaderProgram3D, "project"),1,GL_FALSE,&mat_project.m[0][0]);
@@ -153,6 +154,11 @@ void gpuRenderObject::render(){
 
          GLScopedEBO tempEBO(ebo);
          GLScopedTexture2D tempTexture(tex);
+
+         int textureIntBool;
+         textureIntBool = (sub.textured) ? 1 : 0;
+
+         glUniform1ui(glGetUniformLocation(shaderProgram3D, "hasTexture"), textureIntBool);
          glUniform1i(glGetUniformLocation(shaderProgram3D, "diffuseTex"), 0);
 
          glDrawElements(GL_TRIANGLES,sub.indiceCount, GL_UNSIGNED_INT, 0);

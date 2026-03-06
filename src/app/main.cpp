@@ -38,9 +38,18 @@ int main(int argc, char* argv[])
       // Define model data and create instances of those models (objects)
       model yoshi("../resources/objects/yoshi/yoshi.obj");
       model Arcanine("../resources/objects/Arcanine/Arcanine.obj");
+      model test("../resources/objects/teapot.obj",true);
+      model ape("../resources/objects/apeman/Apeman.obj");
 
       object yoshi1(yoshi);
       object arcanine1(Arcanine);
+      object testObj(test);
+      object ape1(ape);
+      ape1.move(0,-2,-5);
+      ape1.scale(.05,.05,.05);
+      testObj.scale(0.02, 0.02, 0.02);
+      testObj.move(5,0,-5);
+      testObj.color = Color::Purple;
       arcanine1.move(-10,0,-10);
       arcanine1.scale(10,10,10);
       yoshi1.move(0,0,-10);
@@ -53,6 +62,8 @@ int main(int argc, char* argv[])
       gpuRenderObject gpuRend(cam);
       gpuRend.bindObject(yoshi1);
       gpuRend.bindObject(arcanine1);
+      gpuRend.bindObject(testObj);
+      gpuRend.bindObject(ape1);
 
       gpuRend.addLight(light1);
       gpuRend.addLight(light2);
@@ -60,13 +71,15 @@ int main(int argc, char* argv[])
       cpuRenderObject cpuRend(cam);
       cpuRend.bindObject(yoshi1);
       cpuRend.bindObject(arcanine1);
+      cpuRend.bindObject(testObj);
+      cpuRend.bindObject(ape1);
 
       cpuRend.addLight(light1);
       cpuRend.addLight(light2);
 
       // Create text object
       textRenderObject text(gl_window);
-      text.loadFont("../resources/font/small_pixel.ttf");
+      text.loadFont("../resources/font/novem___.ttf");
 
       double movement;
       double rotate;
@@ -94,6 +107,7 @@ int main(int argc, char* argv[])
          if(ogl){ 
             gpuRend.render();
             text.RenderText("GPU", gl_window.fboWidth/2.0f, 10,Color::Green);
+
          }
          // Render 3D objects with the CPU
          else { 

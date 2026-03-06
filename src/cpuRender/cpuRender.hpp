@@ -67,6 +67,8 @@ private:
    };
 
    model::texture texRef;
+   vec4 colRef;
+   bool hasTexRef;
 
    /// @brief: Aspect ratio of the window
    float m_aspectRatio;     

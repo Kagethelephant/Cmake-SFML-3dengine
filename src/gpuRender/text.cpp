@@ -59,7 +59,7 @@ void textRenderObject::loadFont(const char *filePath){
       std::cout << "Failed to load font" << std::endl;
    }
    // Set font pixel size
-   FT_Set_Pixel_Sizes(face, 0, 8);
+   FT_Set_Pixel_Sizes(face, 0, 16);
 
    fontFaces.push_back(face);
 

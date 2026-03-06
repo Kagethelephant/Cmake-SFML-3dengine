@@ -28,8 +28,6 @@ struct vertex {
    vec4 pos;      // Screen position
    vec4 clipPos;  // Clip space Position
    vec4 fragPos;  // Frag Position (world space position)
-   vec3 color;    // Color of vertice (not used)
-   vec3 normal;   // Normal vector of vertice (not used)
    vec2 uv;       // Texture coordinates of vertice
 
    // Screen position references
@@ -47,7 +45,6 @@ struct vertex {
       pos{other.pos}, 
       clipPos{other.clipPos}, 
       fragPos{other.fragPos}, 
-      normal{other.normal}, 
       uv{other.uv}, 
       x{pos.x}, 
       y{pos.y}, 
@@ -60,7 +57,6 @@ struct vertex {
          pos = other.pos;
          clipPos = other.clipPos;
          fragPos = other.fragPos;
-         normal = other.normal;
          uv = other.uv;
       }  
       return *this;
@@ -79,7 +75,6 @@ struct vertex {
       v1.pos = v1.pos + (v2.pos - v1.pos) * t;
       v1.clipPos = v1.clipPos + (v2.clipPos - v1.clipPos) * t;
       v1.fragPos = v1.fragPos + (v2.fragPos - v1.fragPos) * t;
-      v1.normal = v1.normal + (v2.normal - v1.normal) * t;
       v1.uv = v1.uv + (v2.uv - v1.uv) * t;
       return v1;
    }
@@ -95,6 +90,9 @@ struct vertex {
 // LIGHTS
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+/// @brief: Light object that is used for 3D shading
+/// @param pos: second vertice to create line
+/// @param col: 0-1 scale for position on line
 struct light {
    light (const vec3& pos, const vec3& col = vec3(1,1,1)) : position{pos}, color{col} {}
    vec3 position;
@@ -159,18 +157,14 @@ private:
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
-/// @brief: Loads vertex data into the triangle buffer from an OBJ file and saves the 
-/// location with a model object 
+/// @brief: This stores all of the vertex data and attributes loaded from the obj file and is 
+/// referenced by an object so we dont have to load multiple models for objects with the same model
 /// @param filename: filepath to the OBJ file
 /// @param ccwWinding: changes the winding on the model so the triangle normal points outwards
 class model {
 public:
    model(const std::string& filename, bool ccwWinding = false);
 
-
-
-   bool hasTexture = false;
-   bool hasNormal  = false;
 
    std::vector<float>   verticesRaw; // VBO
    std::vector<vertex>   vertices; // VBO
@@ -205,19 +199,17 @@ private:
    struct vertexKey {
       int v;
       int t;
-      int n;
 
       // Check if the another key is equal to this one
       bool operator==(const vertexKey& o) const {
-         return v == o.v && t == o.t && n == o.n;
+         return v == o.v && t == o.t;
       }
    };
 
    struct vertexKeyHash {
       size_t operator()(const vertexKey& k) const {
          return std::hash<int>()(k.v)
-         ^ (std::hash<int>()(k.t) << 1)
-         ^ (std::hash<int>()(k.n) << 2);
+         ^ (std::hash<int>()(k.t) << 1);
       }
    };
 

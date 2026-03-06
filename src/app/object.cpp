@@ -4,6 +4,7 @@
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 // Standard Libraries
+#include <iostream>
 #include <math.h>
 #include "utils/matrix.hpp"
 #include <fstream>
@@ -64,17 +65,15 @@ void object::rotate(float u, float v, float w){
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 model::model(const std::string& filename, bool ccwWinding) {
 
+   std::cout << filename << std::endl;
    // Open the obj file
    std::ifstream obj(filename);
-   if (!obj) {
-      throw std::runtime_error("Failed to open OBJ file");
-   }
+   if (!obj) { throw std::runtime_error("Failed to open OBJ file");}
 
    std::string dir = getDirectory(filename);
 
    // Raw OBJ attribute streams
    std::vector<vec3> objPositions;
-   std::vector<vec3> objNormals;
    std::vector<vec2> objTexcoords;
 
    // (v,t,n) → unified vertex index hashtable 
@@ -103,13 +102,6 @@ model::model(const std::string& filename, bool ccwWinding) {
          vec2 uv;
          stream >> uv.x >> uv.y;
          objTexcoords.push_back(uv);
-      }
-      // NORMAL
-      // -------------------------------------------------
-      else if (type == "vn") {
-         vec3 n;
-         stream >> n.x >> n.y >> n.z;
-         objNormals.push_back(n);
       }
       // MTL FILE
       // -------------------------------------------------
@@ -145,7 +137,6 @@ model::model(const std::string& filename, bool ccwWinding) {
          // Temporary storage for one polygon face
          std::vector<int> vIdx;
          std::vector<int> tIdx;
-         std::vector<int> nIdx;
 
          std::string vert;
          while (stream >> vert) {
@@ -160,19 +151,13 @@ model::model(const std::string& filename, bool ccwWinding) {
             v = std::stoi(vert.substr(0, p1)) - 1;
 
             // Checks that there is a second slash and there is something btwn first and second slash
-            // std::string::npos is what find() reterns when character is not found
-               // Get the texture value (adjusted to 0 based indexing)
-            if (p1 != std::string::npos) t = std::stoi(vert.substr(p1 + 1, p2 - p1 - 1)) - 1;
-            else t = -1;
-
-            // checks that there is a second slash and grabs normal value after it
-            if (p2 != std::string::npos) n = std::stoi(vert.substr(p2 + 1)) - 1;
-            else n = -1;
+            // Get the texture value (adjusted to 0 based indexing)
+            if (p1 != std::string::npos) {t = std::stoi(vert.substr(p1 + 1, p2 - p1 - 1)) - 1; currentMesh.textured = true;}
+            else currentMesh.textured = false;
 
             // Add values to the vertice buffers
             vIdx.push_back(v);
             tIdx.push_back(t);
-            nIdx.push_back(n);
          }
 
          // Need at least a triangle
@@ -190,24 +175,33 @@ model::model(const std::string& filename, bool ccwWinding) {
 
             for (int k = 0; k < 3; ++k) {
                // Create a key that ties all the attributes of the vertex together
-               vertexKey key{
-                  vIdx[tri[k]],
-                  tIdx[tri[k]],
-                  nIdx[tri[k]]
-               };
+               vertexKey key{vIdx[tri[k]],tIdx[tri[k]]};
 
                auto it = vertexCache.find(key);
                // vertexCache.find() will return vertexCache.end() if it is not found
                // If it is found than add the already existing vertex index to indices
                if (it != vertexCache.end()) currentMesh.indices.push_back(it->second);
                else {
+                  // std::cout << "-------Create new vert---------" << std::endl;
                   // If it does not exist create a new vertex
-                  vertex vertOut;
-                  vertOut.pos = vec4(objPositions[key.v],1.0f);
-                  // Some OBJ files omit texcoords or normals
+                  int correctedKeyV, correctedKeyT;
+                  if (key.v < 0) correctedKeyV = objPositions.size() + key.v + 1;
+                  else correctedKeyV = key.v;
+                  if (key.t < 0) correctedKeyT = objTexcoords.size() + key.t + 1;
+                  else correctedKeyT = key.t;
+                  // std::cout << correctedKeyV << std::endl;
+                  // std::cout << correctedKeyT << std::endl;
 
-                  vertOut.uv     = (key.t >= 0) ? objTexcoords[key.t] : vec2(0,0);
-                  vertOut.normal = (key.n >= 0) ? objNormals[key.n]    : vec3(0,0,1);
+                  vertex vertOut;
+                  vertOut.pos = vec4(objPositions[correctedKeyV],1.0f);
+                  // Some OBJ files omit texcoords or normals
+                  if (currentMesh.textured){
+                     vertOut.uv = objTexcoords[correctedKeyT];
+                     currentMesh.textured = true;
+                  }
+                  else {
+                     vertOut.uv = vec2(0,0);
+                  }
 
                   uint32_t newIndex = static_cast<uint32_t>(vertices.size());
                   vertices.push_back(vertOut);
@@ -227,10 +221,6 @@ model::model(const std::string& filename, bool ccwWinding) {
       verticesRaw.push_back(vert.pos.c[0]);
       verticesRaw.push_back(vert.pos.c[1]);
       verticesRaw.push_back(vert.pos.c[2]);
-      // normal
-      verticesRaw.push_back(vert.normal.c[0]);
-      verticesRaw.push_back(vert.normal.c[1]);
-      verticesRaw.push_back(vert.normal.c[2]);
       // uv
       verticesRaw.push_back(vert.uv.c[0]);
       verticesRaw.push_back(vert.uv.c[1]);
