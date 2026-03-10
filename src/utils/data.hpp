@@ -1,7 +1,6 @@
 #pragma once
 
 #include "matrix.hpp"
-#include "utils.hpp"
 
 
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -10,10 +9,6 @@
 
 // You can use "const" to define variables like this but
 constexpr double pi = 3.14159265358979323846;
-
-// Global randomizer object so we dont have to make multiple instances
-extern randObj rander;
-
 
 enum class Color : unsigned int {
    Red   = 0xc93e34ff, //0xc93e34

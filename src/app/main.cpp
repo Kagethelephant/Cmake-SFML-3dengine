@@ -1,130 +1,126 @@
-// Opengl
+// OpenGL
 #include <glad/glad.h>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
-
+// Project headers
 #include "object.hpp"
 #include "cpuRender/cpuRender.hpp"
 #include "gpuRender/text.hpp"
 #include "gpuRender/window.hpp"
 #include "gpuRender/gpuRender.hpp"
-
 #include "utils/matrix.hpp"
-#include "utils/utils.hpp"
+// Standard Libraries
 #include <math.h>
 #include <string>
 
-int main(int argc, char* argv[])
-{
-   // INITIALIZE GLFW
-   // -----------------------------------------------------------------------------------
+
+
+int main(int argc, char* argv[]){
+
+   //---------------------- INITIALIZE GLFW ----------------------
    glfwInit();
    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-   // Global random number generator (global so everything shares the same seed)
-   randObj rander(false, 13412234);
-   bool ogl = true;
+   // Toggles between GPU and CPU rasterization
+   bool useGPU = true;
 
-   // ----------------------------- CREATE WINDOW AND OpenGL CONEXT -------------------------------
-   //Create scope here so objects can call destructors on open gl objects before opengl is terminated
+   // Scope used to call destructors on GLFW objects before terminating GLFW
    {
-      // Create the window
-      window gl_window(400);
-      // Create camera that represents view into world
-      camera cam(gl_window);
+      //------------------- INITIALIZE WINDOW RESOURCES ----------------------
+      window programWindow(400);
+      camera userCamera(programWindow);
+      // Base camera movement speeds (scaled by frame time in the main loop)
+      double posSpeed = 10.0f; // Position units / sec
+      double rotSpeed = 3.0f;  // Radians / sec
 
-      // Define model data and create instances of those models (objects)
-      model yoshi("../resources/objects/yoshi/yoshi.obj");
-      model Arcanine("../resources/objects/Arcanine/Arcanine.obj");
-      model test("../resources/objects/teapot.obj",true);
-      model ape("../resources/objects/apeman/Apeman.obj");
-
-      object yoshi1(yoshi);
-      object arcanine1(Arcanine);
-      object testObj(test);
-      object ape1(ape);
-      ape1.move(0,-2,-5);
-      ape1.scale(.05,.05,.05);
-      testObj.scale(0.02, 0.02, 0.02);
-      testObj.move(5,0,-5);
-      testObj.color = Color::Purple;
-      arcanine1.move(-10,0,-10);
-      arcanine1.scale(10,10,10);
-      yoshi1.move(0,0,-10);
-      yoshi1.rotate(0,5,0);
-
-      light light1(vec3(15,5,5),vec3(0.6,0.3,0.3));
-      light light2(vec3(-15,5,5),vec3(0.3,0.3,0.6));
-
-      // Create the rendering objects for the CPU and GPU
-      gpuRenderObject gpuRend(cam);
-      gpuRend.bindObject(yoshi1);
-      gpuRend.bindObject(arcanine1);
-      gpuRend.bindObject(testObj);
-      gpuRend.bindObject(ape1);
-
-      gpuRend.addLight(light1);
-      gpuRend.addLight(light2);
-
-      cpuRenderObject cpuRend(cam);
-      cpuRend.bindObject(yoshi1);
-      cpuRend.bindObject(arcanine1);
-      cpuRend.bindObject(testObj);
-      cpuRend.bindObject(ape1);
-
-      cpuRend.addLight(light1);
-      cpuRend.addLight(light2);
-
-      // Create text object
-      textRenderObject text(gl_window);
+      textRenderObject text(programWindow);
       text.loadFont("../resources/font/novem___.ttf");
 
-      double movement;
-      double rotate;
-      double speed = 10.0f;
-      double rotation = 3.0f;
 
-      // ------------------------------ MAIN WINDOW LOOP ---------------------------------
-      // Main loop for the window
-      while(!glfwWindowShouldClose(gl_window.win)){
+      //------------------- CREATE MODELS, OBJECTS AND LIGHTS ------------------------
+      // Models load geometry once and can be used by many objects
+      model yoshiModel("../resources/objects/yoshi/yoshi.obj");
+      model arcanineModel("../resources/objects/Arcanine/Arcanine.obj");
+      model teapotModel("../resources/objects/teapot.obj",true);
+      model apeModel("../resources/objects/apeman/Apeman.obj");
 
-         // Get keyboard inputs
-         if (gl_window.checkKey(GLFW_KEY_ESCAPE)) {glfwSetWindowShouldClose(gl_window.win, true);}
-         if (gl_window.checkKey(GLFW_KEY_ENTER, window::KeyMode::PressedOnce)) {ogl = !ogl;}
-         if (gl_window.checkKey(GLFW_KEY_S)) {cam.move(0, 0, -movement);}
-         if (gl_window.checkKey(GLFW_KEY_W)) {cam.move(0, 0, movement);}
-         if (gl_window.checkKey(GLFW_KEY_A)) {cam.rotate(0, -rotate, 0);}
-         if (gl_window.checkKey(GLFW_KEY_D)) {cam.rotate(0, rotate, 0);}
+      object apeObj(apeModel);
+      apeObj.move(0,-2,-5);
+      apeObj.scale(.1,.1,.1);
 
+      object teapotObj(teapotModel);
+      teapotObj.scale(0.02, 0.02, 0.02);
+      teapotObj.move(5,0,-5);
+      teapotObj.color = Color::Purple;
+
+      object arcanineObj(arcanineModel);
+      arcanineObj.move(-10,0,-10);
+      arcanineObj.scale(10,10,10);
+
+      object yoshiObj(yoshiModel);
+      yoshiObj.move(0,0,-10);
+      yoshiObj.rotate(0,5,0);
+
+      // Light position and RGB color (0–1 range)
+      light redLight(vec3(15,5,5),vec3(0.6,0.3,0.3));
+      light blueLight(vec3(-15,5,5),vec3(0.3,0.3,0.6));
+
+      //------------------- BIND OBJECTS AND LIGHTS TO RENDERERS ------------------------
+      // Pass same camera, objects, and lights to both renderers to mirror screen output between the two
+      gpuRenderObject gpuRend(userCamera);
+      gpuRend.bindObject(yoshiObj);
+      gpuRend.bindObject(arcanineObj);
+      gpuRend.bindObject(teapotObj);
+      gpuRend.bindObject(apeObj);
+
+      gpuRend.addLight(redLight);
+      gpuRend.addLight(blueLight);
+
+      cpuRenderObject cpuRend(userCamera);
+      cpuRend.bindObject(yoshiObj);
+      cpuRend.bindObject(arcanineObj);
+      cpuRend.bindObject(teapotObj);
+      cpuRend.bindObject(apeObj);
+
+      cpuRend.addLight(redLight);
+      cpuRend.addLight(blueLight);
+
+
+      //------------------- PROGRAM LOOP ------------------------
+      while(!glfwWindowShouldClose(programWindow.win)){
+         
+         //------------------- USER INPUT ------------------------
          // Multiply the speed of movement and rotation by the amount of time the last frame took
-         // This will make it so very high and low frame rates will move relitively the same in real time
-         movement = speed * gl_window.frameTime;
-         rotate = rotation * gl_window.frameTime;
+         // This will make it so very high and low frame rates will move relatively the same in real time
+         double posDelta = posSpeed * programWindow.frameTime;
+         double rotDelta = rotSpeed * programWindow.frameTime;
 
-         // Render 3D objects with the GPU
-         if(ogl){ 
+         if (programWindow.checkKey(GLFW_KEY_ESCAPE)) {glfwSetWindowShouldClose(programWindow.win, true);}
+         if (programWindow.checkKey(GLFW_KEY_ENTER, window::KeyMode::PressedOnce)) {useGPU = !useGPU;}
+         if (programWindow.checkKey(GLFW_KEY_S)) {userCamera.move(0, 0, -posDelta);}
+         if (programWindow.checkKey(GLFW_KEY_W)) {userCamera.move(0, 0, posDelta);}
+         if (programWindow.checkKey(GLFW_KEY_A)) {userCamera.rotate(0, -rotDelta, 0);}
+         if (programWindow.checkKey(GLFW_KEY_D)) {userCamera.rotate(0, rotDelta, 0);}
+
+         //------------------- RENDER PIPELINE ------------------------
+         if(useGPU){ 
             gpuRend.render();
-            text.RenderText("GPU", gl_window.fboWidth/2.0f, 10,Color::Green);
-
+            text.RenderText("GPU", programWindow.fboWidth/2.0f, 10,Color::Green);
          }
-         // Render 3D objects with the CPU
          else { 
             cpuRend.render();
-            text.RenderText("CPU", gl_window.fboWidth/2.0f, 10, Color::Blue);
+            text.RenderText("CPU", programWindow.fboWidth/2.0f, 10, Color::Blue);
          }
+         text.RenderText("FPS: " + std::to_string(programWindow.fps), 10, 10);
 
-         // Print the FPS of the window
-         text.RenderText("FPS: " + std::to_string(gl_window.fps), 10, 10);
-
-         // Updating the frame renders the FBO to the screen and checks for events, etc.
-         gl_window.frameUpdate();
+         // Renders the FBO to the screen, checks for events, updates FPS, etc.
+         programWindow.frameUpdate();
       }
    }
-   // Shutdown GLFW
+   // Called after scope so all GLFW object destructors can be called
    glfwTerminate();
-
    return 0;
 }
 

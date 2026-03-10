@@ -61,6 +61,7 @@ private:
       // @brief: Print the vector parameters
       void print() const {v[0].pos.print(); v[1].pos.print(); v[2].pos.print();}
 
+
       // Operator overloads for multiplying a whole triagle by a matrix (just multiplies the underlying vectors)
       triangle3d operator * (const mat4x4& m) const {return triangle3d(this->v[0] * m, this->v[1] * m, this->v[2] * m);}
       void operator *= (const mat4x4& m) { this->v[0] *= m; this->v[1] *= m; this->v[2] *= m; }
@@ -128,4 +129,7 @@ private:
    /// @param point: Point in 3d space
    /// @param plain: Plain in 3d space represented by its normal vecor
    float edgeFunction(const vec2& a, const vec2& b, const vec2& p);
+
+
+   int wrap(int n, int max);
 };

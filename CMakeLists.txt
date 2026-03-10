@@ -24,7 +24,6 @@ set(SOURCE_FILES
    lib/glad/src/glad.c
    src/app/main.cpp
    src/app/object.cpp
-   src/utils/utils.cpp
    src/utils/data.cpp
    src/utils/matrix.cpp
    src/cpuRender/cpuRender.cpp

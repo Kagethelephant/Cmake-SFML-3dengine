@@ -65,7 +65,6 @@ void object::rotate(float u, float v, float w){
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 model::model(const std::string& filename, bool ccwWinding) {
 
-   std::cout << filename << std::endl;
    // Open the obj file
    std::ifstream obj(filename);
    if (!obj) { throw std::runtime_error("Failed to open OBJ file");}
@@ -182,15 +181,12 @@ model::model(const std::string& filename, bool ccwWinding) {
                // If it is found than add the already existing vertex index to indices
                if (it != vertexCache.end()) currentMesh.indices.push_back(it->second);
                else {
-                  // std::cout << "-------Create new vert---------" << std::endl;
                   // If it does not exist create a new vertex
                   int correctedKeyV, correctedKeyT;
                   if (key.v < 0) correctedKeyV = objPositions.size() + key.v + 1;
                   else correctedKeyV = key.v;
                   if (key.t < 0) correctedKeyT = objTexcoords.size() + key.t + 1;
                   else correctedKeyT = key.t;
-                  // std::cout << correctedKeyV << std::endl;
-                  // std::cout << correctedKeyT << std::endl;
 
                   vertex vertOut;
                   vertOut.pos = vec4(objPositions[correctedKeyV],1.0f);
@@ -251,11 +247,7 @@ model::texture model::loadTexture(const std::string& filepath) {
    if (!tex.data)
       throw std::runtime_error("Failed to load texture: " + correctedPath);
 
-   GLenum format;
-   if (tex.channels == 1) format = GL_RED;
-   else if (tex.channels == 3) format = GL_RGB;
-   else if (tex.channels == 4) format = GL_RGBA;
-   else {
+   if (tex.channels == 2){
       stbi_image_free(tex.data);
       throw std::runtime_error("Unsupported image channel count: " + correctedPath);
    }

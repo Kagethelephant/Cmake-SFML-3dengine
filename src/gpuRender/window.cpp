@@ -34,8 +34,18 @@ window::window(int _height){
    glfwSetWindowSizeLimits(win, GLFW_DONT_CARE, fboHeight, GLFW_DONT_CARE, GLFW_DONT_CARE);
    // This disables vsync
    glfwSwapInterval(0); 
+
    // Initialize GLAD (GLAD provides us with openGL commands)
    gladLoadGL();
+
+   // Print GPU information
+   const GLubyte* vendor = glGetString(GL_VENDOR);
+   const GLubyte* renderer = glGetString(GL_RENDERER);
+   const GLubyte* version = glGetString(GL_VERSION);
+
+   std::cout << "GPU Vendor: " << vendor << std::endl;
+   std::cout << "GPU Model: " << renderer << std::endl;
+   std::cout << "OpenGL Version: " << version << std::endl;
 
    // Setup callbacks
    glfwSetWindowUserPointer(win, this);
@@ -176,7 +186,7 @@ void window::frameUpdate(){
    glDrawArrays(GL_TRIANGLES, 0, 6);
 
 
-   frameTime = glfwGetTime() - currentTime;
+   frameTime = glfwGetTime() - currentTime; // In seconds
    currentTime = glfwGetTime();
    frameCount++;
    // If a second has passed

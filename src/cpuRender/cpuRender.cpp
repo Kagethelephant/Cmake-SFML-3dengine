@@ -10,7 +10,6 @@
 #include "gpuRender/RAIIWrapper.hpp"
 #include "utils/data.hpp"
 #include "utils/matrix.hpp"
-#include "utils/utils.hpp"
 #include "app/object.hpp"
 
 
@@ -207,6 +206,10 @@ void cpuRenderObject::raster(const triangle3d& pr) {
    const vertex& v1 = pr.v[1];
    const vertex& v2 = pr.v[2];
    // Screen-space positions
+   vec2 p0(v0.pos.x, v0.pos.y);
+   vec2 p1(v1.pos.x, v1.pos.y);
+   vec2 p2(v2.pos.x, v2.pos.y);
+
    float invW0 = 1.0f / v0.clipPos.w;
    float invW1 = 1.0f / v1.clipPos.w;
    float invW2 = 1.0f / v2.clipPos.w;
@@ -223,18 +226,13 @@ void cpuRenderObject::raster(const triangle3d& pr) {
    vec2 uvOverW1 = v1.uv * invW1;
    vec2 uvOverW2 = v2.uv * invW2;
 
-   int xmin = std::max((int)std::min({ v0.pos.x, v1.pos.x, v2.pos.x }), 1);
-   int xmax = std::min((int)std::max({ v0.pos.x, v1.pos.x, v2.pos.x }), (int)m_resolution.x - 1);
-   int ymin = std::max((int)std::min({ v0.pos.y, v1.pos.y, v2.pos.y }), 1);
-   int ymax = std::min((int)std::max({ v0.pos.y, v1.pos.y, v2.pos.y }), (int)m_resolution.y - 1);
-
-   vec2 p0(v0.pos.x, v0.pos.y);
-   vec2 p1(v1.pos.x, v1.pos.y);
-   vec2 p2(v2.pos.x, v2.pos.y);
+   int xmin = std::max((int)std::min({ p0.x, p1.x, p2.x }), 1);
+   int xmax = std::min((int)std::max({ p0.x, p1.x, p2.x }), (int)m_resolution.x - 1);
+   int ymin = std::max((int)std::min({ p0.y, p1.y, p2.y }), 1);
+   int ymax = std::min((int)std::max({ p0.y, p1.y, p2.y }), (int)m_resolution.y - 1);
 
 
    // --- Edge function setup
-
    float area = edgeFunction(p0, p1, p2);
    if (area == 0.0f) return;
    float invArea = 1.0f / area;
@@ -253,49 +251,35 @@ void cpuRenderObject::raster(const triangle3d& pr) {
    float gamma_row = edgeFunction(p0, p1, start) * invArea;
 
    // --- Approximate geometric normal from screen-space derivatives
+   vec3 dFdx = (v0.fragPos * alpha_dx + v1.fragPos * beta_dx + v2.fragPos * gamma_dx).xyz();
+   vec3 dFdy = (v0.fragPos * alpha_dy + v1.fragPos * beta_dy + v2.fragPos * gamma_dy).xyz();
 
-   vec2 AB = (v1.pos - v0.pos).xy();
-   vec2 AC = (v2.pos - v0.pos).xy();
-
-   float AB_AB = AB.dot(AB);
-   float AC_AC = AC.dot(AC);
-   float AB_AC = AB.dot(AC);
-   float invDet = 1.0f / (AB_AB * AC_AC - AB_AC * AB_AC);
-
-   vec2 dBeta ( AC_AC * invDet, -AB_AC * invDet);
-   vec2 dGamma(-AB_AC * invDet,  AB_AB * invDet);
-   vec2 dAlpha = (dBeta + dGamma) * -1.0f;
-
-   vec3 dFdx = (v0.fragPos * dAlpha.x + v1.fragPos * dBeta.x + v2.fragPos * dGamma.x).xyz();
-   vec3 dFdy = (v0.fragPos * dAlpha.y + v1.fragPos * dBeta.y + v2.fragPos * dGamma.y).xyz();
    vec3 normal = dFdx.cross(dFdy).normal();
 
    // ======================================================================================
    // Raster loop
    // ======================================================================================
 
-   for (int y = ymin; y <= ymax; ++y)
-   {
+   for (int y = ymin; y <= ymax; ++y){
       float alpha = alpha_row;
       float beta  = beta_row;
       float gamma = gamma_row;
 
-      for (int x = xmin; x <= xmax; ++x)
-      {
-         if (alpha >= 0.0f && beta >= 0.0f && gamma >= 0.0f)
-         {
-            float depth = (alpha * ndcZ0 + beta  * ndcZ1 + gamma * ndcZ2) * 0.5f + 0.5f;
+      for (int x = xmin; x <= xmax; ++x){
 
+         if (alpha >= 0.0f && beta >= 0.0f && gamma >= 0.0f){
+
+            float depth = (alpha * ndcZ0 + beta  * ndcZ1 + gamma * ndcZ2) * 0.5f + 0.5f;
             int index = x + y * m_resolution.x;
 
-            if (depth <= m_zBuffer[index])
-            {
+            if (depth <= m_zBuffer[index]){
+               
                // Perspective-correct attribute reconstruction
                float invW = 1.0f / (alpha * invW0 + beta  * invW1 + gamma * invW2);
 
                vec3 fragPos = (fragOverW0 * alpha + fragOverW1 * beta + fragOverW2 * gamma).xyz() * invW;
 
-               float r = 1, g = 1, b = 1, a = 1;
+               vec4 texColor;
 
                if (hasTexRef) {
 
@@ -309,25 +293,21 @@ void cpuRenderObject::raster(const triangle3d& pr) {
                   int ty = (int)(uv.y * texRef.h);
                   int texel = (ty * texRef.w + tx) * texRef.channels;
 
+
                   if (texRef.channels >= 3) {
-                     r = texRef.data[texel + 0];
-                     g = texRef.data[texel + 1];
-                     b = texRef.data[texel + 2];
-                     if (texRef.channels == 4)
-                        a = texRef.data[texel + 3];
+                     int a = 1;
+                     if (texRef.channels == 4) a = texRef.data[texel + 3];
+                     texColor = vec4(texRef.data[texel + 0], texRef.data[texel + 1], texRef.data[texel + 2], a);
                   }
                   else { // grayscale
-                     r = g = b = texRef.data[texel] / 255.0f;
+                     float shade = texRef.data[texel] / 255.0f;
+                     texColor = vec4(shade,shade,shade,1.0f);
                   }
                }
                else {
-                  r = (std::uint8_t)colRef.x;
-                  g = (std::uint8_t)colRef.y;
-                  b = (std::uint8_t)colRef.z;
-                  a = (std::uint8_t)colRef.w;
+                  texColor = vec4(colRef.x, colRef.y, colRef.z, colRef.w);
                }
 
-               vec4 texColor(r, g, b, a);
 
                // Diffuse + constant ambient
                vec3 lighting(0,0,0);
@@ -342,6 +322,7 @@ void cpuRenderObject::raster(const triangle3d& pr) {
                m_pixelBuffer[index*4 + 0] = std::clamp(result[0], 0.0f, 255.0f);
                m_pixelBuffer[index*4 + 1] = std::clamp(result[1], 0.0f, 255.0f);
                m_pixelBuffer[index*4 + 2] = std::clamp(result[2], 0.0f, 255.0f);
+
                m_pixelBuffer[index*4 + 3] = std::clamp(result[3], 0.0f, 255.0f);
 
                m_zBuffer[index] = depth;
@@ -384,4 +365,9 @@ bool cpuRenderObject::backFaceCulling(const triangle3d& tri) {
     float area = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
     // Area will return negative if the triangle has CCW winding
     return area < 0.0f;
+}
+
+int cpuRenderObject::wrap(int n, int max){
+   if (n >= max) n -= max;
+   return n;
 }
