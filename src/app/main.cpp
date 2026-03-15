@@ -53,7 +53,7 @@ int main(int argc, char* argv[]){
       object teapotObj(teapotModel);
       teapotObj.scale(0.02, 0.02, 0.02);
       teapotObj.move(5,0,-5);
-      teapotObj.color = Color::Purple;
+      teapotObj.setColor(Color::Purple);
 
       object arcanineObj(arcanineModel);
       arcanineObj.move(-10,0,-10);
@@ -101,8 +101,12 @@ int main(int argc, char* argv[]){
          if (programWindow.checkKey(GLFW_KEY_ENTER, window::KeyMode::PressedOnce)) {useGPU = !useGPU;}
          if (programWindow.checkKey(GLFW_KEY_S)) {userCamera.move(0, 0, -posDelta);}
          if (programWindow.checkKey(GLFW_KEY_W)) {userCamera.move(0, 0, posDelta);}
-         if (programWindow.checkKey(GLFW_KEY_A)) {userCamera.rotate(0, -rotDelta, 0);}
-         if (programWindow.checkKey(GLFW_KEY_D)) {userCamera.rotate(0, rotDelta, 0);}
+         if (programWindow.checkKey(GLFW_KEY_A)) {userCamera.move(-posDelta, 0, 0);}
+         if (programWindow.checkKey(GLFW_KEY_D)) {userCamera.move(posDelta, 0, 0);}
+         if (programWindow.checkKey(GLFW_KEY_LEFT)) {userCamera.rotate(0, -rotDelta, 0);}
+         if (programWindow.checkKey(GLFW_KEY_RIGHT)) {userCamera.rotate(0, rotDelta, 0);}
+         if (programWindow.checkKey(GLFW_KEY_UP)) {userCamera.rotate(rotDelta, 0, 0);}
+         if (programWindow.checkKey(GLFW_KEY_DOWN)) {userCamera.rotate(-rotDelta, 0, 0);}
 
          //------------------- RENDER PIPELINE ------------------------
          if(useGPU){ 

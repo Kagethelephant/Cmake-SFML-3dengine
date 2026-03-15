@@ -20,8 +20,8 @@ window::window(int _height){
 
    // Set the size of the FBO (this can be scaled down from window dimmensions for pixelated effect)
    fboHeight = _height;
-   targetAspect = float(windowWidth) / float(windowHeight);  // initial estimate
-   fboWidth = int(fboHeight * targetAspect);
+   aspectRatio = float(windowWidth) / float(windowHeight);  // initial estimate
+   fboWidth = int(fboHeight * aspectRatio);
 
 
 
@@ -56,7 +56,7 @@ window::window(int _height){
 
       self->windowWidth  = w;
       self->windowHeight = h;
-      self->windowAspect  = float(w) / float(h);
+      self->aspectRatio  = float(w) / float(h);
 
       self->resizePending = true;
    });

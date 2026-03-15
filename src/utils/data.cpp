@@ -16,7 +16,7 @@
 // }
 
 
-vec4 hexColorToFloat(Color color) {
+vec4 hexColorToFloat(const Color color) {
    vec4 floatColor;
    unsigned int hexValue = static_cast<unsigned int>(color);
    // Extract the R, G, B, and A bytes using bit shifting and masking
@@ -28,7 +28,7 @@ vec4 hexColorToFloat(Color color) {
 }
 
 
-vec4 hexColorToRGB(Color color) {
+vec4 hexColorToRGB(const Color color) {
    vec4 rgbColor;
    unsigned int hexValue = static_cast<unsigned int>(color);
    // Extract the R, G, B, and A bytes using bit shifting and masking

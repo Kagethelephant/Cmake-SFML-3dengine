@@ -16,67 +16,71 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// MOVE AND ROTATE CAMERA
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void camera::move(const float& x, const float& y, const float& z) {
-   
-   vec3 up = vec3(0,1,0) * matrix_transform(0, 0, 0, rotation[0], rotation[1], rotation[2]);
-   position += (direction.cross(up) * x);
-   position += (direction * z);
-   position[1] += y;
-   mat_view = matrix_view(matrix_pointAt(position, direction, up));
+
+
+
+//---------------------- CAMERA MOVEMENT ----------------------
+void camera::move(float x, float y, float z) {
+   // Transform the world-space up vector by the camera's rotation
+   vec3 up = vec3(0,1,0) * matrix_transform(0, 0, 0, m_rotation[0], m_rotation[1], m_rotation[2]);
+   // Move along camera's right vector
+   // use cross product of up and forward vector to get the the right vector
+   m_position += (m_direction.cross(up) * x);
+   // Movement in z and y is the same: not world axis but relative to camera direction 
+   m_position += m_direction * z;
+   m_position += up * y;
+
+   // Updated view matrix will be referenced by renderer
+   m_viewMatrix = matrix_view(matrix_pointAt(m_position, m_direction, up));
+}
+
+void camera::rotate(float u, float v, float w) {
+   m_rotation += vec3(u, v, w);
+   vec3 up = vec3(0,1,0) * matrix_transform(0, 0, 0, m_rotation[0], m_rotation[1], m_rotation[2]);
+   m_direction = vec3(0,0,-1) * matrix_transform(0, 0, 0, m_rotation[0], m_rotation[1],m_rotation[2]);
+   // Updated view matrix will be referenced by renderer
+   m_viewMatrix = matrix_view(matrix_pointAt(m_position, m_direction, up));
 }
 
 
-void camera::rotate(const float& u, const float& v, const float& w) {
-   
-   rotation += vec3(u, v, w);
-   vec3 up = vec3(0,1,0) * matrix_transform(0, 0, 0, rotation[0], rotation[1], rotation[2]);
-   direction = (vec3(0,0,-1) * matrix_transform(0, 0, 0, rotation[0], rotation[1],rotation[2])).normal();
-   mat_view = matrix_view(matrix_pointAt(position, direction, up));
-}
+//---------------------- OBJECT TRANSFORMATIONS ----------------------
 
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// MOVE AND ROTATE OBJECT
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 void object::scale(float sx, float sy, float sz){
-   scales = vec3(sx,sy,sz);
-   matScale = matrix_scale(scales[0], scales[1], scales[2]);
+   m_scale = vec3(sx,sy,sz);
+   m_scaleMatrix = matrix_scale(m_scale[0], m_scale[1], m_scale[2]);
 }
 
 
 void object::move(float x, float y, float z){
-   position = vec3(x,y,z);
-   matTransform = matrix_transform(position[0], position[1], position[2], rotation[0], rotation[1], rotation[2]);
+   m_position += vec3(x,y,z);
+   m_transformMatrix = matrix_transform(m_position[0], m_position[1], m_position[2], m_rotation[0], m_rotation[1], m_rotation[2]);
 }
 
 
 void object::rotate(float u, float v, float w){
-   rotation = vec3(u,v,w);
-   matTransform = matrix_transform(position[0], position[1], position[2], rotation[0], rotation[1], rotation[2]);
+   m_rotation += vec3(u,v,w);
+   m_transformMatrix = matrix_transform(m_position[0], m_position[1], m_position[2], m_rotation[0], m_rotation[1], m_rotation[2]);
 }
 
 
 
 
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// LOAD OBJ MODEL
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-model::model(const std::string& filename, bool ccwWinding) {
+//---------------------- LOAD MODEL FROM OBJ FILE ----------------------
 
-   // Open the obj file
+model::model(const std::string& filename, bool cwWinding) {
+
    std::ifstream obj(filename);
    if (!obj) { throw std::runtime_error("Failed to open OBJ file");}
 
+   // dir is used to find other files within the same directory
    std::string dir = getDirectory(filename);
 
    // Raw OBJ attribute streams
    std::vector<vec3> objPositions;
    std::vector<vec2> objTexcoords;
 
-   // (v,t,n) → unified vertex index hashtable 
-   // This is the key, the value, and the hash callback function to generate the hash key
+   // hash table mapping a combination of position and texture indexes to a vertex object 
+   // in the vertex vector arry (vertices) vertexKeyHash is the callable struct to generate hash
    std::unordered_map<vertexKey, uint32_t, vertexKeyHash> vertexCache;
 
    subMesh* currentSubmesh;
@@ -88,119 +92,121 @@ model::model(const std::string& filename, bool ccwWinding) {
       std::string type;
       stream >> type;
 
-      // POSITION
-      // -------------------------------------------------
+      // ---------- POSITION -----------
       if (type == "v") {
          vec3 p;
          stream >> p.x >> p.y >> p.z;
          objPositions.push_back(p);
       }
-      // TEXCOORD
-      // -------------------------------------------------
+
+      // ---------- TEXCOORD -----------
       else if (type == "vt") {
          vec2 uv;
          stream >> uv.x >> uv.y;
          objTexcoords.push_back(uv);
       }
-      // MTL FILE
-      // -------------------------------------------------
+
+      // ---------- MTL FILE -----------
       else if (type == "mtllib") {
          std::string mtlfile;
          stream >> mtlfile;
-         loadMTL(dir + mtlfile, materialMap);
+         // Maps "mtlName" below to its corresponding texture data in "textureMap"
+         loadMTL(dir + mtlfile);
       }
-      // MTL MATERIAL
-      // -------------------------------------------------
+
+      // ---------- MTL MATERIAL -----------
       else if (type == "usemtl") {
          std::string mtlName;
          stream >> mtlName;
-         material mtl = materialMap[mtlName];
+         // loadMTL should already be called at this point so we just need to create a new
+         // submesh and tie the texture associated with this mtlName to that submesh
          subMesh newSubmesh;
-         newSubmesh.tex = mtl.diffuseTex;
-         subMeshes.push_back(newSubmesh);
+         newSubmesh.tex = m_textureMap[mtlName];
+         m_subMeshes.push_back(newSubmesh);
       }
 
-      // FACE (triangles, quads, ngons)
-      // -------------------------------------------------
+      // ---------- FACE -----------
       else if (type == "f") {
-         
-         if(subMeshes.size() == 0){
+        
+         // ---------- COLLECT INDICES -----------
+
+         // Create an initial submesh for the current submesh. This ensures that if there is no
+         // material (untextured model) than we can still create a submesh
+         if(m_subMeshes.size() == 0){
             subMesh newSubmesh;
             newSubmesh.textured = false;
-            subMeshes.push_back(newSubmesh);
+            m_subMeshes.push_back(newSubmesh);
          }
          
-         // Get the top submesh in the submesh array
-         subMesh& currentMesh = subMeshes.back();
+         // Vertices associated with a texture should follow "usemtl" call for that texture / material
+         // so make the last submesh aded the current submesh for this face
+         subMesh& currentMesh = m_subMeshes.back();
+         // Assume this mesh has no texture until a texture indice is found below
+         currentMesh.textured = false;
 
-         // Temporary storage for one polygon face
+         // Temporary storage for this polygons position and texture indices
          std::vector<int> vIdx;
          std::vector<int> tIdx;
 
+
          std::string vert;
          while (stream >> vert) {
-            int v = 0, t = 0, n = 0;
+            int v = 0, t = 0;
+            // Find the slashes in the vertex string "v/t/n" or "v//n" or "v/t"
+            size_t p1 = vert.find('/');         // first slash
+            size_t p2 = vert.find('/', p1 + 1); // Second slash (if exists)
 
-            // Parse v/t/n or v//n or v/t
-            // Get the position of the first slash and second slash
-            size_t p1 = vert.find('/');
-            size_t p2 = vert.find('/', p1 + 1);
-
-            // First vertex is the position first slash (adjusted to 0 based indexing)
+            // Extract position index (before first slash) and convert to 0-based
             v = std::stoi(vert.substr(0, p1)) - 1;
 
-            // Checks that there is a second slash and there is something btwn first and second slash
-            // Get the texture value (adjusted to 0 based indexing)
-            if (p1 != std::string::npos) {t = std::stoi(vert.substr(p1 + 1, p2 - p1 - 1)) - 1; currentMesh.textured = true;}
-            else currentMesh.textured = false;
-
-            // Add values to the vertice buffers
+            // Extract texture index (between first and second slash) and convert to 0-based, if present 
+            // If no slash, this vertex has no texture coordinates
+            if (p1 != std::string::npos) {
+               t = std::stoi(vert.substr(p1 + 1, p2 - p1 - 1)) - 1; 
+               currentMesh.textured = true;
+            }
+            // Store indices for this face/polygon
             vIdx.push_back(v);
             tIdx.push_back(t);
          }
-
-         // Need at least a triangle
+         // Need at least a triangle to generate face/polygon
          if (vIdx.size() < 3) continue;
 
-         // -------------------------------------------------
-         // FAN TRIANGULATION
-         // (v0, v1, v2), (v0, v2, v3), ...
-         // -------------------------------------------------
-         for (size_t i = 1; i + 1 < vIdx.size(); ++i) {
 
+         // ---------- FAN TRIANGULATION -----------
+         
+         for (int i = 1; i < vIdx.size()-1; ++i) {
             // Start with the first triangle (should be {0,1,2} then {0,2,3} for triangle fan)
-            int tri[3] = {0, static_cast<int>(i), static_cast<int>(i + 1)};
-            if (ccwWinding) std::swap(tri[1], tri[2]);
+            int tri[3] = {0, i, i+1};
+            // Triangle winding swapped if indicated in model constructor call to ensure normals face outward
+            if (cwWinding) std::swap(tri[1], tri[2]);
 
             for (int k = 0; k < 3; ++k) {
-               // Create a key that ties all the attributes of the vertex together
+               // Create a new key containing the index of the vertex and 
                vertexKey key{vIdx[tri[k]],tIdx[tri[k]]};
-
+               // "it" is an iterator (similiar to pointer) to the map element (not the value but the key-value pair itself)
                auto it = vertexCache.find(key);
-               // vertexCache.find() will return vertexCache.end() if it is not found
-               // If it is found than add the already existing vertex index to indices
+
+               // If the key is not found, 'it' equals vertexCache.end()
+               // If found, it->first is the key, and it->second is the value (here, the vertex index)
+               // If vertex has already been created simply add it submesh indices
                if (it != vertexCache.end()) currentMesh.indices.push_back(it->second);
                else {
-                  // If it does not exist create a new vertex
-                  int correctedKeyV, correctedKeyT;
-                  if (key.v < 0) correctedKeyV = objPositions.size() + key.v + 1;
-                  else correctedKeyV = key.v;
-                  if (key.t < 0) correctedKeyT = objTexcoords.size() + key.t + 1;
-                  else correctedKeyT = key.t;
+                  // Correct negative indices for OBJ (negative = relative to end of array)
+                  int correctedKeyV = (key.v < 0) ? objPositions.size() + key.v + 1 : key.v;
+                  int correctedKeyT = (key.t < 0) ? objTexcoords.size() + key.t + 1 : key.t;
 
+                  // vertex has not been created, so create it and add the position and texture data if it exists
                   vertex vertOut;
-                  vertOut.pos = vec4(objPositions[correctedKeyV],1.0f);
-                  // Some OBJ files omit texcoords or normals
+                  vertOut.screenPos = vec4(objPositions[correctedKeyV],1.0f);
                   if (currentMesh.textured){
                      vertOut.uv = objTexcoords[correctedKeyT];
-                     currentMesh.textured = true;
-                  }
-                  else {
-                     vertOut.uv = vec2(0,0);
                   }
 
-                  uint32_t newIndex = static_cast<uint32_t>(vertices.size());
-                  vertices.push_back(vertOut);
+                  // Add new vertex to verices vector array and map the location to the 
+                  // current submesh and the vertexCache hashtable for use on other faces if applicable
+                  uint32_t newIndex = static_cast<uint32_t>(m_vertices.size());
+                  m_vertices.push_back(vertOut);
                   vertexCache[key] = newIndex;
                   currentMesh.indices.push_back(newIndex);
                }
@@ -208,61 +214,65 @@ model::model(const std::string& filename, bool ccwWinding) {
          }
       }
    }
+   // Allocate memory matching the size of the vertices vector array
+   // 3 pos + 2 uv = 5 floats per vertex
+   m_verticesRaw.reserve(m_vertices.size() * 5); 
 
-   verticesRaw.reserve(vertices.size() * 8); // 3 pos + 3 normal + 2 uv = 8 floats per vertex
-
-   // Push all vertice data back to a raw vertice array to send to GPU
-   for (const auto& vert : vertices) {
-      // pos
-      verticesRaw.push_back(vert.pos.c[0]);
-      verticesRaw.push_back(vert.pos.c[1]);
-      verticesRaw.push_back(vert.pos.c[2]);
+   // Create a tightliy packed vertice array for GPU
+   for (const auto& vert : m_vertices) {
+      // position
+      m_verticesRaw.push_back(vert.screenPos.c[0]);
+      m_verticesRaw.push_back(vert.screenPos.c[1]);
+      m_verticesRaw.push_back(vert.screenPos.c[2]);
       // uv
-      verticesRaw.push_back(vert.uv.c[0]);
-      verticesRaw.push_back(vert.uv.c[1]);
+      m_verticesRaw.push_back(vert.uv.c[0]);
+      m_verticesRaw.push_back(vert.uv.c[1]);
    }
 }
 
 
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// HELPERS
-//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// ------------------------- Get File Directory Path -------------------------
-std::string model::getDirectory(const std::string& path) {
-   size_t pos = path.find_last_of("/\\");
-   if (pos == std::string::npos)
-      return "";
-   return path.substr(0, pos + 1); // include trailing slash
+
+
+//---------------------- MODEL LOADING HELPERS ----------------------
+
+std::string model::getDirectory(const std::string& filepath) {
+   // find the location of the last "/" or "\\" this should be the directoy
+   size_t pos = filepath.find_last_of("/\\");
+
+   if (pos == std::string::npos) return "";
+   return filepath.substr(0, pos + 1); // include trailing slash
 }
 
 
-// ------------------------- Load Texture File -------------------------
+
 model::texture model::loadTexture(const std::string& filepath) {
+   // Directory converted from "dir\\file" to "dir/file"
    std::string correctedPath = filepath;
    std::replace(correctedPath.begin(), correctedPath.end(), '\\', '/');
+
    texture tex;
    stbi_set_flip_vertically_on_load(true);
 
    tex.data = stbi_load(correctedPath.c_str(), &tex.w, &tex.h, &tex.channels, 0);
-   if (!tex.data)
-      throw std::runtime_error("Failed to load texture: " + correctedPath);
+   if (!tex.data) throw std::runtime_error("Failed to load texture: " + correctedPath);
 
-   if (tex.channels == 2){
+   // Only 1, 3, or 4 channel images are supported in CPU and GPU raterizer
+   if (!(tex.channels == 1 || tex.channels == 3 || tex.channels == 4)){
       stbi_image_free(tex.data);
       throw std::runtime_error("Unsupported image channel count: " + correctedPath);
    }
-
    return tex;
 }
 
-// ------------------------- Load MTL File -------------------------
-void model::loadMTL(const std::string& path, std::unordered_map<std::string, material>& materials) {
-   std::ifstream file(path);
-   if (!file) throw std::runtime_error("Failed to open MTL: " + path);
 
-   // Get the directory of the file to find the textures
-   std::string dir = getDirectory(path);
-   material* current = nullptr;
+
+void model::loadMTL(const std::string& filepath) {
+   std::ifstream file(filepath);
+   if (!file) throw std::runtime_error("Failed to open MTL: " + filepath);
+
+   // Texture locations will be relative to .mtl directory so we need to capture this
+   std::string dir = getDirectory(filepath);
+   texture* current = nullptr;
    std::string line;
 
    // itterate through the entire mtl file
@@ -276,16 +286,15 @@ void model::loadMTL(const std::string& path, std::unordered_map<std::string, mat
       if (type == "newmtl") {
          std::string name;
          ss >> name;
-         materials[name] = {}; // Creates another element in the map if it does not exist
-         materials[name].name = name; // Load name into the name po
-         current = &materials[name];
+         m_textureMap[name] = {}; // Creates another element in the map if it does not exist
+         current = &m_textureMap[name];
       } 
       // Load the texture into the material map
       else if (type == "map_Kd" && current) {
          std::string texPath;
          ss >> texPath;
          // Load texture from the path
-         current->diffuseTex = loadTexture(dir + texPath);
+         *current = loadTexture(dir + texPath);
       }
    }
 }

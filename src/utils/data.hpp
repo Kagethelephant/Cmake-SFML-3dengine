@@ -23,10 +23,10 @@ enum class Color : unsigned int {
 };
 
 
-vec4 hexColorToFloat(Color hexValue);
+vec4 hexColorToFloat(const Color hexValue);
 
 
-vec4 hexColorToRGB(Color color);
+vec4 hexColorToRGB(const Color color);
 
 
 

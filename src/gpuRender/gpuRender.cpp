@@ -20,13 +20,7 @@
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // INTITIALIZE THE RENDERER
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-gpuRenderObject::gpuRenderObject(camera& _cam) : cam{_cam}, gl_window{_cam.gl_window}{
-   // This is the VAO that is used to bind the VBO
-   width = gl_window.fboWidth;
-   height = gl_window.fboHeight;
-
-   mat_project = matrix_project(70.0f, gl_window.targetAspect, 0.1f, 1000.0f);
-
+gpuRenderObject::gpuRenderObject(camera& cam) : m_camera{cam}, m_window{cam.getWindow()}{
    shaderProgram3D = createShaderProgram("../src/shaders/3d_vertex.glsl", "../src/shaders/3d_fragment.glsl");
 }
 
@@ -38,6 +32,7 @@ gpuRenderObject::gpuRenderObject(camera& _cam) : cam{_cam}, gl_window{_cam.gl_wi
 void gpuRenderObject::bindObject(const object& obj){
   
    gpuMesh gpuObject(obj);
+   const model& mod = obj.getModel();
    GLuint& vao = gpuObject.vao;
    GLuint& vbo = gpuObject.vbo;
 
@@ -46,7 +41,7 @@ void gpuRenderObject::bindObject(const object& obj){
    // Setup the VBO using the VAO
    GLScopedVAO tempVAO(vao);
    GLScopedVBO tempVBO(vbo);
-   glBufferData(GL_ARRAY_BUFFER, obj.mod.verticesRaw.size() * sizeof(GLfloat), obj.mod.verticesRaw.data(), GL_STATIC_DRAW);
+   glBufferData(GL_ARRAY_BUFFER, mod.getVerticesRaw().size() * sizeof(GLfloat), mod.getVerticesRaw().data(), GL_STATIC_DRAW);
    // 1) Shader layout location, 2) Qty of vert attributes, 3) Size of attribute, 4) normaliize btwn -1 to 1, 5)span btwn verts in bytes, 6) start of buffer
    // positions at location 0
    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
@@ -56,7 +51,7 @@ void gpuRenderObject::bindObject(const object& obj){
    glEnableVertexAttribArray(1);
 
 
-   for (const auto& mesh : obj.mod.subMeshes) {
+   for (const auto& mesh : mod.getSubMeshes()) {
       gpuSubMesh gpuSub;
       GLuint& ebo = gpuSub.ebo;
       GLuint& tex = gpuSub.tex;
@@ -94,8 +89,8 @@ void gpuRenderObject::bindObject(const object& obj){
 void gpuRenderObject::render(){
 
    vec4 bgColor = hexColorToFloat(Color::Black);
-   GLScopedFBO tempFBO(gl_window.fbo);
-   GLScopedViewport tempViewPort(0, 0, gl_window.fboWidth, gl_window.fboHeight);
+   GLScopedFBO tempFBO(m_window.fbo);
+   GLScopedViewport tempViewPort(0, 0, m_window.fboWidth, m_window.fboHeight);
    GLScopedProgram tempProgram(shaderProgram3D);
    glClearColor(bgColor[0],bgColor[1],bgColor[2],bgColor[3]);
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -125,7 +120,7 @@ void gpuRenderObject::render(){
       const GLuint& vao = mesh.vao;
       const GLuint& vbo = mesh.vbo;
 
-      vec4 color = hexColorToFloat(obj.color);
+      vec4 color = hexColorToFloat(obj.getColor());
 
       // Setup the VBO using the VAO
       GLScopedVAO tempVAO(vao);
@@ -133,16 +128,16 @@ void gpuRenderObject::render(){
 
 
       // update the uniform color
-      glUniformMatrix4fv(glGetUniformLocation(shaderProgram3D, "view"),1,GL_FALSE,&cam.mat_view.m[0][0]);
-      glUniformMatrix4fv(glGetUniformLocation(shaderProgram3D, "project"),1,GL_FALSE,&mat_project.m[0][0]);
+      glUniformMatrix4fv(glGetUniformLocation(shaderProgram3D, "view"),1,GL_FALSE,&m_camera.getViewMatrix().m[0][0]);
+      glUniformMatrix4fv(glGetUniformLocation(shaderProgram3D, "project"),1,GL_FALSE,&m_camera.getProjectionMatrix().m[0][0]);
 
       glUniform1i(glGetUniformLocation(shaderProgram3D, "lightCount"),lightCount);
       glUniform3fv(glGetUniformLocation(shaderProgram3D, "lightPos"),lightCount,&lightPosBuffer[0]);
       glUniform3fv(glGetUniformLocation(shaderProgram3D, "lightCol"),lightCount,&lightColBuffer[0]);
 
       glUniform3fv(glGetUniformLocation(shaderProgram3D, "objCol"),1,&color[0]);
-      glUniformMatrix4fv(glGetUniformLocation(shaderProgram3D, "scale"),1,GL_FALSE,&obj.matScale.m[0][0]);
-      glUniformMatrix4fv(glGetUniformLocation(shaderProgram3D, "transform"),1,GL_FALSE,&obj.matTransform.m[0][0]);
+      glUniformMatrix4fv(glGetUniformLocation(shaderProgram3D, "scale"),1,GL_FALSE,&obj.getScaleMatrix().m[0][0]);
+      glUniformMatrix4fv(glGetUniformLocation(shaderProgram3D, "transform"),1,GL_FALSE,&obj.getTransformMatrix().m[0][0]);
       
       // Activate this texture here so we dont have to do it for every sub mesh
       GLScopedActiveTexture tempActiveTex(GL_TEXTURE0);

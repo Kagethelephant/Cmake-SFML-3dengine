@@ -18,8 +18,7 @@ public:
    int fboWidth, fboHeight;
 
    int windowWidth, windowHeight;
-   float windowAspect;
-   float targetAspect;
+   float aspectRatio;
 
    std::unordered_map<int, int> prevKeyState;
    enum class KeyMode { Pressed, PressedOnce, Released };

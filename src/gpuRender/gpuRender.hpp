@@ -22,24 +22,16 @@ class gpuRenderObject {
 
 public:
 
-   gpuRenderObject(camera& _cam);
+   gpuRenderObject(camera& cam);
 
    /// @brief: Shader program to render 3d objects
    GLuint shaderProgram3D;
-
-   /// @brief height: Height of the rendering view (not always the same as window)
-   int height;
-   /// @brief: Width of the rendering view (not always the same as window)
-   int width;
 
 
    vec3 lightPos = vec3(0,0,0);
    vec3 lightPosview = vec3(0,0,0);
    vec3 lightCol = vec3(1,1,1);
    
-   /// @brief: Projects 3d vertices onto a 2D surface (the screen)
-   mat4x4 mat_project;
-
    // Quad used to render 2d textures on to the screen (used for UI)
    std::vector<GLfloat> quadVertices;
 
@@ -66,8 +58,8 @@ public:
    void addLight(const light& newLight){
       lights.push_back(newLight);
    }
-   window& gl_window;
-   camera& cam;
+   const window& m_window;
+   camera& m_camera;
 
    std::vector<GLfloat> vertices; 
    std::vector<GLuint> indices; 
